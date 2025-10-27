@@ -6,7 +6,7 @@ import os
 
 # Initialize extensions
 db = SQLAlchemy()
-migrate = Migrate() 
+migrate = Migrate()
 login_manager = LoginManager()
 
 class Config:
@@ -20,13 +20,13 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # Instance folder oluştur
+    # Create instance folder
     instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance')
     os.makedirs(instance_path, exist_ok=True)
 
     # Initialize extensions
     db.init_app(app)
-    migrate.init_app(app, db)  
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     
     login_manager.login_view = 'auth.login'
@@ -39,7 +39,8 @@ def create_app():
         return User.query.get(int(user_id))
 
     with app.app_context():
-        from app.routes import main
+        # Import and register blueprints
+        from app.main.routes import main
         from app.auth.routes import auth_bp
         
         app.register_blueprint(main)
