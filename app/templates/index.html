@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}SmartExpensesTracker | Login & Sign Up{% endblock %}
+
+{% block content %}
+<!-- Brand Section -->
+<section class="brand">
+    <div class="logo">💰</div>
+    <h1>SmartExpensesTracker</h1>
+</section>
+
+<!-- Authentication Card -->
+<section class="auth-card">
+    <div class="tab-header">
+        <button id="loginTab" class="tab active">Login</button>
+        <button id="signupTab" class="tab">Sign Up</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="form active" method="POST" action="{{ url_for('auth.login') }}">
+        {{ login_form.hidden_tag() }}
+        <h2>Welcome Back 👋</h2>
+        <p>Enter your credentials to access your account.</p>
+
+        <div class="input-group">
+            <label for="loginEmail">Email</label>
+            {{ login_form.email(class="form-input", placeholder="you@example.com") }}
+            {% if login_form.email.errors %}
+                <div class="error-text">
+                    {% for error in login_form.email.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <label for="loginPassword">Password</label>
+            {{ login_form.password(class="form-input", placeholder="••••••••") }}
+            {% if login_form.password.errors %}
+                <div class="error-text">
+                    {% for error in login_form.password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {{ login_form.submit(class="btn primary") }}
+    </form>
+
+    <!-- Sign Up Form -->
+    <form id="signupForm" class="form" method="POST" action="{{ url_for('auth.signup') }}">
+        {{ signup_form.hidden_tag() }}
+        <h2>Create Account ✨</h2>
+        <p>Fill in your information to get started.</p>
+
+        <div class="input-group">
+            <label for="signupName">Full Name</label>
+            {{ signup_form.name(class="form-input", placeholder="John Doe") }}
+            {% if signup_form.name.errors %}
+                <div class="error-text">
+                    {% for error in signup_form.name.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <label for="signupEmail">Email</label>
+            {{ signup_form.email(class="form-input", placeholder="you@example.com") }}
+            {% if signup_form.email.errors %}
+                <div class="error-text">
+                    {% for error in signup_form.email.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <label for="signupPassword">Password</label>
+            {{ signup_form.password(class="form-input", placeholder="••••••••") }}
+            {% if signup_form.password.errors %}
+                <div class="error-text">
+                    {% for error in signup_form.password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <label for="confirmPassword">Confirm Password</label>
+            {{ signup_form.confirm_password(class="form-input", placeholder="••••••••") }}
+            {% if signup_form.confirm_password.errors %}
+                <div class="error-text">
+                    {% for error in signup_form.confirm_password.errors %}
+                        <small>{{ error }}</small>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {{ signup_form.submit(class="btn primary") }}
+    </form>
+</section>
+{% endblock %}
