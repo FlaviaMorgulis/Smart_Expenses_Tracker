@@ -167,10 +167,10 @@ class Budget(db.Model):
     member_id = db.Column(db.Integer, db.ForeignKey('members.member_id', ondelete='CASCADE'), nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.category_id', ondelete='CASCADE'), nullable=True)
     
-    # Relationships
-    user = db.relationship('User', backref='budgets')
-    member = db.relationship('Member', backref='budgets')
-    category = db.relationship('Category', backref='budgets')
+    # Relationships (removed backref since they're already defined in the parent models)
+    user = db.relationship('User')
+    member = db.relationship('Member')
+    category = db.relationship('Category')
     
     def is_user_budget(self):
         """Check if this is a user budget (not member budget)"""
@@ -219,4 +219,4 @@ class Budget(db.Model):
     def __repr__(self):
         owner = self.get_owner_name()
         category = self.category.category_name if self.category else 'Total Expenses'
-        return f'<Budget {owner} - {category}: ${self.budget_amount}>'
+        return f'Budget {owner} - {category}: ${self.budget_amount}'
