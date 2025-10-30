@@ -159,6 +159,8 @@ class Budget(db.Model):
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    alert_threshold = db.Column(db.Numeric(5, 2), nullable=False, default=80.0)  # Alert when % of budget is reached (default 80%)
+    notifications_enabled = db.Column(db.Boolean, nullable=False, default=True)  # Enable/disable budget alerts
     created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
     updated_at = db.Column(db.DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
     
@@ -167,10 +169,7 @@ class Budget(db.Model):
     member_id = db.Column(db.Integer, db.ForeignKey('members.member_id', ondelete='CASCADE'), nullable=True)
     category_id = db.Column(db.Integer, db.ForeignKey('categories.category_id', ondelete='CASCADE'), nullable=True)
     
-    # Relationships (removed backref since they're already defined in the parent models)
-    user = db.relationship('User')
-    member = db.relationship('Member')
-    category = db.relationship('Category')
+    # Relationships - No explicit relationships needed since backref is defined in parent models
     
     def is_user_budget(self):
         """Check if this is a user budget (not member budget)"""
@@ -187,6 +186,45 @@ class Budget(db.Model):
     def is_total_budget(self):
         """Check if this is a total expenses budget (all categories)"""
         return self.category_id is None
+    
+    def should_alert(self, current_spending):
+        """Check if an alert should be triggered based on current spending"""
+        if not self.notifications_enabled or self.budget_amount <= 0:
+            return False
+        
+        percentage_used = (current_spending / float(self.budget_amount)) * 100
+        return percentage_used >= float(self.alert_threshold)
+    
+    def get_alert_status(self, current_spending):
+        """Get detailed alert status information"""
+        if self.budget_amount <= 0:
+            return {
+                'should_alert': False,
+                'percentage_used': 0,
+                'amount_remaining': 0,
+                'status': 'invalid_budget'
+            }
+        
+        percentage_used = (current_spending / float(self.budget_amount)) * 100
+        amount_remaining = float(self.budget_amount) - current_spending
+        
+        if percentage_used >= 100:
+            status = 'over_budget'
+        elif percentage_used >= float(self.alert_threshold):
+            status = 'alert_threshold_reached'
+        elif percentage_used >= (float(self.alert_threshold) - 10):  # Within 10% of threshold
+            status = 'approaching_threshold'
+        else:
+            status = 'within_budget'
+        
+        return {
+            'should_alert': self.should_alert(current_spending),
+            'percentage_used': round(percentage_used, 2),
+            'amount_remaining': round(amount_remaining, 2),
+            'alert_threshold': float(self.alert_threshold),
+            'status': status,
+            'notifications_enabled': self.notifications_enabled
+        }
     
     def get_owner_name(self):
         """Get the name of the budget owner (user or member)"""
@@ -205,12 +243,14 @@ class Budget(db.Model):
             'start_date': self.start_date.isoformat() if self.start_date else None,
             'end_date': self.end_date.isoformat() if self.end_date else None,
             'is_active': self.is_active,
+            'alert_threshold': float(self.alert_threshold) if self.alert_threshold else 80.0,
+            'notifications_enabled': self.notifications_enabled,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'user_id': self.user_id,
             'member_id': self.member_id,
             'category_id': self.category_id,
-            'category_name': self.category.category_name if self.category else 'Total Expenses',
+            'category_name': self.category.category_name if self.category_id and hasattr(self, 'category') and self.category else 'Total Expenses',
             'owner_name': self.get_owner_name(),
             'owner_type': 'user' if self.is_user_budget() else 'member',
             'budget_type': 'category' if self.is_category_budget() else 'total'

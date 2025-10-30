@@ -796,6 +796,43 @@ class AdvancedAnalyticsService:
         return query.all()
     
     @staticmethod
+    def check_budget_alerts(user_id):
+        """Check all active budgets for a user and return alerts"""
+        from .models import Budget
+        active_budgets = Budget.query.filter_by(user_id=user_id, is_active=True, notifications_enabled=True).all()
+        
+        alerts = []
+        
+        for budget in active_budgets:
+            usage = BudgetService.get_budget_usage(budget.budget_id)
+            alert_status = budget.get_alert_status(usage['amount_spent'])
+            
+            if alert_status['should_alert']:
+                alerts.append({
+                    'budget_id': budget.budget_id,
+                    'budget_name': f"{budget.get_owner_name()} - {budget.category.category_name if budget.category else 'Total Expenses'}",
+                    'alert_status': alert_status,
+                    'budget_info': budget.to_dict()
+                })
+        
+        return alerts
+    
+    @staticmethod
+    def update_budget_settings(budget_id, alert_threshold=None, notifications_enabled=None):
+        """Update budget alert settings"""
+        from .models import Budget
+        budget = Budget.query.get_or_404(budget_id)
+        
+        if alert_threshold is not None:
+            budget.alert_threshold = alert_threshold
+        if notifications_enabled is not None:
+            budget.notifications_enabled = notifications_enabled
+        
+        budget.updated_at = datetime.now()
+        db.session.commit()
+        return budget
+    
+    @staticmethod
     def get_budget_usage(budget_id):
         """Calculate how much of the budget has been used"""
         from .models import Budget, Transaction, MembersTransaction
