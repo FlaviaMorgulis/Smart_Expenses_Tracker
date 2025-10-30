@@ -45,5 +45,12 @@ def create_app():
         
         app.register_blueprint(main)
         app.register_blueprint(auth_bp, url_prefix='/auth')
+        
+        # Register notifications blueprint
+        try:
+            from app.notifications.routes import notifications_bp
+            app.register_blueprint(notifications_bp, url_prefix='/api')
+        except ImportError:
+            app.logger.warning("Notifications blueprint not available")
 
     return app

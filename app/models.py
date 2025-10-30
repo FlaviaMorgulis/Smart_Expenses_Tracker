@@ -41,7 +41,7 @@ class User(db.Model, UserMixin):
         }
 
     def __repr__(self):
-        return f'<User {self.user_name}>'
+        return f'User {self.user_name}'
 
 class Category(db.Model): 
     __tablename__ = 'categories'
@@ -62,7 +62,7 @@ class Category(db.Model):
         }
 
     def __repr__(self):
-        return f'<Category {self.category_name}>'
+        return f'Category {self.category_name}'
 
 class Member(db.Model):
     __tablename__ = 'members'
@@ -87,7 +87,7 @@ class Member(db.Model):
         }
 
     def __repr__(self):
-        return f'<Member {self.name}>'
+        return f'Member {self.name}'
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'
@@ -103,7 +103,8 @@ class Transaction(db.Model):
     members = db.relationship('MembersTransaction', back_populates='transaction', cascade='all, delete-orphan')
 
 
-    # Helper methods for checking transaction state
+    # Helper methods for checking transaction state 
+    # ( to differentiate when an expense is just for the user or to be shared with whole family)
     def get_associated_members(self):
         """Get all members associated with this transaction"""
         return [mt.member for mt in self.members]
@@ -127,7 +128,7 @@ class Transaction(db.Model):
         }
 
     def __repr__(self):
-        return f'<Transaction {self.transaction_id}: ${self.amount} ({self.transaction_type})>'
+        return f'Transaction {self.transaction_id}: ${self.amount} ({self.transaction_type})'
 
 class MembersTransaction(db.Model):
     __tablename__ = 'members_transaction'
@@ -147,7 +148,7 @@ class MembersTransaction(db.Model):
         }
 
     def __repr__(self):
-        return f'<MembersTransaction {self.member_id}-{self.transaction_id}>'
+        return f'MembersTransaction {self.member_id}-{self.transaction_id}'
 
 
 class Budget(db.Model):
@@ -156,9 +157,7 @@ class Budget(db.Model):
     budget_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     budget_amount = db.Column(db.Numeric(10, 2), nullable=False)
     budget_period = db.Column(db.String(20), nullable=False, default='monthly')  # 'weekly', 'monthly', 'yearly'
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=False)
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    is_active = db.Column(db.Boolean, nullable=False, default=True)  # Whether budget is currently active
     alert_threshold = db.Column(db.Numeric(5, 2), nullable=False, default=80.0)  # Alert when % of budget is reached (default 80%)
     notifications_enabled = db.Column(db.Boolean, nullable=False, default=True)  # Enable/disable budget alerts
     created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
@@ -167,9 +166,10 @@ class Budget(db.Model):
     # Foreign keys - budget can be for user OR member, and for specific category OR total expenses
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=True)
     member_id = db.Column(db.Integer, db.ForeignKey('members.member_id', ondelete='CASCADE'), nullable=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.category_id', ondelete='CASCADE'), nullable=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.category_id', ondelete='SET NULL'), nullable=True)  # SET NULL since categories are ENUM-constrained
     
-    # Relationships - No explicit relationships needed since backref is defined in parent models
+    # Relationships
+    category = db.relationship('Category', backref='budgets')
     
     def is_user_budget(self):
         """Check if this is a user budget (not member budget)"""
@@ -186,6 +186,20 @@ class Budget(db.Model):
     def is_total_budget(self):
         """Check if this is a total expenses budget (all categories)"""
         return self.category_id is None
+    
+    def pause(self):
+        """Pause/deactivate this budget"""
+        self.is_active = False
+        self.updated_at = datetime.utcnow()
+    
+    def unpause(self):
+        """Unpause/activate this budget"""
+        self.is_active = True
+        self.updated_at = datetime.utcnow()
+    
+    def is_paused(self):
+        """Check if this budget is currently paused"""
+        return not self.is_active
     
     def should_alert(self, current_spending):
         """Check if an alert should be triggered based on current spending"""
@@ -226,22 +240,18 @@ class Budget(db.Model):
             'notifications_enabled': self.notifications_enabled
         }
     
-    def get_owner_name(self):
-        """Get the name of the budget owner (user or member)"""
-        if self.is_user_budget():
-            return self.user.user_name if self.user else 'Unknown User'
-        elif self.is_member_budget():
-            return self.member.name if self.member else 'Unknown Member'
-        return 'Unknown'
     
     def to_dict(self):
         """Convert budget to dictionary"""
+        # Get category name safely
+        category_name = 'Total Expenses'  
+        if self.category_id and self.category:
+            category_name = self.category.category_name
+        
         return {
             'budget_id': self.budget_id,
             'budget_amount': float(self.budget_amount) if self.budget_amount else 0,
             'budget_period': self.budget_period,
-            'start_date': self.start_date.isoformat() if self.start_date else None,
-            'end_date': self.end_date.isoformat() if self.end_date else None,
             'is_active': self.is_active,
             'alert_threshold': float(self.alert_threshold) if self.alert_threshold else 80.0,
             'notifications_enabled': self.notifications_enabled,
@@ -250,13 +260,13 @@ class Budget(db.Model):
             'user_id': self.user_id,
             'member_id': self.member_id,
             'category_id': self.category_id,
-            'category_name': self.category.category_name if self.category_id and hasattr(self, 'category') and self.category else 'Total Expenses',
-            'owner_name': self.get_owner_name(),
+            'category_name': category_name,
+            'owner_name': 'Budget Owner',  
             'owner_type': 'user' if self.is_user_budget() else 'member',
             'budget_type': 'category' if self.is_category_budget() else 'total'
         }
     
     def __repr__(self):
-        owner = self.get_owner_name()
+        owner = "Budget Owner"  
         category = self.category.category_name if self.category else 'Total Expenses'
         return f'Budget {owner} - {category}: ${self.budget_amount}'

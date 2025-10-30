@@ -37,6 +37,11 @@ instance/
 *.db
 *.sqlite
 *.sqlite3
+instance/
+
+# Keep migrations but ignore their cache
+migrations/__pycache__/
+migrations/versions/__pycache__/
 
 # IDE
 .vscode/

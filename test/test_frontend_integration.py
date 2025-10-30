@@ -60,7 +60,7 @@ def test_auth_routes_compatibility():
         with app.app_context():
             db.create_all()
             # Initialize categories using seed script
-            from seed_categories import seed_system_categories
+            from Smart_Expenses_Tracker.app.utilities.seed_categories import seed_system_categories
             seed_system_categories()
             
             # Test 1: Login page loads
@@ -116,7 +116,7 @@ def test_main_routes_with_backend():
         with app.app_context():
             db.create_all()
             # Initialize categories using seed script
-            from seed_categories import seed_system_categories
+            from Smart_Expenses_Tracker.app.utilities.seed_categories import seed_system_categories
             seed_system_categories()
             
             # Create and login user
@@ -205,7 +205,7 @@ def test_forms_integration():
         with app.app_context():
             db.create_all()
             # Initialize categories using seed script
-            from seed_categories import seed_system_categories
+            from Smart_Expenses_Tracker.app.utilities.seed_categories import seed_system_categories
             seed_system_categories()
             
             # Test auth forms with enhanced User model
@@ -262,7 +262,7 @@ def test_backend_services_with_frontend_user():
     with app.app_context():
         db.create_all()
         # Initialize categories using seed script
-        from seed_categories import seed_system_categories
+        from Smart_Expenses_Tracker.app.utilities.seed_categories import seed_system_categories
         seed_system_categories()
         
         # Simulate user created through frontend auth
@@ -316,7 +316,7 @@ def test_template_context_compatibility():
         with app.app_context():
             db.create_all()
             # Initialize categories using seed script
-            from seed_categories import seed_system_categories
+            from Smart_Expenses_Tracker.app.utilities.seed_categories import seed_system_categories
             seed_system_categories()
             
             # Create user with some data

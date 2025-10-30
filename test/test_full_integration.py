@@ -22,7 +22,7 @@ def setup_test_environment():
     db.create_all()
     
     # Initialize system categories using seed script
-    from seed_categories import seed_system_categories
+    from Smart_Expenses_Tracker.app.utilities.seed_categories import seed_system_categories
     seed_system_categories()
     
     # Create test user

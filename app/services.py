@@ -32,6 +32,40 @@ class CategoryService:
         """Find category by name"""
         from .models import Category
         return Category.query.filter_by(category_name=category_name).first()
+    
+    @staticmethod
+    def get_category_total_spending(category, user_id, start_date=None, end_date=None):
+        """Get total spending in this category for a user"""
+        from .models import Transaction
+        query = db.session.query(func.sum(Transaction.amount)).filter(
+            Transaction.category_id == category.category_id,
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == 'expense'
+        )
+        
+        if start_date:
+            query = query.filter(Transaction.transaction_date >= start_date)
+        if end_date:
+            query = query.filter(Transaction.transaction_date <= end_date)
+        
+        result = query.scalar()
+        return result if result else 0
+    
+    @staticmethod
+    def get_category_transaction_count(category, user_id, start_date=None, end_date=None):
+        """Get number of transactions in this category for a user"""
+        from .models import Transaction
+        query = Transaction.query.filter(
+            Transaction.category_id == category.category_id,
+            Transaction.user_id == user_id
+        )
+        
+        if start_date:
+            query = query.filter(Transaction.transaction_date >= start_date)
+        if end_date:
+            query = query.filter(Transaction.transaction_date <= end_date)
+        
+        return query.count()
 
 class UserService:
     """Handle complex user operations and business logic"""
@@ -334,7 +368,7 @@ class MemberService:
     """Handle member-specific operations"""
     
     @staticmethod
-    def get_member_transactions(member, start_date=None, end_date=None):
+    def get_member_transaction_history(member, start_date=None, end_date=None):
         """Get all transactions for this member"""
         from .models import Transaction, MembersTransaction
         query = db.session.query(Transaction).join(MembersTransaction).filter(
@@ -382,99 +416,21 @@ class MemberService:
             'total_expenses': total_expenses,
             'net_balance': total_income - total_expenses
         }
-    
-    @staticmethod
-    def get_member_total_expenses(member, start_date=None, end_date=None):
-        """Get total expenses for this member"""
-        from .models import Transaction, MembersTransaction
-        query = db.session.query(func.sum(Transaction.amount)).join(MembersTransaction).filter(
-            MembersTransaction.member_id == member.member_id,
-            Transaction.transaction_type == 'expense'
-        )
-        
-        if start_date:
-            query = query.filter(Transaction.transaction_date >= start_date)
-        if end_date:
-            query = query.filter(Transaction.transaction_date <= end_date)
-        
-        result = query.scalar()
-        return result if result else 0
-    
-    @staticmethod
-    def get_shared_transactions(user_id):
-        """Get all transactions that have members associated (shared transactions)"""
-        from .models import Transaction, MembersTransaction
-        return db.session.query(Transaction).join(MembersTransaction).filter(
-            Transaction.user_id == user_id
-        ).distinct().all()
-
-class CategoryService:
-    """Handle category-specific operations"""
-    
-    @staticmethod
-    def get_category_total_spending(category, user_id, start_date=None, end_date=None):
-        """Get total spending in this category for a user"""
-        from .models import Transaction
-        query = db.session.query(func.sum(Transaction.amount)).filter(
-            Transaction.category_id == category.category_id,
-            Transaction.user_id == user_id,
-            Transaction.transaction_type == 'expense'
-        )
-        
-        if start_date:
-            query = query.filter(Transaction.transaction_date >= start_date)
-        if end_date:
-            query = query.filter(Transaction.transaction_date <= end_date)
-        
-        result = query.scalar()
-        return result if result else 0
-    
-    @staticmethod
-    def get_category_transaction_count(category, user_id, start_date=None, end_date=None):
-        """Get number of transactions in this category for a user"""
-        from .models import Transaction
-        query = Transaction.query.filter(
-            Transaction.category_id == category.category_id,
-            Transaction.user_id == user_id
-        )
-        
-        if start_date:
-            query = query.filter(Transaction.transaction_date >= start_date)
-        if end_date:
-            query = query.filter(Transaction.transaction_date <= end_date)
-        
-        return query.count()
 
 
 class BudgetService:
     """Handle budget operations and tracking"""
     
     @staticmethod
-    def create_user_budget(user_id, category_id, budget_amount, budget_period='monthly', start_date=None, end_date=None):
+    def create_user_budget(user_id, category_id, budget_amount, budget_period='monthly'):
         """Create a budget for a user in a specific category (or total expenses if category_id is None)"""
         from .models import Budget
-        from datetime import datetime, timedelta
-        
-        if not start_date:
-            start_date = datetime.now().date()
-        
-        if not end_date:
-            if budget_period == 'weekly':
-                end_date = start_date + timedelta(weeks=1)
-            elif budget_period == 'monthly':
-                end_date = start_date + timedelta(days=30)
-            elif budget_period == 'yearly':
-                end_date = start_date + timedelta(days=365)
-            else:
-                end_date = start_date + timedelta(days=30)  # Default to monthly
         
         budget = Budget(
             user_id=user_id,
             category_id=category_id,
             budget_amount=budget_amount,
-            budget_period=budget_period,
-            start_date=start_date,
-            end_date=end_date
+            budget_period=budget_period
         )
         
         db.session.add(budget)
@@ -482,31 +438,15 @@ class BudgetService:
         return budget
     
     @staticmethod
-    def create_member_budget(member_id, category_id, budget_amount, budget_period='monthly', start_date=None, end_date=None):
+    def create_member_budget(member_id, category_id, budget_amount, budget_period='monthly'):
         """Create a budget for a member in a specific category (or total expenses if category_id is None)"""
         from .models import Budget
-        from datetime import datetime, timedelta
-        
-        if not start_date:
-            start_date = datetime.now().date()
-        
-        if not end_date:
-            if budget_period == 'weekly':
-                end_date = start_date + timedelta(weeks=1)
-            elif budget_period == 'monthly':
-                end_date = start_date + timedelta(days=30)
-            elif budget_period == 'yearly':
-                end_date = start_date + timedelta(days=365)
-            else:
-                end_date = start_date + timedelta(days=30)
         
         budget = Budget(
             member_id=member_id,
             category_id=category_id,
             budget_amount=budget_amount,
-            budget_period=budget_period,
-            start_date=start_date,
-            end_date=end_date
+            budget_period=budget_period
         )
         
         db.session.add(budget)
@@ -514,28 +454,46 @@ class BudgetService:
         return budget
     
     @staticmethod
-    def create_user_total_budget(user_id, budget_amount, budget_period='monthly', start_date=None, end_date=None):
+    def create_user_total_budget(user_id, budget_amount, budget_period='monthly'):
         """Create a total expenses budget for a user (across all categories)"""
         return BudgetService.create_user_budget(
             user_id=user_id, 
             category_id=None,  # None means total expenses
             budget_amount=budget_amount,
-            budget_period=budget_period,
-            start_date=start_date,
-            end_date=end_date
+            budget_period=budget_period
         )
     
     @staticmethod
-    def create_member_total_budget(member_id, budget_amount, budget_period='monthly', start_date=None, end_date=None):
+    def create_member_total_budget(member_id, budget_amount, budget_period='monthly'):
         """Create a total expenses budget for a member (across all categories)"""
         return BudgetService.create_member_budget(
             member_id=member_id,
             category_id=None,  # None means total expenses
             budget_amount=budget_amount,
-            budget_period=budget_period,
-            start_date=start_date,
-            end_date=end_date
+            budget_period=budget_period
         )
+    
+    @staticmethod
+    def deactivate_budget(budget_id):
+        """Deactivate/pause a budget"""
+        from .models import Budget
+        from datetime import datetime
+        budget = Budget.query.get_or_404(budget_id)
+        budget.is_active = False
+        budget.updated_at = datetime.now()
+        db.session.commit()
+        return budget
+    
+    @staticmethod
+    def activate_budget(budget_id):
+        """Activate/unpause a budget"""
+        from .models import Budget
+        from datetime import datetime
+        budget = Budget.query.get_or_404(budget_id)
+        budget.is_active = True
+        budget.updated_at = datetime.now()
+        db.session.commit()
+        return budget
 
 
 class AdvancedAnalyticsService:
@@ -810,7 +768,7 @@ class AdvancedAnalyticsService:
             if alert_status['should_alert']:
                 alerts.append({
                     'budget_id': budget.budget_id,
-                    'budget_name': f"{budget.get_owner_name()} - {budget.category.category_name if budget.category else 'Total Expenses'}",
+                    'budget_name': f"Budget - {budget.category.category_name if budget.category else 'Total Expenses'}",
                     'alert_status': alert_status,
                     'budget_info': budget.to_dict()
                 })
@@ -879,7 +837,7 @@ class AdvancedAnalyticsService:
         from .models import Budget
         budget = Budget.query.get_or_404(budget_id)
         
-        allowed_fields = ['budget_amount', 'budget_period', 'start_date', 'end_date', 'is_active']
+        allowed_fields = ['budget_amount', 'budget_period', 'is_active']
         for field, value in updates.items():
             if field in allowed_fields and value is not None:
                 setattr(budget, field, value)
@@ -888,12 +846,3 @@ class AdvancedAnalyticsService:
         db.session.commit()
         return budget
     
-    @staticmethod
-    def deactivate_budget(budget_id):
-        """Deactivate a budget"""
-        from .models import Budget
-        budget = Budget.query.get_or_404(budget_id)
-        budget.is_active = False
-        budget.updated_at = datetime.now()
-        db.session.commit()
-        return budget

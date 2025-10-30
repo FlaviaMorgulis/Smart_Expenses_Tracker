@@ -1,6 +1,7 @@
 # Utility functions - Pure helper functions only
 # Business logic should be in services.py
 import re
+import validators
 from datetime import datetime, timedelta
 
 def format_currency(amount):
@@ -14,10 +15,11 @@ def calculate_percentage(part, total):
     return (part / total) * 100
 
 def validate_email(email):
-    """Basic email validation"""
-    import re
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
+    """Email validation using validators library"""
+    try:
+        return validators.email(email) is True
+    except validators.ValidationError:
+        return False
 
 def validate_transaction_amount(amount):
     """Validate transaction amount"""
@@ -39,7 +41,7 @@ def get_date_range_filter(start_date, end_date):
 def sanitize_filename(filename):
     """Sanitize filename for safe file export"""
     import re
-    # Remove or replace unsafe characters
+    # Remove or replace unusual characters
     filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
     return filename.strip()
 
@@ -50,7 +52,7 @@ def generate_csv_export(data, filename):
 
     output = io.StringIO()
 
-    # You can expand this based on  data structure
+    # Can be expanded based on data structure
     if 'personal_transactions' in data:
         writer = csv.writer(output)
         writer.writerow(['Date', 'Amount', 'Type', 'Category'])
@@ -115,7 +117,11 @@ class TransactionHelper:
     @staticmethod
     def filter_transactions_by_type(transactions, transaction_type):
         """Filter transactions by type (income/expense)"""
-        return [t for t in transactions if t.transaction_type == transaction_type]
+        result = []
+        for t in transactions:
+            if t.transaction_type == transaction_type:
+                result.append(t)
+        return result
 
 class ValidationHelper:
     """Helper class for data validation"""
@@ -161,7 +167,7 @@ class QueryPerformanceHelper:
         """Optimized transaction query with proper indexing usage"""
         from app.models import Transaction
         
-        # Use indexes efficiently
+        # Use indexes 
         query = Transaction.query.filter(Transaction.user_id == user_id)
         
         # Use compound index (user_id, transaction_date)
