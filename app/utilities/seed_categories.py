@@ -46,7 +46,7 @@ def seed_system_categories():
     print(f" Created {created_count} new system categories")
     return created_count
 
-# NOTE: Users cannot create custom categories due to Enum constraint in Category model
+# Users cannot create custom categories due to Enum constraint in Category model
 # Users can only choose from the predefined system categories:
 # 'Transport', 'Utilities', 'Entertainment', 'Food', 'Healthcare', 'Shopping', 'Other'
 

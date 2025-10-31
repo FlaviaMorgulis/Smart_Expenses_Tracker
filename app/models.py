@@ -12,7 +12,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(255), unique=True, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, server_default=func.now()) 
 
-    # Relationships
+    # Relationships ( for now we keep delete orphan ,
+    # but to be changed into a solution for keeping the data for 3 months and after autodelete)
     members = db.relationship('Member', backref='user', cascade='all, delete-orphan')
     transactions = db.relationship('Transaction', backref='user', cascade='all, delete-orphan')
     categories = db.relationship('Category', backref='user', cascade='all, delete-orphan')
@@ -31,6 +32,7 @@ class User(db.Model, UserMixin):
         """Check if provided password matches the stored hash"""
         return check_password_hash(self.password_hash, password)
 
+# Serialization, API Responses and more
     def to_dict(self):
         """Convert user to dictionary for API responses"""
         return {
@@ -39,10 +41,13 @@ class User(db.Model, UserMixin):
             'email': self.email,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
-
+#  repr so it returns an unambiguos data and type of objetc
     def __repr__(self):
         return f'User {self.user_name}'
 
+#Using cascade so when user is deleted the linking data is automaticcaly deleted-
+# (Solution for starting stage- prioritizes user data privacy over transaction data preservation)
+#Personalization within constraints: User can't customize the category name but choose from a list, to simplify analytics
 class Category(db.Model): 
     __tablename__ = 'categories'
     category_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -50,45 +55,96 @@ class Category(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=True)  
 
     # Relationships
+    #passive deletes so SQL relies on the database to handle deletions not SQLALchemy, so we keep transaction data even if category is deleted.
     transactions = db.relationship('Transaction', backref='category', passive_deletes=True)
 
+    #using is_system_category to help business logic and help the frontend to distinguish between system and user categories!
     def to_dict(self):
         """Convert category to dictionary"""
         return {
             'category_id': self.category_id,
             'category_name': self.category_name,
             'user_id': self.user_id,
-            'is_system_category': self.user_id is None
+            'is_system_category': self.user_id is None 
         }
 
     def __repr__(self):
         return f'Category {self.category_name}'
 
 class Member(db.Model):
+    """
+    Members are data entities managed by the User - they represent family members
+    for expense tracking purposes. Members do NOT have their own accounts or login access.
+    Only the User can create transactions and assign members to them.
+    """
     __tablename__ = 'members'
     member_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
-    name = db.Column(db.String(255), nullable=False)
-    relationship = db.Column(db.String(100), nullable=False)  
-    joined_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    name = db.Column(db.String(255), nullable=False)  # Display name (e.g., "Sarah Thompson")
+    relationship = db.Column(db.String(100), nullable=False)  # Relationship to user (e.g., "Spouse", "Child")
+    joined_at = db.Column(db.DateTime, nullable=False, server_default=func.now())  # When user added this member
 
-    # Relationships
+    # Relationships - members are linked to transactions via MembersTransaction junction table
     transactions = db.relationship('MembersTransaction', back_populates='member', cascade='all, delete-orphan')
 
-    # Simple profile update 
+    def get_monthly_contribution(self, month, year):
+        """Calculate this member's contribution for a specific month (user's perspective)"""
+        from datetime import datetime
+        from sqlalchemy import extract
+        
+        # Get transactions this member was involved in for the specified month
+        monthly_transactions = []
+        for mt in self.transactions:
+            transaction = mt.transaction
+            if (transaction.transaction_date.month == month and 
+                transaction.transaction_date.year == year and 
+                transaction.transaction_type == 'expense'):
+                monthly_transactions.append(transaction)
+        
+        # Calculate member's share using equal cost splitting
+        total_contribution = 0
+        for transaction in monthly_transactions:
+            cost_per_person = float(transaction.amount) / len(transaction.members)
+            total_contribution += cost_per_person
+        
+        return total_contribution
+
+    def get_lifetime_stats(self):
+        """Get lifetime statistics for this member (from user's tracking perspective)"""
+        total_transactions = len([mt for mt in self.transactions if mt.transaction.transaction_type == 'expense'])
+        total_contribution = 0
+        
+        for mt in self.transactions:
+            transaction = mt.transaction
+            if transaction.transaction_type == 'expense':
+                cost_per_person = float(transaction.amount) / len(transaction.members)
+                total_contribution += cost_per_person
+        
+        return {
+            'total_transactions': total_transactions,
+            'total_contribution': total_contribution,
+            'average_per_transaction': total_contribution / total_transactions if total_transactions > 0 else 0
+        }
+
     def to_dict(self):
-        """Convert member to dictionary"""
+        """Convert member to dictionary for user's family management interface"""
+        stats = self.get_lifetime_stats()
         return {
             'member_id': self.member_id,
             'user_id': self.user_id,
             'name': self.name,
             'relationship': self.relationship,
-            'joined_at': self.joined_at.isoformat() if self.joined_at else None
+            'joined_at': self.joined_at.isoformat() if self.joined_at else None,
+            'total_contribution': stats['total_contribution'],
+            'total_transactions': stats['total_transactions'],
+            'is_data_entity': True,  # Clarifies this is not a user account
+            'managed_by_user': True  # Only the user can modify this data
         }
 
     def __repr__(self):
-        return f'Member {self.name}'
+        return f'Member {self.name} (managed by User {self.user_id})'
 
+#Category set to nullable in case an user delete a category so the data is not automaticcaly deleted
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     transaction_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -96,26 +152,51 @@ class Transaction(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('categories.category_id', ondelete='SET NULL'), nullable=True)
     amount = db.Column(db.Numeric(8, 2), nullable=False)
     transaction_type = db.Column(db.Enum('income', 'expense', name='transaction_type_enum'), nullable=False)
-    transaction_date = db.Column(db.DateTime, nullable=False)  
-    created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    transaction_date = db.Column(db.DateTime, nullable=False)  # for analytics
+    created_at = db.Column(db.DateTime, nullable=False, server_default=func.now()) # for user behavior, monitoring for marketing(peak usage time), future features
 
     # Relationships
     members = db.relationship('MembersTransaction', back_populates='transaction', cascade='all, delete-orphan')
 
 
-    # Helper methods for checking transaction state 
-    # ( to differentiate when an expense is just for the user or to be shared with whole family)
+    # Helper methods for transaction categorization from USER's perspective
+    # Members are data entities - only the User creates transactions and assigns members for tracking
     def get_associated_members(self):
-        """Get all members associated with this transaction"""
+        """Get all family members the User assigned to this transaction for cost tracking"""
         return [mt.member for mt in self.members]
 
     def is_personal_transaction(self):
-        """Check if this is a personal transaction (no members associated)"""
+        """Check if this is a personal expense (User only) vs family expense (User + members)"""
         return len(self.members) == 0
+    
+    def is_family_expense(self):
+        """Check if this is a family/shared expense (has assigned members)"""
+        return len(self.members) > 0
+    
+    def get_cost_per_person(self):
+        """Calculate cost per person for family expenses (User's calculation)"""
+        if self.is_personal_transaction():
+            return float(self.amount)  # User pays full amount
+        else:
+            # Split equally among all participants (User + assigned members)
+            total_people = len(self.members) + 1  # +1 for the User
+            return float(self.amount) / total_people
+    
+    def get_user_share(self):
+        """Get the User's portion of this expense"""
+        return self.get_cost_per_person()
+    
+    def get_members_total_share(self):
+        """Get combined share of all assigned members (for tracking purposes)"""
+        if self.is_personal_transaction():
+            return 0
+        else:
+            cost_per_person = self.get_cost_per_person()
+            return cost_per_person * len(self.members)
 
-    # Data serialization 
+    # Data serialization from User's management perspective
     def to_dict(self):
-        """Convert transaction to dictionary for export"""
+        """Convert transaction to dictionary - shows User's expense tracking data"""
         return {
             'transaction_id': self.transaction_id,
             'amount': float(self.amount),
@@ -123,8 +204,13 @@ class Transaction(db.Model):
             'category': self.category.category_name if self.category else 'Uncategorized',
             'date': self.transaction_date.isoformat(),
             'created_at': self.created_at.isoformat(),
-            'members': [member.name for member in self.get_associated_members()],
-            'is_personal': self.is_personal_transaction()
+            'assigned_members': [member.name for member in self.get_associated_members()],
+            'is_personal': self.is_personal_transaction(),
+            'is_family_expense': self.is_family_expense(),
+            'user_share': self.get_user_share(),
+            'members_total_share': self.get_members_total_share(),
+            'cost_per_person': self.get_cost_per_person(),
+            'expense_type': 'Personal' if self.is_personal_transaction() else 'Family/Shared'
         }
 
     def __repr__(self):
@@ -133,7 +219,7 @@ class Transaction(db.Model):
 class MembersTransaction(db.Model):
     __tablename__ = 'members_transaction'
     transaction_id = db.Column(db.Integer, db.ForeignKey('transactions.transaction_id', ondelete='CASCADE'), primary_key=True)
-    member_id = db.Column(db.Integer, db.ForeignKey('members.member_id', ondelete='CASCADE'), primary_key=True)
+    member_id = db.Column(db.Integer, db.ForeignKey('members.member_id', ondelete='CASCADE'), primary_key=True) # cascade will be triggered by sqlAlchemy when the parent will be deleted in the database
 
     # Relationships
     transaction = db.relationship('Transaction', back_populates='members')
