@@ -145,6 +145,7 @@ class Member(db.Model):
         return f'Member {self.name} (managed by User {self.user_id})'
 
 #Category set to nullable in case an user delete a category so the data is not automaticcaly deleted
+#!!!check model in budget class- this model in transaction has the problem that users are associated with every transaction creating problems in cost splitting and etc
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     transaction_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -163,7 +164,7 @@ class Transaction(db.Model):
     # Members are data entities - only the User creates transactions and assigns members for tracking
     def get_associated_members(self):
         """Get all family members the User assigned to this transaction for cost tracking"""
-        return [mt.member for mt in self.members]
+        return [mt.member for mt in self.members] 
 
     def is_personal_transaction(self):
         """Check if this is a personal expense (User only) vs family expense (User + members)"""
@@ -236,7 +237,9 @@ class MembersTransaction(db.Model):
     def __repr__(self):
         return f'MembersTransaction {self.member_id}-{self.transaction_id}'
 
-
+## Decide if using simple version like in transaction but with the problem of not being able to have 
+# a transaction associated just with a member or more advanced like in budget
+# with clear ownership separations and flexible combinations
 class Budget(db.Model):
     __tablename__ = 'budgets'
     

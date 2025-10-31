@@ -31,7 +31,7 @@ def seed_system_categories():
             try:
                 category = Category(
                     category_name=category_name,
-                    user_id=None  # System category
+                    user_id=None  # Because it is a system category 
                 )
                 db.session.add(category)
                 db.session.commit()
