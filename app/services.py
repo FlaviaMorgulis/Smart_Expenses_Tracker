@@ -1,29 +1,4 @@
-"""
-Smart Expenses Tracker - Services Layer
-=======================================
-
-Business logic layer for the Smart Expenses Tracker application.
-Provides comprehensive expense tracking, budget management, and family finance coordination.
-
-Features:
-- Category & Transaction Management
-- Budget Tracking with Alert System  
-- Family Member & Shared Expense Coordination
-- Analytics & Reporting Services
-- Dashboard Data Aggregation
-- Cash Flow Analysis
-- Data Export Functionality
-
-Architecture:
-- Service Layer Pattern with static methods
-- Full SQLAlchemy model compatibility
-- Comprehensive business logic separation
-- Production-ready error handling
-
-Author: Smart Expenses Tracker Team
-License: MIT
-"""
-
+# Smart Expenses Tracker - Services Layer
 from datetime import datetime, timedelta
 from . import db
 from .models import User, Category, Transaction, Member, Budget, MembersTransaction
