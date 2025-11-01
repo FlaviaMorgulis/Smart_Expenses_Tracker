@@ -179,7 +179,7 @@ class Transaction(db.Model):
         if self.is_personal_transaction():
             return float(self.amount)  # User pays full amount
         else:
-            # Split equally among all participants (User + assigned members)
+            # Split equally among all participants (User + assigned members) - potentially problematic
             total_people = len(self.members) + 1  # +1 for the User
             return float(self.amount) / total_people
     
