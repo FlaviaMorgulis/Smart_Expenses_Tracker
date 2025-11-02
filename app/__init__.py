@@ -1,49 +1,44 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_login import LoginManager
+from flask_migrate import Migrate
+from datetime import datetime
 import os
 
-# Initialize extensions
 db = SQLAlchemy()
-migrate = Migrate()
 login_manager = LoginManager()
+migrate = Migrate()
 
-class Config:
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(
-        os.path.abspath(os.path.dirname(__file__)), '../instance/expenses.db'
-    )
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+from app.models import User 
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
-
-    # Create instance folder
-    instance_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance')
-    os.makedirs(instance_path, exist_ok=True)
-
+    
+    # Config
+    app.config['SECRET_KEY'] = 'your-secret-key-here'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///expenses.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
     # Initialize extensions
     db.init_app(app)
-    migrate.init_app(app, db)
     login_manager.init_app(app)
+    migrate.init_app(app, db)
     
-    login_manager.login_view = 'auth.login'
-    login_manager.login_message_category = 'info'
-
-    from app.models import User
-    
+    # User loader
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
-
-    with app.app_context():
-        # Import and register blueprints
-        from app.main.routes import main
-        from app.auth.routes import auth_bp
-        
-        app.register_blueprint(main)
-        app.register_blueprint(auth_bp, url_prefix='/auth')
-
+    
+    from app.auth.routes import auth_bp
+    from app.main.routes import main_bp
+    from app.transactions.routes import transactions_bp
+    
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(main_bp)
+    app.register_blueprint(transactions_bp, url_prefix='/transactions')
+    
+    @app.context_processor
+    def utility_processor():
+        return dict(now=datetime.now)
+    
     return app
