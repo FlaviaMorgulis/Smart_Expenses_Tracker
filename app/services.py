@@ -1,4 +1,3 @@
-# Smart Expenses Tracker - Services Layer
 from datetime import datetime, timedelta
 from . import db
 from .models import User, Category, Transaction, Member, Budget, MembersTransaction
@@ -160,7 +159,7 @@ class TransactionService:
 
 
 class SimpleAnalyticsService:
-    """Basic analytics - what a beginner could implement"""
+    """Basic analytics """
     
     @staticmethod
     def get_total_income(user_id):
@@ -233,11 +232,11 @@ class SimpleAnalyticsService:
 
 
 class BudgetService:
-    """Simplified budget management"""
+    """Budget management"""
     
     @staticmethod
     def create_simple_budget(user_id, category_id, amount, budget_period='monthly'):
-        """Create a simple budget"""
+        """Create a budget"""
         budget = Budget(
             user_id=user_id,
             category_id=category_id,
@@ -256,7 +255,7 @@ class BudgetService:
     
     @staticmethod
     def check_budget_status(user_id, category_id):
-        """Simple budget check - see if user is over budget"""
+        """Budget check - see if user is over budget"""
         budget = Budget.query.filter_by(
             user_id=user_id, 
             category_id=category_id, 
@@ -290,7 +289,7 @@ class BudgetService:
     
     @staticmethod
     def check_budget_alerts(user_id):
-        """Simple budget alerts for beginner version"""
+        """Simple budget alerts"""
         budgets = BudgetService.get_user_budgets(user_id)
         alerts = []
         
