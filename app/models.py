@@ -215,7 +215,7 @@ class Transaction(db.Model):
         }
 
     def __repr__(self):
-        return f'Transaction {self.transaction_id}: ${self.amount} ({self.transaction_type})'
+        return f'Transaction {self.transaction_id}: £{self.amount} ({self.transaction_type})'
 
 class MembersTransaction(db.Model):
     __tablename__ = 'members_transaction'
@@ -332,7 +332,6 @@ class Budget(db.Model):
     
     def to_dict(self):
         """Convert budget to dictionary"""
-        # Get category name safely
         category_name = 'Total Expenses'  
         if self.category_id and self.category:
             category_name = self.category.category_name
@@ -358,4 +357,4 @@ class Budget(db.Model):
     def __repr__(self):
         owner = "Budget Owner"  
         category = self.category.category_name if self.category else 'Total Expenses'
-        return f'Budget {owner} - {category}: ${self.budget_amount}'
+        return f'Budget {owner} - {category}: £{self.budget_amount}'

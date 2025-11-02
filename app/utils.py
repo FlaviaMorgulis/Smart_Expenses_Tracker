@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 def format_currency(amount):
     """Format amount as currency string"""
-    return f"${amount:.2f}"
+    return f"£{amount:.2f}"
 
 def calculate_percentage(part, total):
     """Calculate percentage with division by zero protection"""

@@ -147,7 +147,7 @@ class TransactionService:
                 'date': t.transaction_date.strftime('%Y-%m-%d'),
                 'category': t.category.category_name if t.category else 'Uncategorized',
                 'type': t.transaction_type.title(),
-                'amount': f"${float(t.amount):.2f}",
+                'amount': f"£{float(t.amount):.2f}",
                 'amount_raw': float(t.amount),
                 'is_personal': t.is_personal_transaction(),
                 'member_count': len(t.get_associated_members()),
@@ -392,7 +392,7 @@ class UtilityService:
     @staticmethod
     def format_currency(amount):
         """Format amount as currency"""
-        return f"${float(amount):.2f}"
+        return f"£{float(amount):.2f}"
     
     @staticmethod
     def get_current_month_name():
