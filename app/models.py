@@ -101,11 +101,10 @@ class Member(db.Model):
                 transaction.transaction_type == 'expense'):
                 monthly_transactions.append(transaction)
         
-        # Calculate member's share using equal cost splitting
+        # Calculate member's share using cost splitting logic
         total_contribution = 0
         for transaction in monthly_transactions:
-            cost_per_person = float(transaction.amount) / len(transaction.members)
-            total_contribution += cost_per_person
+            total_contribution += transaction.get_cost_per_person()
         
         return total_contribution
 
@@ -117,8 +116,7 @@ class Member(db.Model):
         for mt in self.transactions:
             transaction = mt.transaction
             if transaction.transaction_type == 'expense':
-                cost_per_person = float(transaction.amount) / len(transaction.members)
-                total_contribution += cost_per_person
+                total_contribution += transaction.get_cost_per_person()
         
         return {
             'total_transactions': total_transactions,
@@ -137,15 +135,15 @@ class Member(db.Model):
             'joined_at': self.joined_at.isoformat() if self.joined_at else None,
             'total_contribution': stats['total_contribution'],
             'total_transactions': stats['total_transactions'],
-            'is_data_entity': True,  # Clarifies this is not a user account
-            'managed_by_user': True  # Only the user can modify this data
+            'is_data_entity': True  # Clarifies this is not a user account
         }
 
     def __repr__(self):
         return f'Member {self.name} (managed by User {self.user_id})'
 
 #Category set to nullable in case an user delete a category so the data is not automaticcaly deleted
-#!!!check model in budget class- this model in transaction has the problem that users are associated with every transaction creating problems in cost splitting and etc
+# User creates all transactions and assigns members as needed. Members are data entities only.
+# user_participates field controls whether User participates in cost splitting.
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     transaction_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -155,6 +153,7 @@ class Transaction(db.Model):
     transaction_type = db.Column(db.Enum('income', 'expense', name='transaction_type_enum'), nullable=False)
     transaction_date = db.Column(db.DateTime, nullable=False)  # for analytics
     created_at = db.Column(db.DateTime, nullable=False, server_default=func.now()) # for user behavior, monitoring for marketing(peak usage time), future features
+    user_participates = db.Column(db.Boolean, nullable=False, default=True)  # Whether User participates in cost splitting
 
     # Relationships
     members = db.relationship('MembersTransaction', back_populates='transaction', cascade='all, delete-orphan')
@@ -174,26 +173,50 @@ class Transaction(db.Model):
         """Check if this is a family/shared expense (has assigned members)"""
         return len(self.members) > 0
     
+    def is_user_participating(self):
+        """Check if User participates in the cost split (not just paying for it)"""
+        return self.user_participates
+    
+    def is_members_only_expense(self):
+        """Check if this is a members-only expense (User paid but doesn't participate in split)"""
+        return len(self.members) > 0 and not self.user_participates
+    
     def get_cost_per_person(self):
-        """Calculate cost per person for family expenses (User's calculation)"""
+        """Calculate cost per person with proper participation logic"""
         if self.is_personal_transaction():
-            return float(self.amount)  # User pays full amount
+            return float(self.amount)  # User pays full amount, no sharing
         else:
-            # Split equally among all participants (User + assigned members) - potentially problematic
-            total_people = len(self.members) + 1  # +1 for the User
-            return float(self.amount) / total_people
+            # Calculate participants: members + user (if participating)
+            total_participants = len(self.members)
+            if self.user_participates:
+                total_participants += 1  # Add user only if they participate
+            
+            if total_participants == 0:
+                return 0  # Safety check
+            return float(self.amount) / total_participants
     
     def get_user_share(self):
-        """Get the User's portion of this expense"""
-        return self.get_cost_per_person()
+        """Get the User's portion of this expense (if participating)"""
+        if self.is_personal_transaction():
+            return float(self.amount)  # User pays full amount
+        elif self.user_participates:
+            return self.get_cost_per_person()  # User's share of the split
+        else:
+            return 0  # User paid but doesn't participate in the split
     
     def get_members_total_share(self):
-        """Get combined share of all assigned members (for tracking purposes)"""
+        """Get combined share of all assigned members"""
         if self.is_personal_transaction():
-            return 0
+            return 0  # No members involved
         else:
             cost_per_person = self.get_cost_per_person()
             return cost_per_person * len(self.members)
+    
+    def get_user_net_expense(self):
+        """Get how much the User actually spent (amount paid - reimbursements from members)"""
+        amount_paid = float(self.amount)  # User always pays the full amount
+        members_owe = self.get_members_total_share()  # What members should pay back
+        return amount_paid - members_owe
 
     # Data serialization from User's management perspective
     def to_dict(self):
@@ -208,11 +231,23 @@ class Transaction(db.Model):
             'assigned_members': [member.name for member in self.get_associated_members()],
             'is_personal': self.is_personal_transaction(),
             'is_family_expense': self.is_family_expense(),
+            'user_participates': self.user_participates,
+            'is_members_only': self.is_members_only_expense(),
             'user_share': self.get_user_share(),
             'members_total_share': self.get_members_total_share(),
+            'user_net_expense': self.get_user_net_expense(),
             'cost_per_person': self.get_cost_per_person(),
-            'expense_type': 'Personal' if self.is_personal_transaction() else 'Family/Shared'
+            'expense_type': self.get_expense_type_description()
         }
+    
+    def get_expense_type_description(self):
+        """Get descriptive expense type for UI display"""
+        if self.is_personal_transaction():
+            return 'Personal'
+        elif self.user_participates:
+            return 'Shared (User + Members)'
+        else:
+            return 'Members Only (User Paid)'
 
     def __repr__(self):
         return f'Transaction {self.transaction_id}: £{self.amount} ({self.transaction_type})'
@@ -237,9 +272,6 @@ class MembersTransaction(db.Model):
     def __repr__(self):
         return f'MembersTransaction {self.member_id}-{self.transaction_id}'
 
-## Decide if using simple version like in transaction but with the problem of not being able to have 
-# a transaction associated just with a member or more advanced like in budget
-# with clear ownership separations and flexible combinations
 class Budget(db.Model):
     __tablename__ = 'budgets'
     
@@ -259,6 +291,7 @@ class Budget(db.Model):
     
     # Relationships
     category = db.relationship('Category', backref='budgets')
+    member = db.relationship('Member', backref='budgets')
     
     def is_user_budget(self):
         """Check if this is a user budget (not member budget)"""
@@ -289,6 +322,17 @@ class Budget(db.Model):
     def is_paused(self):
         """Check if this budget is currently paused"""
         return not self.is_active
+    
+    def validate_budget_ownership(self):
+        """Validate that budget has valid ownership (user XOR member, not both)"""
+        has_user = self.user_id is not None
+        has_member = self.member_id is not None
+        
+        if not has_user and not has_member:
+            return False, "Budget must belong to either a user or a member"
+        if has_user and has_member:
+            return False, "Budget cannot belong to both user and member"
+        return True, "Valid ownership"
     
     def should_alert(self, current_spending):
         """Check if an alert should be triggered based on current spending"""
@@ -336,6 +380,13 @@ class Budget(db.Model):
         if self.category_id and self.category:
             category_name = self.category.category_name
         
+        # Get owner name
+        owner_name = 'Unknown'
+        if self.is_user_budget():
+            owner_name = 'User Budget'
+        elif self.is_member_budget() and self.member:
+            owner_name = self.member.name
+        
         return {
             'budget_id': self.budget_id,
             'budget_amount': float(self.budget_amount) if self.budget_amount else 0,
@@ -349,12 +400,12 @@ class Budget(db.Model):
             'member_id': self.member_id,
             'category_id': self.category_id,
             'category_name': category_name,
-            'owner_name': 'Budget Owner',  
+            'owner_name': owner_name,  
             'owner_type': 'user' if self.is_user_budget() else 'member',
             'budget_type': 'category' if self.is_category_budget() else 'total'
         }
     
     def __repr__(self):
-        owner = "Budget Owner"  
+        owner = "User" if self.is_user_budget() else f"Member-{self.member_id}" if self.member_id else "Unknown"
         category = self.category.category_name if self.category else 'Total Expenses'
         return f'Budget {owner} - {category}: £{self.budget_amount}'

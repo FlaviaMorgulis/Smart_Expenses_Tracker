@@ -84,6 +84,18 @@ class UserService:
         db.session.add(user)
         db.session.commit()
         return user
+    
+    @staticmethod
+    def add_member_to_user(user, name, relationship):
+        """Add a member to a user"""
+        member = Member(
+            user_id=user.user_id,
+            name=name,
+            relationship=relationship
+        )
+        db.session.add(member)
+        db.session.commit()
+        return member
 
 
 class TransactionService:
@@ -102,8 +114,8 @@ class TransactionService:
         return Transaction.query.get(transaction_id)
     
     @staticmethod
-    def create_transaction(user_id, amount, category_id, transaction_type, transaction_date=None):
-        """Create new transaction - Note: This model doesn't have description field"""
+    def create_transaction(user_id, amount, category_id, transaction_type, transaction_date=None, user_participates=True):
+        """Create new transaction with participation control"""
         if not transaction_date:
             transaction_date = datetime.now()
             
@@ -112,11 +124,70 @@ class TransactionService:
             amount=amount,
             category_id=category_id,
             transaction_type=transaction_type,
-            transaction_date=transaction_date
+            transaction_date=transaction_date,
+            user_participates=user_participates
         )
         db.session.add(transaction)
         db.session.commit()
         return transaction
+    
+    @staticmethod
+    def add_personal_transaction(user, amount, transaction_type, category_id, transaction_date=None):
+        """Add a personal transaction (User only, no members)"""
+        return TransactionService.create_transaction(
+            user_id=user.user_id,
+            amount=amount,
+            category_id=category_id,
+            transaction_type=transaction_type,
+            transaction_date=transaction_date,
+            user_participates=True  # User pays and participates
+        )
+    
+    @staticmethod
+    def add_shared_transaction(user, amount, transaction_type, category_id, member_ids, user_participates=True, transaction_date=None):
+        """Add a shared transaction with members"""
+        # Create the transaction
+        transaction = TransactionService.create_transaction(
+            user_id=user.user_id,
+            amount=amount,
+            category_id=category_id,
+            transaction_type=transaction_type,
+            transaction_date=transaction_date,
+            user_participates=user_participates
+        )
+        
+        # Add members to the transaction
+        for member_id in member_ids:
+            TransactionService.add_member_to_transaction(transaction, member_id)
+        
+        return transaction
+    
+    @staticmethod
+    def add_member_transaction(user, member_id, amount, transaction_type, category_id, transaction_date=None):
+        """Add a transaction where User pays for a member (member-only expense)"""
+        transaction = TransactionService.create_transaction(
+            user_id=user.user_id,
+            amount=amount,
+            category_id=category_id,
+            transaction_type=transaction_type,
+            transaction_date=transaction_date,
+            user_participates=False  # User pays but doesn't participate in split
+        )
+        
+        # Add the member to the transaction
+        TransactionService.add_member_to_transaction(transaction, member_id)
+        return transaction
+    
+    @staticmethod
+    def add_member_to_transaction(transaction, member_id):
+        """Add a member to an existing transaction"""
+        member_transaction = MembersTransaction(
+            transaction_id=transaction.transaction_id,
+            member_id=member_id
+        )
+        db.session.add(member_transaction)
+        db.session.commit()
+        return member_transaction
     
     @staticmethod
     def delete_transaction(transaction_id):
