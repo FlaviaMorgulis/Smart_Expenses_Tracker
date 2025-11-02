@@ -21,7 +21,7 @@
                 {% if current_user.is_authenticated %}
                 <!-- Logged in users -->
                 <a href="{{ url_for('main.dashboard') }}" class="nav-link">Home</a>
-                <a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a>
+                <a href="{{ url_for('transactions.transactions') }}" class="nav-link">Transactions</a>
                 <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
                 <a href="{{ url_for('main.faq') }}" class="nav-link">FAQ</a>
                 <div class="user-menu">
