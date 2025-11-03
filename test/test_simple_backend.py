@@ -5,7 +5,7 @@ A simplified test that works with your current database and focuses on core func
 
 from app import create_app, db
 from app.models import User, Category, Member, Transaction, MembersTransaction
-from app.services import UserService, TransactionService, AnalyticsService, ExportService, MemberService
+from app.services import UserService, TransactionService, SimpleAnalyticsService, ExportService, MemberService
 from datetime import datetime
 from decimal import Decimal
 
@@ -61,7 +61,7 @@ def test_basic_functionality():
             print("  Testing utility functions...")
             from app.utils import format_currency, calculate_percentage, validate_email
             
-            assert format_currency(123.45) == "$123.45"
+            assert format_currency(123.45) == "£123.45"
             assert calculate_percentage(25, 100) == 25.0
             assert validate_email("test@example.com") == True
             assert validate_email("invalid-email") == False
@@ -81,13 +81,12 @@ def test_basic_functionality():
             print("  ✅ Validation helpers working")
             
             print("\n🎉 All basic functionality tests passed!")
-            return True
             
         except Exception as e:
             print(f"❌ Test failed: {e}")
             import traceback
             traceback.print_exc()
-            return False
+            assert False, f"Basic functionality test failed: {e}"
 
 def test_auth_integration():
     """Test integration with existing auth system"""
@@ -127,11 +126,10 @@ def test_auth_integration():
                 print("  ✅ Flask-Login integration working")
                 
                 print("  🎉 Auth integration tests passed!")
-                return True
                 
             except Exception as e:
                 print(f"  ❌ Auth integration test failed: {e}")
-                return False
+                assert False, f"Auth integration test failed: {e}"
 
 def test_services_logic():
     """Test service layer logic without database operations"""
@@ -140,16 +138,16 @@ def test_services_logic():
     try:
         # Test 1: Check if services can be imported properly
         from app.services import (
-            UserService, TransactionService, AnalyticsService,
+            UserService, TransactionService, SimpleAnalyticsService,
             ExportService, MemberService
         )
         
         # Test 2: Service methods exist and are callable
         assert hasattr(UserService, 'add_member_to_user')
         assert hasattr(TransactionService, 'add_personal_transaction')
-        assert hasattr(AnalyticsService, 'get_spending_by_category')
-        assert hasattr(ExportService, 'export_user_data')
-        assert hasattr(MemberService, 'get_member_transactions_summary')
+        assert hasattr(SimpleAnalyticsService, 'get_spending_by_category')
+        assert hasattr(ExportService, 'export_transactions_to_csv')
+        assert hasattr(MemberService, 'get_user_members')
         print("  ✅ All service classes and methods exist")
         print("  ✅ Services can be imported")
         
@@ -172,13 +170,12 @@ def test_services_logic():
         print("  ✅ Helper classes working")
         
         print("  🎉 Services logic tests passed!")
-        return True
         
     except Exception as e:
         print(f"  ❌ Services test failed: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        assert False, f"Services test failed: {e}"
 
 def main():
     """Run simplified tests"""
