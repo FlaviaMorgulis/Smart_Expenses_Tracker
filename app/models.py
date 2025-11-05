@@ -10,7 +10,8 @@ class User(db.Model, UserMixin):
     user_name = db.Column(db.String(255), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, server_default=func.now()) 
+    created_at = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    is_admin = db.Column(db.Boolean, nullable=False, default=False) 
 
     # Relationships ( for now we keep delete orphan ,
     # but to be changed into a solution for keeping the data for 3 months and after autodelete)
@@ -31,6 +32,10 @@ class User(db.Model, UserMixin):
     def check_password(self, password):
         """Check if provided password matches the stored hash"""
         return check_password_hash(self.password_hash, password)
+    
+    def is_administrator(self):
+        """Check if user has admin privileges"""
+        return self.is_admin
 
 # Serialization, API Responses and more
     def to_dict(self):
@@ -52,7 +57,7 @@ class Category(db.Model):
     __tablename__ = 'categories'
     category_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     category_name = db.Column(db.Enum('Transport', 'Utilities', 'Entertainment', 'Food', 'Healthcare', 'Shopping', 'Other', name='category_enum'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=True)  
+    user_id = db.Column(db.Integer, db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=True) # to distinguish user category vs system category 
 
     # Relationships
     #passive deletes so SQL relies on the database to handle deletions not SQLALchemy, so we keep transaction data even if category is deleted.
@@ -277,7 +282,7 @@ class Budget(db.Model):
     
     budget_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     budget_amount = db.Column(db.Numeric(10, 2), nullable=False)
-    budget_period = db.Column(db.String(20), nullable=False, default='monthly')  # 'weekly', 'monthly', 'yearly'
+    budget_period = db.Column(db.Enum('weekly', 'monthly', 'yearly', name='budget_period_enum'), nullable=False, default='monthly')
     is_active = db.Column(db.Boolean, nullable=False, default=True)  # Whether budget is currently active
     alert_threshold = db.Column(db.Numeric(5, 2), nullable=False, default=80.0)  # Alert when % of budget is reached (default 80%)
     notifications_enabled = db.Column(db.Boolean, nullable=False, default=True)  # Enable/disable budget alerts
