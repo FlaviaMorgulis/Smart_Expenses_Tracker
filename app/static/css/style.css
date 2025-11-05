@@ -1,0 +1,382 @@
+/* Root Variables */
+:root {
+  --accent: #01010128;
+  --text: #060606;
+  --muted: #2b2424;
+  --bg-light: #f4f5f7;
+  --white: #fff;
+  --radius: 12px;
+  --transition: 0.25s ease;
+  font-family: "Poppins", "Segoe UI", sans-serif;
+}
+
+/* Base Layout */
+body {
+  background: linear-gradient(180deg, #f8f9fb 0%, #eef0f3 100%);
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Poppins", "Segoe UI", sans-serif;
+}
+
+/* Auth page specific layout */
+body.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Navigation Styles */
+.navbar {
+  background: var(--white);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 70px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-link {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  transition: var(--transition);
+}
+
+.nav-link:hover {
+  background-color: var(--bg-light);
+  color: var(--text);
+}
+
+.user-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  min-width: 150px;
+  display: none;
+}
+
+.user-menu:hover .user-dropdown {
+  display: block;
+}
+
+/* Flash Messages */
+.flash-messages {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1001;
+  max-width: 400px;
+}
+
+.flash-message {
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: var(--radius);
+  position: relative;
+  background: var(--white);
+  border-left: 4px solid #007bff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.flash-message.error {
+  border-left-color: #dc3545;
+  background-color: #f8d7da;
+}
+
+.flash-message.success {
+  border-left-color: #28a745;
+  background-color: #d4edda;
+}
+
+.flash-close {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+/* Footer */
+.footer {
+  background: var(--white);
+  margin-top: 50px;
+  padding: 30px 0;
+  border-top: 1px solid #eee;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* Wrapper */
+.wrapper {
+  max-width: 1200px;
+  width: 100%;
+  padding: 30px;
+  margin: 0 auto;
+}
+
+/* Auth content wrapper */
+.auth-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  width: 100%;
+}
+
+/* Brand Section */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 32px;
+  justify-content: center;
+}
+
+/* Navigation brand (when in navbar) */
+.navbar .brand {
+  margin-bottom: 0;
+  justify-content: flex-start;
+  font-size: 1.5em;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius);
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8em;
+}
+
+/* Navbar logo (smaller) */
+.navbar .logo {
+  width: 40px;
+  height: 40px;
+  font-size: 1.2em;
+}
+
+.logo img {
+  width: 50%;
+  filter: invert(1) brightness(200%);
+}
+
+.brand h1 {
+  font-size: 36px;
+  color: var(--text);
+}
+
+/* Card */
+.auth-card {
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+  max-width: 480px;
+  width: 100%;
+}
+
+/* Tabs */
+.tab-header {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.tab {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  background: var(--bg-light);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 15px;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.tab:hover:not(.active) {
+  background: #e8e9eb;
+}
+
+/* Forms */
+.form {
+  display: none;
+  flex-direction: column;
+}
+
+.form.active {
+  display: flex;
+}
+
+.form h2 {
+  margin-bottom: 8px;
+  margin-top: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.form p {
+  color: var(--muted);
+  margin-bottom: 24px;
+  margin-top: 0;
+  line-height: 1.5;
+}
+
+/* Inputs */
+.input-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+input,
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+  transition: var(--transition);
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+input:focus,
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(1, 1, 1, 0.1);
+  outline: none;
+}
+
+.error-text {
+  margin-top: 6px;
+  color: #dc3545;
+  font-size: 13px;
+}
+
+.error-text small {
+  display: block;
+  margin-top: 2px;
+}
+
+/* Buttons */
+.btn {
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 14px 24px;
+  transition: var(--transition);
+  width: 100%;
+  margin-top: 8px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.btn.primary:hover {
+  background: rgba(1, 1, 1, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 24px;
+    margin: 0 16px;
+  }
+  .brand h1 {
+    font-size: 28px;
+  }
+  .logo {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5em;
+  }
+  .navbar .logo {
+    width: 35px;
+    height: 35px;
+    font-size: 1em;
+  }
+  .tab {
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+  .input-group {
+    margin-bottom: 18px;
+  }
+  .nav-container {
+    padding: 0 16px;
+    height: 60px;
+  }
+}

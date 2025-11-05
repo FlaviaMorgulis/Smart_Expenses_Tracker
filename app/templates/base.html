@@ -11,8 +11,9 @@
       href="{{ url_for('static', filename='css/style.css') }}"
     />
   </head>
-  <body>
-    <!-- Navigation -->
+  <body class="{% if not current_user.is_authenticated %}auth-page{% endif %}">
+    <!-- Navigation (only show if user is logged in) -->
+    {% if current_user.is_authenticated %}
     <nav class="navbar">
       <div class="nav-container">
         <div class="brand">
@@ -53,6 +54,7 @@
         </div>
       </div>
     </nav>
+    {% endif %}
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %} {% if
@@ -68,14 +70,16 @@
     {% endif %} {% endwith %}
 
     <!-- Main Content -->
-    <main class="wrapper">{% block content %}{% endblock %}</main>
+    <main class="{% if current_user.is_authenticated %}wrapper{% else %}auth-content{% endif %}">{% block content %}{% endblock %}</main>
 
-    <!-- Footer -->
+    <!-- Footer (only show if user is logged in) -->
+    {% if current_user.is_authenticated %}
     <footer class="footer">
       <div class="footer-content">
         <p>&copy; 2025 SmartExpensesTracker. All rights reserved.</p>
       </div>
     </footer>
+    {% endif %}
 
     <!-- External JS -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
