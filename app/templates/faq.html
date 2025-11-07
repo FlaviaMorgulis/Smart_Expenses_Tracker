@@ -1,132 +1,58 @@
-{% extends "base.html" %} {% block title %}FAQ - SmartExpensesTracker{% endblock
-%} {% block page_css %}
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/about-faq.css') }}"
-/>
-{% endblock %} {% block content %}
-<div class="main-content">
-  <div class="page-header">
+{% extends "base.html" %}
+
+{% block title %}FAQ - SmartExpensesTracker{% endblock %}
+
+{% block content %}
+<!-- Brand Section -->
+<section class="brand">
+    <div class="logo">❓</div>
     <h1>Frequently Asked Questions</h1>
-    <p class="page-subtitle">
-      Find answers to common questions about SmartExpensesTracker
-    </p>
-  </div>
+</section>
 
-  <div class="content-container">
-    <div class="faq-section">
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>How do I add a new transaction?</h3>
+<!-- FAQ Content -->
+<section class="auth-card">
+    <div class="faq-content">
+        <div class="welcome-section">
+            <h2>Hello, {{ user.user_name }}! 👋</h2>
+            <p>Find answers to common questions about SmartExpensesTracker</p>
         </div>
-        <div class="faq-answer">
-          <p>
-            Navigate to the Transactions page and click the "Add Transaction"
-            button. Fill in the transaction details including amount, category,
-            and description, then click "Save".
-          </p>
-        </div>
-      </div>
 
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>Can I edit or delete existing transactions?</h3>
-        </div>
-        <div class="faq-answer">
-          <p>
-            Yes! In the Transactions page, you'll find edit and delete buttons
-            for each transaction. Click the edit button to modify transaction
-            details or the delete button to remove it.
-          </p>
-        </div>
-      </div>
+        <div class="faq-list">
+            <div class="faq-item">
+                <h3>💳 How do I add a new transaction?</h3>
+                <p>Go to the Transactions page and click "Add Transaction". Fill in the amount, category, and date for your income or expense.</p>
+            </div>
 
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>How are my spending categories organized?</h3>
-        </div>
-        <div class="faq-answer">
-          <p>
-            SmartExpensesTracker uses predefined categories like Food,
-            Transportation, Entertainment, etc. You can assign each transaction
-            to the most appropriate category for better spending analysis.
-          </p>
-        </div>
-      </div>
+            <div class="faq-item">
+                <h3>👨‍👩‍👧‍👦 How can I add family members?</h3>
+                <p>Navigate to your Profile page and click "Add Family Member". You can track expenses for each family member individually.</p>
+            </div>
 
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>What kind of reports can I generate?</h3>
-        </div>
-        <div class="faq-answer">
-          <p>
-            The dashboard provides various reports including monthly spending
-            summaries, category-wise breakdowns, budget vs. actual spending
-            comparisons, and cash flow analysis.
-          </p>
-        </div>
-      </div>
+            <div class="faq-item">
+                <h3>📊 How do I view my spending reports?</h3>
+                <p>Visit the Dashboard to see your financial overview. You can view monthly summaries, category breakdowns, and savings progress.</p>
+            </div>
 
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>Is my financial data secure?</h3>
-        </div>
-        <div class="faq-answer">
-          <p>
-            Absolutely! We use industry-standard encryption to protect your
-            data. Your information is stored securely and is never shared with
-            third parties.
-          </p>
-        </div>
-      </div>
+            <div class="faq-item">
+                <h3>🔒 Is my financial data secure?</h3>
+                <p>Yes! All your data is encrypted and stored securely. We never share your financial information with third parties.</p>
+            </div>
 
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>How do I set up budget alerts?</h3>
-        </div>
-        <div class="faq-answer">
-          <p>
-            Budget alerts are automatically configured based on your spending
-            patterns. You'll receive notifications on the dashboard when you're
-            approaching or exceeding your budget limits.
-          </p>
-        </div>
-      </div>
+            <div class="faq-item">
+                <h3>📱 Can I use the app on multiple devices?</h3>
+                <p>Absolutely! Your account syncs across all your devices. Just log in with your email and password.</p>
+            </div>
 
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>Can I export my transaction data?</h3>
+            <div class="faq-item">
+                <h3>💾 How do I export my data?</h3>
+                <p>Go to your Profile page and click "Export Data". You can download your transactions as CSV or generate PDF reports.</p>
+            </div>
         </div>
-        <div class="faq-answer">
-          <p>
-            Yes! The Transactions page includes export buttons that allow you to
-            download your data in CSV or PDF format for external analysis or
-            record-keeping.
-          </p>
-        </div>
-      </div>
 
-      <div class="faq-item">
-        <div class="faq-question">
-          <h3>What should I do if I forgot my password?</h3>
+        <div class="support-section">
+            <h3>Still need help?</h3>
+            <p>Contact our support team at <strong>support@smartexpensestracker.com</strong> or visit our <a href="{{ url_for('main.about') }}">About page</a> for more information.</p>
         </div>
-        <div class="faq-answer">
-          <p>
-            Currently, password reset functionality is not implemented. Please
-            contact support for assistance with password recovery.
-          </p>
-        </div>
-      </div>
     </div>
-
-    <div class="contact-section">
-      <h2>Still have questions?</h2>
-      <p>
-        If you can't find the answer you're looking for, feel free to contact us
-        at
-        <strong>support@smartexpensestracker.com</strong>
-      </p>
-    </div>
-  </div>
-</div>
+</section>
 {% endblock %}

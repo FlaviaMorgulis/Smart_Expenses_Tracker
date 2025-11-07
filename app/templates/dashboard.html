@@ -1,129 +1,305 @@
-{% extends "base.html" %} {% block title %}Dashboard - SmartExpensesTracker{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SmartExpensesTracker{% endblock %}
+
+{% block content %}
 <div class="dashboard-container">
-  <div class="dashboard-content">
-    <!-- Welcome Section -->
-    <div class="welcome-section">
-      <h1>Welcome back, {{ user.user_name }}! 👋</h1>
-      <p class="lead">Here's your financial overview</p>
+    <div class="dashboard-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1>Welcome back, {{ user.user_name }}! 👋</h1>
+            <p class="lead">Here's your expense overview for {{ current_month }}</p>
+        </div>
+
+        <!-- Monthly Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-info">
+                    <h3>MONTHLY INCOME</h3>
+                    <h2 class="stat-amount positive">+£{{ "%.2f"|format(monthly_income) }}</h2>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📉</div>
+                <div class="stat-info">
+                    <h3>MONTHLY EXPENSES</h3>
+                    <h2 class="stat-amount negative">-£{{ "%.2f"|format(monthly_expenses) }}</h2>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⚖️</div>
+                <div class="stat-info">
+                    <h3>REMAINING BUDGET</h3>
+                    <h2 class="stat-amount {% if remaining_budget >= 0 %}positive{% else %}negative{% endif %}">
+                        £{{ "%.2f"|format(remaining_budget) }}
+                    </h2>
+                    {% if total_budget > 0 %}
+                    <small>of £{{ "%.2f"|format(total_budget) }} total</small>
+                    {% else %}
+                    <small>No budget set</small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Graphics Section -->
+        <div class="analytics-section">
+            <div class="analytics-header">
+                <div class="time-range-selector">
+                    <label>Time Range:</label>
+                    <select id="timeRangeSelect" onchange="changeTimeRange(this.value)">
+                        <option value="3months" {% if current_time_range == '3months' %}selected{% endif %}>Last 3 Months</option>
+                        <option value="6months" {% if current_time_range == '6months' %}selected{% endif %}>Last 6 Months</option>
+                        <option value="1year" {% if current_time_range == '1year' %}selected{% endif %}>Last 1 Year</option>
+                        <option value="2years" {% if current_time_range == '2years' %}selected{% endif %}>Last 2 Years</option>
+                        <option value="all" {% if current_time_range == 'all' %}selected{% endif %}>All Time</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="analytics-grid">
+                <!-- Pie Chart - Monthly Category Spending -->
+                <div class="analytics-card">
+                    <h4>
+                        Spending Breakdown 
+                        <small>
+                            {% if current_time_range == '3months' %}
+                                - Last 3 Months
+                            {% elif current_time_range == '6months' %}
+                                - Last 6 Months
+                            {% elif current_time_range == '1year' %}
+                                - Last 1 Year
+                            {% elif current_time_range == '2years' %}
+                                - Last 2 Years
+                            {% elif current_time_range == 'all' %}
+                                - All Time
+                            {% else %}
+                                - {{ current_month }}
+                            {% endif %}
+                        </small>
+                    </h4>
+                    <div class="chart-container">
+                        <canvas id="categoryChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Monthly Comparison Chart -->
+                <div class="analytics-card">
+                    <h4>Income vs Expenses 
+                        <small>({{ monthly_comparison|length }} months)</small>
+                    </h4>
+                    <div class="chart-container">
+                        <canvas id="monthlyComparisonChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Alerts Slider -->
+        <div class="budget-alerts-section">
+            <div class="section-header">
+                <h3>Budget Alerts - {{ current_month }}</h3>
+                <a href="{{ url_for('transactions.budgets') }}" class="view-all">Manage Budgets</a>
+            </div>
+            
+            <div class="budget-alerts-container" id="budgetAlertsSlider">
+                {% if budget_alerts %}
+                    {% for alert in budget_alerts %}
+                    <div class="budget-alert {{ alert.alert_level }}">
+                        <div class="alert-category">{{ alert.category_name }}</div>
+                        <div class="alert-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ alert.percentage_used }}%"></div>
+                            </div>
+                            <span class="progress-text">{{ "%.1f"|format(alert.percentage_used) }}%</span>
+                        </div>
+                        <div class="alert-amount">£{{ "%.2f"|format(alert.spent) }} / £{{ "%.2f"|format(alert.budget_amount) }}</div>
+                        <div class="alert-status">
+                            {% if alert.alert_level == 'over-budget' %}
+                                Over Budget
+                            {% elif alert.alert_level == 'near-limit' %}
+                                Near Limit
+                            {% else %}
+                                Within Budget
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-alerts">
+                        <p>No budget alerts. All good! ✅</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
-
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon">💰</div>
-        <div class="stat-info">
-          <h3>TOTAL BALANCE</h3>
-          <h2
-            class="stat-amount {% if balance >= 0 %}positive{% else %}negative{% endif %}"
-          >
-            £{{ "%.2f"|format(balance) }}
-          </h2>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon">📈</div>
-        <div class="stat-info">
-          <h3>TOTAL INCOME</h3>
-          <h2 class="stat-amount positive">+£{{ "%.2f"|format(income) }}</h2>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon">📉</div>
-        <div class="stat-info">
-          <h3>TOTAL EXPENSES</h3>
-          <h2 class="stat-amount negative">-£{{ "%.2f"|format(expenses) }}</h2>
-        </div>
-      </div>
-    </div>
-
-    <!-- Monthly Summary -->
-    <div class="monthly-summary-grid">
-      <div class="monthly-card">
-        <h3>This Month's Income</h3>
-        <div class="monthly-amount positive">
-          +£{{ "%.2f"|format(monthly_income) }}
-        </div>
-        <small>Total income for {{ now().strftime('%B %Y') }}</small>
-      </div>
-
-      <div class="monthly-card">
-        <h3>This Month's Spending</h3>
-        <div class="monthly-amount negative">
-          -£{{ "%.2f"|format(monthly_expenses) }}
-        </div>
-        <small>Total expenses for {{ now().strftime('%B %Y') }}</small>
-      </div>
-    </div>
-
-    <!-- Recent Transactions -->
-    <div class="recent-transactions">
-      <div class="section-header">
-        <h3>Recent Transactions</h3>
-        <a href="{{ url_for('transactions.transactions') }}" class="view-all"
-          >View All</a
-        >
-      </div>
-
-      {% if recent_transactions %}
-      <div class="transactions-list">
-        {% for transaction in recent_transactions %}
-        <div
-          class="transaction-item {{ 'income' if transaction.transaction_type == 'income' else 'expense' }}"
-        >
-          <div class="transaction-icon">
-            {% if transaction.transaction_type == 'income' %} 📥 {% else %} 📤
-            {% endif %}
-          </div>
-
-          <div class="transaction-info">
-            <span class="transaction-category">
-              {{ transaction.category.category_name if transaction.category else
-              'Income' }}
-            </span>
-            <span class="transaction-date">
-              {{ transaction.transaction_date.strftime('%b %d, %Y') }}
-            </span>
-          </div>
-
-          <span
-            class="transaction-amount {{ 'income' if transaction.transaction_type == 'income' else 'expense' }}"
-          >
-            {% if transaction.transaction_type == 'income' %} +£{{
-            "%.2f"|format(transaction.amount) }} {% else %} -£{{
-            "%.2f"|format(transaction.amount) }} {% endif %}
-          </span>
-        </div>
-        {% endfor %}
-      </div>
-      {% else %}
-      <div class="empty-state">
-        <p>
-          No transactions yet.
-          <a href="{{ url_for('transactions.transactions') }}"
-            >Add your first transaction!</a
-          >
-        </p>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions-section">
-      <h3>Quick Actions</h3>
-      <div class="action-buttons">
-        <a href="{{ url_for('transactions.transactions') }}" class="action-btn">
-          <span class="btn-icon">➕</span>
-          Add Transaction
-        </a>
-        <a href="{{ url_for('main.profile') }}" class="action-btn">
-          <span class="btn-icon">👤</span>
-          View Profile
-        </a>
-      </div>
-    </div>
-  </div>
 </div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+function changeTimeRange(range) {
+    // URL'yi güncelle ve sayfayı yenile
+    const url = new URL(window.location.href);
+    url.searchParams.set('range', range);
+    window.location.href = url.toString();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Category Spending Pie Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    
+    const categoryData = {
+        labels: [
+            {% for category, amount in category_spending.items() %}
+                '{{ category }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for category, amount in category_spending.items() %}
+                    {{ amount }}{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                '#9966FF', '#FF9F40', '#C9CBCF', '#FF6384'
+            ]
+        }]
+    };
+
+    if (categoryData.labels.length > 0) {
+        new Chart(categoryCtx, {
+            type: 'pie',
+            data: categoryData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: £${value.toFixed(2)} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        categoryCtx.font = '14px Arial';
+        categoryCtx.fillStyle = '#666';
+        categoryCtx.textAlign = 'center';
+        categoryCtx.fillText('No spending data for {{ current_month }}', 200, 150);
+    }
+
+    // Monthly Comparison Line Chart
+    const monthlyCtx = document.getElementById('monthlyComparisonChart').getContext('2d');
+    
+    const monthlyData = {
+        labels: [
+            {% for month_data in monthly_comparison %}
+                '{{ month_data.month_short }}'{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [
+            {
+                label: 'Income',
+                data: [
+                    {% for month_data in monthly_comparison %}
+                        {{ month_data.income }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderColor: '#10B981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+            },
+            {
+                label: 'Expenses',
+                data: [
+                    {% for month_data in monthly_comparison %}
+                        {{ month_data.expenses }}{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                borderColor: '#EF4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                tension: 0.4,
+                fill: true
+            }
+        ]
+    };
+
+    if (monthlyData.labels.length > 0) {
+        new Chart(monthlyCtx, {
+            type: 'line',
+            data: monthlyData,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '£' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    } else {
+        monthlyCtx.font = '14px Arial';
+        monthlyCtx.fillStyle = '#666';
+        monthlyCtx.textAlign = 'center';
+        monthlyCtx.fillText('No monthly comparison data available', 200, 150);
+    }
+
+    // Budget Alerts Slider Functionality
+    const slider = document.getElementById('budgetAlertsSlider');
+    if (slider && slider.scrollWidth > slider.clientWidth) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+        });
+
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+        });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2;
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    }
+});
+</script>
+
 {% endblock %}
