@@ -1,0 +1,833 @@
+{% extends "base.html" %}
+
+{% block title %}Family Management - SmartExpensesTracker{% endblock %}
+
+{% block head %}
+<!-- Members & Family Management CSS -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/members.css') }}"
+/>
+
+<!-- Members & Family Management JavaScript -->
+<script src="{{ url_for('static', filename='js/members.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="family-management-container">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1>Family Expenses 👨‍👩‍👧‍👦</h1>
+      <p class="lead">Shared household tracking and savings goals</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" data-action="add-member">
+        <i class="icon">👥</i> Add Member
+      </button>
+      <button class="btn btn-secondary" data-action="add-expense">
+        <i class="icon">💰</i> Add Expense
+      </button>
+
+      <button class="btn btn-accent" data-action="manage-budget">
+        <i class="icon">📊</i> Manage Budget
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Dashboard Grid -->
+  <div class="dashboard-grid">
+    <!-- Family Overview Cards -->
+    <div class="overview-section">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👨‍👩‍👧‍👦</div>
+          <div class="stat-info">
+            <div class="stat-value">{{ member_count + 1 }}</div>
+            <div class="stat-label">Family Members</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-info">
+            <div class="stat-value">
+              £{{ "%.0f"|format(total_family_expenses) }}
+            </div>
+            <div class="stat-label">Total Expenses</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-info">
+            <div class="stat-value">
+              £{{ "%.0f"|format(family_budget_total) }}
+            </div>
+            <div class="stat-label">Monthly Budget</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-info">
+            <div class="stat-value">
+              {{ "%.0f"|format(budget_percentage if budget_percentage else 0) }}%
+            </div>
+            <div class="stat-label">Budget Used</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Family Members Section -->
+    <div class="members-section">
+      <div class="members-header">
+        <h3>Family Members</h3>
+        <button id="addMemberBtn" class="btn btn-primary">+ Add Member</button>
+      </div>
+      <div class="members-grid">
+        <!-- Current User (Owner) -->
+        <div class="member-card owner">
+          <div class="member-actions">
+            <button
+              class="action-btn edit"
+              onclick="editProfile()"
+              title="Edit Profile"
+            >
+              <i class="icon">✏️</i>
+            </button>
+            <button
+              class="action-btn settings"
+              onclick="showSettings()"
+              title="Account Settings"
+            >
+              <i class="icon">⚙️</i>
+            </button>
+          </div>
+          <div class="member-header">
+            <div class="member-avatar owner-avatar">
+              {{ current_user.user_name[0].upper() if current_user.user_name
+              else 'U' }}
+            </div>
+            <div class="owner-badge">Owner</div>
+          </div>
+          <div class="member-info">
+            <div class="member-name">{{ current_user.user_name or 'You' }}</div>
+            <div class="member-role">Account Owner</div>
+            <div class="member-stats">
+              <div class="stat">
+                <span class="value"
+                  >£{{ "%.0f"|format(total_family_expenses * 0.4 if total_family_expenses > 0 else 0)
+                  }}</span
+                >
+                <span class="label">Paid</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Family Members -->
+        {% for member in members %} {% set stats = member.get_lifetime_stats()
+        %}
+        <div class="member-card" data-member-id="{{ member.member_id }}">
+          <div class="member-actions">
+            <button
+              class="action-btn edit"
+              data-action="edit-member"
+              data-member-id="{{ member.member_id }}"
+              data-member-name="{{ member.name|e }}"
+              data-member-relationship="{{ member.relationship|e }}"
+            >
+              <i class="icon">✏️</i>
+            </button>
+            <button
+              class="action-btn delete"
+              data-action="delete-member"
+              data-member-id="{{ member.member_id }}"
+              data-member-name="{{ member.name|e }}"
+            >
+              <i class="icon">🗑️</i>
+            </button>
+          </div>
+          <div class="member-header">
+            <div class="member-avatar">{{ member.name[0].upper() }}</div>
+          </div>
+          <div class="member-info">
+            <div class="member-name">{{ member.name }}</div>
+            <div class="member-role">{{ member.relationship }}</div>
+            <div class="member-stats">
+              <div class="stat">
+                <span class="value"
+                  >£{{ "%.0f"|format(stats.total_contribution) }}</span
+                >
+                <span class="label">Contributed</span>
+              </div>
+              <div class="stat">
+                <span class="value">{{ stats.total_transactions }}</span>
+                <span class="label">Expenses</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+        <!-- Add Member Card -->
+        <div class="member-card add-member">
+          <div class="add-member-content">
+            <div class="add-icon">➕</div>
+            <div class="add-text">Add Family Member</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-container-wrapper">
+        <div class="chart-header">
+          <h3>Expense Categories</h3>
+          <div class="chart-controls">
+            <div class="view-toggle">
+              <input
+                type="radio"
+                id="familyView"
+                name="chartView"
+                value="family"
+                checked
+              />
+              <label for="familyView">Whole Family</label>
+              <input
+                type="radio"
+                id="memberView"
+                name="chartView"
+                value="member"
+              />
+              <label for="memberView">Per Member</label>
+            </div>
+            <div
+              class="member-selector"
+              id="memberSelector"
+              style="display: none"
+            >
+              <select id="memberSelect">
+                <option value="{{ current_user.user_name or 'You' }}">
+                  🏠 {{ current_user.user_name or 'You' }} (Owner)
+                </option>
+                {% for member in members %}
+                <option value="{{ member.name }}">
+                  👤 {{ member.name }} ({{ member.relationship }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="categoryChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Family Budget Section -->
+    <div class="family-budget-section">
+      <div class="budget-header">
+        <h3>Family Budget Overview</h3>
+      </div>
+
+      <div class="budget-grid">
+        <!-- Monthly Budget Card -->
+        <div class="budget-card">
+          <div class="budget-card-header">
+            <h4>Monthly Budget</h4>
+            <div class="budget-amount">
+              £{{ "%.0f"|format(family_budget_total) }}
+            </div>
+          </div>
+          <div class="budget-progress">
+            <div class="progress-bar">
+              <div
+                class="progress-fill"
+                style="width: {{ "%.0f"|format(budget_percentage if budget_percentage else 0) }}%"
+              ></div>
+            </div>
+            <div class="progress-text">
+              £{{ "%.0f"|format(total_family_expenses) }} of £{{
+              "%.0f"|format(family_budget_total) }} used
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget Categories -->
+        <div class="budget-categories">
+          <h4>Budget by Category</h4>
+          <div class="category-budgets">
+            <div class="category-budget-item">
+              <div class="category-info">
+                <span class="category-icon">🍽️</span>
+                <span class="category-name">Food & Dining</span>
+              </div>
+              <div class="category-amounts">
+                <span class="spent"
+                  >£{{ "%.0f"|format(category_expenses.get('Food', 0))
+                  }}</span
+                >
+                <span class="budget">/ £{{ "%.0f"|format(category_budgets.get('Food', 0)) }}</span>
+              </div>
+            </div>
+
+            <div class="category-budget-item">
+              <div class="category-info">
+                <span class="category-icon">💡</span>
+                <span class="category-name">Bills & Utilities</span>
+              </div>
+              <div class="category-amounts">
+                <span class="spent"
+                  >£{{ "%.0f"|format(category_expenses.get('Utilities', 0))
+                  }}</span
+                >
+                <span class="budget">/ £{{ "%.0f"|format(category_budgets.get('Utilities', 0)) }}</span>
+              </div>
+            </div>
+
+            <div class="category-budget-item">
+              <div class="category-info">
+                <span class="category-icon">🚗</span>
+                <span class="category-name">Transport</span>
+              </div>
+              <div class="category-amounts">
+                <span class="spent"
+                  >£{{ "%.0f"|format(category_expenses.get('Transport', 0))
+                  }}</span
+                >
+                <span class="budget">/ £{{ "%.0f"|format(category_budgets.get('Transport', 0)) }}</span>
+              </div>
+            </div>
+
+            <div class="category-budget-item">
+              <div class="category-info">
+                <span class="category-icon">🎬</span>
+                <span class="category-name">Entertainment</span>
+              </div>
+              <div class="category-amounts">
+                <span class="spent"
+                  >£{{ "%.0f"|format(category_expenses.get('Entertainment', 0))
+                  }}</span
+                >
+                <span class="budget">/ £{{ "%.0f"|format(category_budgets.get('Entertainment', 0)) }}</span>
+              </div>
+            </div>
+
+            <div class="category-budget-item">
+              <div class="category-info">
+                <span class="category-icon">🛒</span>
+                <span class="category-name">Shopping & Other</span>
+              </div>
+              <div class="category-amounts">
+                <span class="spent"
+                  >£{{ "%.0f"|format(category_expenses.get('Shopping', 0))
+                  }}</span
+                >
+                <span class="budget">/ £{{ "%.0f"|format(category_budgets.get('Shopping', 0)) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Budget Alerts -->
+        <div class="budget-alerts">
+          <h4>Budget Alerts</h4>
+          <div class="alert-items">
+            {% if budget_percentage and budget_percentage > 80 %}
+            <div class="alert-item warning">
+              <span class="alert-icon">⚠️</span>
+              <div class="alert-content">
+                <strong>Budget Warning</strong>
+                <p>
+                  You've used {{ "%.0f"|format(budget_percentage) }}% of your
+                  monthly budget
+                </p>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="alert-item info">
+              <span class="alert-icon">📊</span>
+              <div class="alert-content">
+                <strong>Spending Trend</strong>
+                <p>
+                  Your family spending is {{ "higher than" if (budget_percentage
+                  or 42) > 50 else "within" }} average this month
+                </p>
+              </div>
+            </div>
+
+            <div class="alert-item success">
+              <span class="alert-icon">💡</span>
+              <div class="alert-content">
+                <strong>Savings Tip</strong>
+                <p>Consider meal planning to reduce food expenses by 15-20%</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Expenses Section -->
+    <div class="expenses-section">
+      <div class="expenses-header">
+        <h3>Recent Family Expenses</h3>
+        <div class="expenses-actions">
+          <button
+            class="btn btn-small btn-secondary"
+            data-action="add-expense-section"
+          >
+            <i class="icon">💰</i> Add Expense
+          </button>
+        </div>
+      </div>
+      <div class="expenses-table-container">
+        <table class="expenses-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Paid By</th>
+              <th>Split Between</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for expense in recent_shared_expenses %}
+            <tr>
+              <td>{{ expense.date }}</td>
+              <td>{{ expense.description or 'Family Expense' }}</td>
+              <td>{{ expense.category }}</td>
+              <td>£{{ "%.2f"|format(expense.amount) }}</td>
+              <td>
+                <div class="payer">
+                  <div class="payer-avatar">
+                    {{ current_user.user_name[0].upper() if
+                    current_user.user_name else 'U' }}
+                  </div>
+                  {{ current_user.user_name or 'You' }}
+                </div>
+              </td>
+              <td>
+                <div class="members-involved">
+                  {% for member_name in expense.members %}
+                  <span class="member-tag">{{ member_name }}</span>
+                  {% endfor %}
+                  <span class="split-info"
+                    >({{ expense.member_count }} people)</span
+                  >
+                </div>
+              </td>
+              <td>
+                <div class="expense-actions">
+                  <button
+                    class="action-btn edit"
+                    data-action="edit-expense"
+                    data-expense-id="{{ expense.id }}"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    class="action-btn delete"
+                    data-action="delete-expense"
+                    data-expense-id="{{ expense.id }}"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Member Modal -->
+<div id="addMemberModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add Family Member</h3>
+      <button
+        class="close-btn"
+        data-action="close-modal"
+        data-modal-id="addMemberModal"
+      >
+        &times;
+      </button>
+    </div>
+    <form
+      id="addMemberForm"
+      method="POST"
+      action="{{ url_for('main.add_member') }}"
+    >
+      <div class="form-group">
+        <label for="memberName">Name</label>
+        <input
+          type="text"
+          id="memberName"
+          name="name"
+          required
+          placeholder="Enter member name"
+        />
+      </div>
+      <div class="form-group">
+        <label for="memberRelationship">Relationship</label>
+        <select id="memberRelationship" name="relationship" required>
+          <option value="">Select relationship</option>
+          <option value="Spouse">Spouse</option>
+          <option value="Child">Child</option>
+          <option value="Parent">Parent</option>
+          <option value="Sibling">Sibling</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          data-action="cancel"
+          data-modal-id="addMemberModal"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Add Member</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div id="editMemberModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Family Member</h3>
+      <button
+        class="close-btn"
+        onclick="event.stopPropagation(); closeModal('editMemberModal');"
+      >
+        &times;
+      </button>
+    </div>
+    <form
+      id="editMemberForm"
+      method="POST"
+      action="{{ url_for('main.edit_member') }}"
+    >
+      <input type="hidden" id="editMemberId" name="member_id" />
+      <div class="form-group">
+        <label for="editMemberName">Name</label>
+        <input type="text" id="editMemberName" name="name" required />
+      </div>
+      <div class="form-group">
+        <label for="editMemberRelationship">Relationship</label>
+        <select id="editMemberRelationship" name="relationship" required>
+          <option value="Spouse">Spouse</option>
+          <option value="Child">Child</option>
+          <option value="Parent">Parent</option>
+          <option value="Sibling">Sibling</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('editMemberModal')"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Update Member</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div id="addExpenseModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add Family Expense</h3>
+      <button
+        class="close-btn"
+        onclick="event.stopPropagation(); closeModal('addExpenseModal');"
+      >
+        &times;
+      </button>
+    </div>
+    <form
+      id="addExpenseForm"
+      method="POST"
+      action="{{ url_for('main.add_family_expense') }}"
+    >
+      <div class="form-group">
+        <label for="expenseDate">Date</label>
+        <input type="date" id="expenseDate" name="expense_date" required />
+      </div>
+      <div class="form-group">
+        <label for="expenseDescription">Description (Optional)</label>
+        <input
+          type="text"
+          id="expenseDescription"
+          name="description"
+          placeholder="What was this expense for?"
+        />
+      </div>
+      <div class="form-group">
+        <label for="expenseAmount">Amount (£)</label>
+        <input
+          type="number"
+          id="expenseAmount"
+          name="amount"
+          step="0.01"
+          min="0"
+          required
+          placeholder="0.00"
+        />
+      </div>
+      <div class="form-group">
+        <label for="expenseCategory">Category</label>
+        <select id="expenseCategory" name="category_id" required>
+          <option value="">Select category</option>
+          {% for category in categories %}
+          <option value="{{ category.category_id }}">
+            {{ category.category_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Split between:</label>
+        <div class="member-checkboxes">
+          <label class="checkbox-label">
+            <input type="checkbox" name="include_user" value="true" checked />
+            {{ current_user.user_name or 'You' }} (Owner)
+          </label>
+          {% for member in members %}
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="member_ids"
+              value="{{ member.member_id }}"
+            />
+            {{ member.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('addExpenseModal')"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Add Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Expense Modal -->
+<div id="editExpenseModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Family Expense</h3>
+      <button
+        class="close-btn"
+        onclick="event.stopPropagation(); closeModal('editExpenseModal');"
+      >
+        &times;
+      </button>
+    </div>
+    <form
+      id="editExpenseForm"
+      method="POST"
+      action="{{ url_for('main.edit_family_expense') }}"
+    >
+      <input type="hidden" id="editExpenseId" name="expense_id" />
+      <div class="form-group">
+        <label for="editExpenseDate">Date</label>
+        <input type="date" id="editExpenseDate" name="expense_date" required />
+      </div>
+      <div class="form-group">
+        <label for="editExpenseDescription">Description (Optional)</label>
+        <input
+          type="text"
+          id="editExpenseDescription"
+          name="description"
+          placeholder="What was this expense for?"
+        />
+      </div>
+      <div class="form-group">
+        <label for="editExpenseAmount">Amount (£)</label>
+        <input
+          type="number"
+          id="editExpenseAmount"
+          name="amount"
+          step="0.01"
+          min="0"
+          required
+          placeholder="0.00"
+        />
+      </div>
+      <div class="form-group">
+        <label for="editExpenseCategory">Category</label>
+        <select id="editExpenseCategory" name="category_id" required>
+          <option value="">Select category</option>
+          {% for category in categories %}
+          <option value="{{ category.category_id }}">
+            {{ category.category_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Split between:</label>
+        <div class="member-checkboxes" id="editMemberCheckboxes">
+          <label class="checkbox-label">
+            <input type="checkbox" name="include_user" value="true" />
+            {{ current_user.user_name or 'You' }} (Owner)
+          </label>
+          {% for member in members %}
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="member_ids"
+              value="{{ member.member_id }}"
+            />
+            {{ member.name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeModal('editExpenseModal')"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">Update Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Budget Management Modal -->
+<div id="budgetModal" class="modal">
+  <div class="modal-content large">
+    <div class="modal-header">
+      <h3>Family Budget Management</h3>
+      <button
+        class="close-btn"
+        onclick="event.stopPropagation(); closeModal('budgetModal');"
+      >
+        &times;
+      </button>
+    </div>
+    <div class="budget-content">
+      <form
+        id="budgetForm"
+        method="POST"
+        action="{{ url_for('main.update_family_budget') }}"
+      >
+        <div class="budget-grid">
+          <div class="form-group">
+            <label for="monthlyBudget">Total Monthly Budget (£)</label>
+            <input
+              type="number"
+              id="monthlyBudget"
+              name="monthly_budget"
+              step="0.01"
+              min="0"
+              value="{{ family_budget_total or 2500 }}"
+              required
+            />
+          </div>
+
+          <h4>Category Budgets</h4>
+          <div class="category-budgets">
+            <div class="form-group">
+              <label for="foodBudget">Food (£)</label>
+              <input
+                type="number"
+                id="foodBudget"
+                name="food_budget"
+                step="0.01"
+                min="0"
+                placeholder="500"
+              />
+            </div>
+            <div class="form-group">
+              <label for="billsBudget">Bills (£)</label>
+              <input
+                type="number"
+                id="billsBudget"
+                name="bills_budget"
+                step="0.01"
+                min="0"
+                placeholder="800"
+              />
+            </div>
+            <div class="form-group">
+              <label for="transportBudget">Transport (£)</label>
+              <input
+                type="number"
+                id="transportBudget"
+                name="transport_budget"
+                step="0.01"
+                min="0"
+                placeholder="300"
+              />
+            </div>
+            <div class="form-group">
+              <label for="entertainmentBudget">Entertainment (£)</label>
+              <input
+                type="number"
+                id="entertainmentBudget"
+                name="entertainment_budget"
+                step="0.01"
+                min="0"
+                placeholder="200"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="closeModal('budgetModal')"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Update Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Chart Data - Available globally for members.js
+  const familyData = {{ category_chart_data | tojson | safe }};
+  const memberData = {{ per_member_category_data | tojson | safe }};
+</script>
+
+{% endblock %}

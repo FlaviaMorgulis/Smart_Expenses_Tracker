@@ -1,119 +1,129 @@
-{% extends "base.html" %}
-
-{% block title %}Dashboard - SmartExpensesTracker{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Dashboard - SmartExpensesTracker{%
+endblock %} {% block content %}
 <div class="dashboard-container">
-    <div class="dashboard-content">
-        <!-- Welcome Section -->
-        <div class="welcome-section">
-            <h1>Welcome back, {{ user.user_name }}! 👋</h1>
-            <p class="lead">Here's your financial overview</p>
-        </div>
-
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon">💰</div>
-                <div class="stat-info">
-                    <h3>TOTAL BALANCE</h3>
-                    <h2 class="stat-amount {% if balance >= 0 %}positive{% else %}negative{% endif %}">
-                        £{{ "%.2f"|format(balance) }}
-                    </h2>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">📈</div>
-                <div class="stat-info">
-                    <h3>TOTAL INCOME</h3>
-                    <h2 class="stat-amount positive">+£{{ "%.2f"|format(income) }}</h2>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">📉</div>
-                <div class="stat-info">
-                    <h3>TOTAL EXPENSES</h3>
-                    <h2 class="stat-amount negative">-£{{ "%.2f"|format(expenses) }}</h2>
-                </div>
-            </div>
-        </div>
-
-        <!-- Monthly Summary -->
-        <div class="monthly-summary-grid">
-            <div class="monthly-card">
-                <h3>This Month's Income</h3>
-                <div class="monthly-amount positive">+£{{ "%.2f"|format(monthly_income) }}</div>
-                <small>Total income for {{ now().strftime('%B %Y') }}</small>
-            </div>
-            
-            <div class="monthly-card">
-                <h3>This Month's Spending</h3>
-                <div class="monthly-amount negative">-£{{ "%.2f"|format(monthly_expenses) }}</div>
-                <small>Total expenses for {{ now().strftime('%B %Y') }}</small>
-            </div>
-        </div>
-
-        <!-- Recent Transactions -->
-        <div class="recent-transactions">
-            <div class="section-header">
-                <h3>Recent Transactions</h3>
-                <a href="{{ url_for('transactions.transactions') }}" class="view-all">View All</a>
-            </div>
-            
-            {% if recent_transactions %}
-            <div class="transactions-list">
-                {% for transaction in recent_transactions %}
-                <div class="transaction-item {{ 'income' if transaction.transaction_type == 'income' else 'expense' }}">
-                    <div class="transaction-icon">
-                        {% if transaction.transaction_type == 'income' %}
-                        📥
-                        {% else %}
-                        📤
-                        {% endif %}
-                    </div>
-                    
-                    <div class="transaction-info">
-                        <span class="transaction-category">
-                            {{ transaction.category.category_name if transaction.category else 'Income' }}
-                        </span>
-                        <span class="transaction-date">
-                            {{ transaction.transaction_date.strftime('%b %d, %Y') }}
-                        </span>
-                    </div>
-                    
-                    <span class="transaction-amount {{ 'income' if transaction.transaction_type == 'income' else 'expense' }}">
-                        {% if transaction.transaction_type == 'income' %}
-                        +£{{ "%.2f"|format(transaction.amount) }}
-                        {% else %}
-                        -£{{ "%.2f"|format(transaction.amount) }}
-                        {% endif %}
-                    </span>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="empty-state">
-                <p>No transactions yet. <a href="{{ url_for('transactions.transactions') }}">Add your first transaction!</a></p>
-            </div>
-            {% endif %}
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="quick-actions-section">
-            <h3>Quick Actions</h3>
-            <div class="action-buttons">
-                <a href="{{ url_for('transactions.transactions') }}" class="action-btn">
-                    <span class="btn-icon">➕</span>
-                    Add Transaction
-                </a>
-                <a href="{{ url_for('main.profile') }}" class="action-btn">
-                    <span class="btn-icon">👤</span>
-                    View Profile
-                </a>
-            </div>
-        </div>
+  <div class="dashboard-content">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h1>Welcome back, {{ user.user_name }}! 👋</h1>
+      <p class="lead">Here's your financial overview</p>
     </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+          <h3>TOTAL BALANCE</h3>
+          <h2
+            class="stat-amount {% if balance >= 0 %}positive{% else %}negative{% endif %}"
+          >
+            £{{ "%.2f"|format(balance) }}
+          </h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-info">
+          <h3>TOTAL INCOME</h3>
+          <h2 class="stat-amount positive">+£{{ "%.2f"|format(income) }}</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">📉</div>
+        <div class="stat-info">
+          <h3>TOTAL EXPENSES</h3>
+          <h2 class="stat-amount negative">-£{{ "%.2f"|format(expenses) }}</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Summary -->
+    <div class="monthly-summary-grid">
+      <div class="monthly-card">
+        <h3>This Month's Income</h3>
+        <div class="monthly-amount positive">
+          +£{{ "%.2f"|format(monthly_income) }}
+        </div>
+        <small>Total income for {{ now().strftime('%B %Y') }}</small>
+      </div>
+
+      <div class="monthly-card">
+        <h3>This Month's Spending</h3>
+        <div class="monthly-amount negative">
+          -£{{ "%.2f"|format(monthly_expenses) }}
+        </div>
+        <small>Total expenses for {{ now().strftime('%B %Y') }}</small>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="recent-transactions">
+      <div class="section-header">
+        <h3>Recent Transactions</h3>
+        <a href="{{ url_for('transactions.transactions') }}" class="view-all"
+          >View All</a
+        >
+      </div>
+
+      {% if recent_transactions %}
+      <div class="transactions-list">
+        {% for transaction in recent_transactions %}
+        <div
+          class="transaction-item {{ 'income' if transaction.transaction_type == 'income' else 'expense' }}"
+        >
+          <div class="transaction-icon">
+            {% if transaction.transaction_type == 'income' %} 📥 {% else %} 📤
+            {% endif %}
+          </div>
+
+          <div class="transaction-info">
+            <span class="transaction-category">
+              {{ transaction.category.category_name if transaction.category else
+              'Income' }}
+            </span>
+            <span class="transaction-date">
+              {{ transaction.transaction_date.strftime('%b %d, %Y') }}
+            </span>
+          </div>
+
+          <span
+            class="transaction-amount {{ 'income' if transaction.transaction_type == 'income' else 'expense' }}"
+          >
+            {% if transaction.transaction_type == 'income' %} +£{{
+            "%.2f"|format(transaction.amount) }} {% else %} -£{{
+            "%.2f"|format(transaction.amount) }} {% endif %}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <p>
+          No transactions yet.
+          <a href="{{ url_for('transactions.transactions') }}"
+            >Add your first transaction!</a
+          >
+        </p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions-section">
+      <h3>Quick Actions</h3>
+      <div class="action-buttons">
+        <a href="{{ url_for('transactions.transactions') }}" class="action-btn">
+          <span class="btn-icon">➕</span>
+          Add Transaction
+        </a>
+        <a href="{{ url_for('main.profile') }}" class="action-btn">
+          <span class="btn-icon">👤</span>
+          View Profile
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

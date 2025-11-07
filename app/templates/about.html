@@ -1,0 +1,101 @@
+{% extends "base.html" %} {% block title %}About - SmartExpensesTracker{%
+endblock %} {% block page_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/about-faq.css') }}"
+/>
+{% endblock %} {% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-content">
+    <!-- Page Header -->
+    <div class="welcome-section">
+      <h1>About SmartExpensesTracker</h1>
+      <p class="lead">Your intelligent companion for financial management</p>
+    </div>
+
+    <!-- About Content -->
+    <div class="auth-card">
+      <div class="about-content">
+        <div class="about-section">
+          <h2>Welcome to SmartExpensesTracker</h2>
+          <p>
+            SmartExpensesTracker is your intelligent companion for managing
+            personal and family finances. We believe that financial management
+            should be simple, intuitive, and accessible to everyone.
+          </p>
+        </div>
+
+        <div class="about-section">
+          <h2>Our Mission</h2>
+          <p>
+            To empower individuals and families with tools that make financial
+            tracking effortless, helping you make smarter decisions about your
+            money and achieve your financial goals.
+          </p>
+        </div>
+
+        <div class="about-section">
+          <h2>Features</h2>
+          <div class="features-grid">
+            <div class="feature-card">
+              <h3>💰 Expense Tracking</h3>
+              <p>
+                Track your daily expenses with easy categorization and detailed
+                reports.
+              </p>
+            </div>
+            <div class="feature-card">
+              <h3>👨‍👩‍👧‍👦 Family Management</h3>
+              <p>
+                Manage multiple family members and track shared expenses
+                effortlessly.
+              </p>
+            </div>
+            <div class="feature-card">
+              <h3>📊 Smart Reports</h3>
+              <p>
+                Generate comprehensive reports and visualize your spending
+                patterns.
+              </p>
+            </div>
+            <div class="feature-card">
+              <h3>🔒 Secure & Private</h3>
+              <p>
+                Your financial data is encrypted and secure. We value your
+                privacy.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-section">
+          <h2>Why Choose SmartExpensesTracker?</h2>
+          <p>
+            Unlike other expense trackers, SmartExpensesTracker focuses on both
+            individual and family financial management. Our intuitive interface,
+            powerful features, and commitment to user privacy make us the
+            perfect choice for anyone looking to take control of their finances.
+          </p>
+        </div>
+
+        <div class="about-section">
+          <h2>Get Started</h2>
+          <p>
+            Ready to take control of your finances?
+            <a
+              href="{{ url_for('auth.signup') }}"
+              style="
+                color: var(--accent);
+                text-decoration: none;
+                font-weight: 600;
+              "
+              >Sign up for free</a
+            >
+            today and start your journey towards better financial management!
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endblock %}
+</div>

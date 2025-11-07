@@ -1,0 +1,302 @@
+{% extends "base.html" %} {% block title %}Budget - SmartExpensesTracker{%
+endblock %} {% block page_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/budget.css') }}"
+/>
+{% endblock %} {% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-content">
+    <!-- Page Header -->
+    <div class="welcome-section">
+      <h1>Budget Management 💰</h1>
+      <p class="lead">Track and manage your spending budgets</p>
+    </div>
+
+    <!-- Budget Overview Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-info">
+          <div class="stat-label">TOTAL BUDGET</div>
+          <div class="stat-value">£2500.00</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">💳</div>
+        <div class="stat-info">
+          <div class="stat-label">SPENT THIS MONTH</div>
+          <div class="stat-value spent">£1850.00</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">💵</div>
+        <div class="stat-info">
+          <div class="stat-label">REMAINING</div>
+          <div class="stat-value remaining">£650.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget Charts Section -->
+    <div class="charts-section">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Budget Overview</h3>
+        </div>
+        <div class="chart-content">
+          <div class="donut-chart">
+            <div class="percentage">74.0%</div>
+            <div class="label">Used</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>6-Month Spending Trend</h3>
+        </div>
+        <div class="chart-content">
+          <div class="trend-bars">
+            <div class="bar" style="height: 60%"></div>
+            <div class="bar" style="height: 70%"></div>
+            <div class="bar" style="height: 55%"></div>
+            <div class="bar" style="height: 65%"></div>
+            <div class="bar" style="height: 80%"></div>
+            <div class="bar active" style="height: 74%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Budgets -->
+    <div class="category-budgets">
+      <div class="section-header">
+        <h3>Category Budgets</h3>
+        <button class="btn btn-primary" onclick="showAddBudgetModal()">
+          <i class="fas fa-plus"></i> Add Budget
+        </button>
+      </div>
+
+      <div class="budgets-grid">
+        <!-- Food & Dining -->
+        <div class="budget-card">
+          <div class="budget-header">
+            <div class="category-name">Food & Dining</div>
+            <div class="budget-amount">£800</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress" style="width: 81%"></div>
+          </div>
+          <div class="budget-details">
+            <span class="spent">£650 spent</span>
+            <span class="remaining">£150 left</span>
+          </div>
+        </div>
+
+        <!-- Transportation -->
+        <div class="budget-card">
+          <div class="budget-header">
+            <div class="category-name">Transportation</div>
+            <div class="budget-amount">£300</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress" style="width: 82%"></div>
+          </div>
+          <div class="budget-details">
+            <span class="spent">£245 spent</span>
+            <span class="remaining">£55 left</span>
+          </div>
+        </div>
+
+        <!-- Entertainment -->
+        <div class="budget-card">
+          <div class="budget-header">
+            <div class="category-name">Entertainment</div>
+            <div class="budget-amount">£200</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress warning" style="width: 90%"></div>
+          </div>
+          <div class="budget-details">
+            <span class="spent">£180 spent</span>
+            <span class="remaining">£20 left</span>
+          </div>
+        </div>
+
+        <!-- Shopping -->
+        <div class="budget-card">
+          <div class="budget-header">
+            <div class="category-name">Shopping</div>
+            <div class="budget-amount">£400</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress" style="width: 80%"></div>
+          </div>
+          <div class="budget-details">
+            <span class="spent">£320 spent</span>
+            <span class="remaining">£80 left</span>
+          </div>
+        </div>
+
+        <!-- Healthcare -->
+        <div class="budget-card">
+          <div class="budget-header">
+            <div class="category-name">Healthcare</div>
+            <div class="budget-amount">£250</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress" style="width: 50%"></div>
+          </div>
+          <div class="budget-details">
+            <span class="spent">£125 spent</span>
+            <span class="remaining">£125 left</span>
+          </div>
+        </div>
+
+        <!-- Utilities -->
+        <div class="budget-card over-budget">
+          <div class="budget-header">
+            <div class="category-name">Utilities</div>
+            <div class="budget-amount">£350</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress danger" style="width: 100%"></div>
+          </div>
+          <div class="budget-details">
+            <span class="spent">£330 spent</span>
+            <span class="remaining">£20 left</span>
+          </div>
+          <div class="budget-alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            Approaching budget limit
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Budget Modal -->
+<div id="addBudgetModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add Category Budget</h3>
+      <span class="close" onclick="closeAddBudgetModal()">&times;</span>
+    </div>
+    <form id="addBudgetForm" onsubmit="addBudget(event)">
+      <div class="form-group">
+        <label for="budgetCategory">Category</label>
+        <select id="budgetCategory" name="category" required>
+          <option value="">Select a category</option>
+          <option value="Food & Dining">Food & Dining</option>
+          <option value="Transportation">Transportation</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Utilities">Utilities</option>
+          <option value="Education">Education</option>
+          <option value="Travel">Travel</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="budgetAmount">Budget Amount (£)</label>
+        <input
+          type="number"
+          id="budgetAmount"
+          name="amount"
+          min="0"
+          step="0.01"
+          placeholder="Enter budget amount"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="budgetPeriod">Budget Period</label>
+        <select id="budgetPeriod" name="period">
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          onclick="closeAddBudgetModal()"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Add Budget
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Modal Functions
+  function showAddBudgetModal() {
+    document.getElementById("addBudgetModal").style.display = "block";
+  }
+
+  function closeAddBudgetModal() {
+    document.getElementById("addBudgetModal").style.display = "none";
+    document.getElementById("addBudgetForm").reset();
+  }
+
+  function addBudget(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const category = formData.get("category");
+    const amount = formData.get("amount");
+    const period = formData.get("period");
+
+    // Here you would typically send this data to your backend
+    console.log("Adding budget:", { category, amount, period });
+
+    alert(`Budget for ${category} added successfully!`);
+    closeAddBudgetModal();
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function (event) {
+    const modal = document.getElementById("addBudgetModal");
+    if (event.target === modal) {
+      closeAddBudgetModal();
+    }
+  };
+
+  // Initialize page animations
+  document.addEventListener("DOMContentLoaded", function () {
+    // Animate stat cards
+    const statCards = document.querySelectorAll(".stat-card");
+    statCards.forEach((card, index) => {
+      card.style.opacity = "0";
+      card.style.transform = "translateY(20px)";
+      setTimeout(() => {
+        card.style.transition = "all 0.5s ease";
+        card.style.opacity = "1";
+        card.style.transform = "translateY(0)";
+      }, index * 100);
+    });
+
+    // Animate budget cards
+    const budgetCards = document.querySelectorAll(".budget-card");
+    budgetCards.forEach((card, index) => {
+      card.style.opacity = "0";
+      card.style.transform = "translateX(-20px)";
+      setTimeout(() => {
+        card.style.transition = "all 0.5s ease";
+        card.style.opacity = "1";
+        card.style.transform = "translateX(0)";
+      }, 500 + index * 100);
+    });
+  });
+</script>
+
+{% endblock %}

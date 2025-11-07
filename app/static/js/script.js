@@ -22,14 +22,17 @@ document.addEventListener("DOMContentLoaded", () => {
   loginTab.addEventListener("click", switchToLogin);
   signupTab.addEventListener("click", switchToSignup);
 
-  // Simple alert to simulate form submission
+  // Allow forms to submit normally - remove preventDefault to enable actual form submission
+  // Forms will now submit to their respective Flask routes
+
+  // Optional: Add form validation or loading states here in the future
   loginForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    alert("✅ Login form submitted!");
+    // Form will submit naturally to Flask backend
+    console.log("Login form submitting...");
   });
 
   signupForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    alert("🎉 Sign up form submitted!");
+    // Form will submit naturally to Flask backend
+    console.log("Signup form submitting...");
   });
 });

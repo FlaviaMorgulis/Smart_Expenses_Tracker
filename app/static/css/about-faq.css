@@ -1,0 +1,391 @@
+/* ================================
+   ABOUT & FAQ PAGES STYLES
+   ================================ */
+
+/* Page Header */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  padding: 40px 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.page-header h1 {
+  color: var(--text);
+  margin: 0 0 10px 0;
+  font-size: 2.5em;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  color: var(--muted);
+  font-size: 1.1em;
+  margin: 0;
+}
+
+/* Brand Section for About/FAQ Pages */
+.brand {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--white);
+  color: var(--text);
+  border-bottom: 1px solid #e9ecef;
+}
+
+.brand .logo {
+  font-size: 3em;
+  margin-bottom: 20px;
+}
+
+.brand .logo img {
+  max-width: 120px;
+  height: auto;
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 2.5em;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Feature Grid */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.feature-card {
+  background: var(--white);
+  padding: 30px 20px;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: var(--transition);
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+  font-size: 2.5em;
+  margin-bottom: 15px;
+}
+
+.feature-card h3 {
+  color: var(--text);
+  margin: 0 0 15px 0;
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.feature-card p {
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* About Content */
+.about-content {
+  background: var(--white);
+  padding: 40px;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.content-section {
+  margin-bottom: 35px;
+}
+
+.content-section:last-child {
+  margin-bottom: 0;
+}
+
+.content-section h2 {
+  color: var(--text);
+  margin: 0 0 20px 0;
+  font-size: 1.5em;
+  font-weight: 600;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 10px;
+}
+
+.content-section p {
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 15px;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-list li {
+  padding: 8px 0;
+  color: var(--text);
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+  padding-left: 20px;
+}
+
+.feature-list li:last-child {
+  border-bottom: none;
+}
+
+.feature-list li::before {
+  content: "✓";
+  color: var(--success);
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 8px;
+}
+
+/* FAQ Styles */
+.faq-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+.faq-item {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.faq-item:last-child {
+  border-bottom: none;
+}
+
+.faq-question {
+  padding: 25px 30px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: var(--transition);
+  border: none;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.faq-question:hover {
+  background: #f0f0f0;
+}
+
+.faq-question h3 {
+  color: var(--text);
+  margin: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.faq-toggle {
+  font-size: 1.2em;
+  color: var(--muted);
+  transition: var(--transition);
+}
+
+.faq-item.active .faq-toggle {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  padding: 25px 30px;
+  background: var(--white);
+  display: none;
+}
+
+.faq-item.active .faq-answer {
+  display: block;
+}
+
+.faq-answer p {
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.faq-answer ul {
+  color: var(--muted);
+  margin: 15px 0;
+  padding-left: 20px;
+}
+
+.faq-answer li {
+  margin-bottom: 5px;
+  line-height: 1.6;
+}
+
+/* Contact Section */
+.contact-section {
+  background: var(--white);
+  padding: 30px;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.contact-section h2 {
+  color: var(--text);
+  margin: 0 0 15px 0;
+  font-weight: 600;
+}
+
+.contact-section p {
+  color: var(--muted);
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+}
+
+.contact-info {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.contact-item {
+  text-align: center;
+}
+
+.contact-item .icon {
+  font-size: 1.5em;
+  color: var(--primary);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.contact-item strong {
+  display: block;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.contact-item span {
+  color: var(--muted);
+}
+
+/* Support Section */
+.support-section {
+  background: var(--bg-light);
+  padding: 40px;
+  border-radius: var(--radius);
+  text-align: center;
+  margin-top: 30px;
+}
+
+.support-section h3 {
+  color: var(--text);
+  margin: 0 0 20px 0;
+  font-size: 1.3em;
+  font-weight: 600;
+}
+
+.support-section p {
+  color: var(--muted);
+  margin: 0 0 25px 0;
+  line-height: 1.6;
+}
+
+.support-section a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.support-section a:hover {
+  text-decoration: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .page-header {
+    padding: 30px 20px;
+  }
+
+  .page-header h1 {
+    font-size: 2em;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .about-content {
+    padding: 30px;
+  }
+
+  .content-section h2 {
+    font-size: 1.3em;
+  }
+
+  .faq-question {
+    padding: 20px 25px;
+  }
+
+  .faq-answer {
+    padding: 20px 25px;
+  }
+
+  .contact-info {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .support-section {
+    padding: 30px;
+  }
+
+  .brand h1 {
+    font-size: 2em;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    padding: 25px 15px;
+  }
+
+  .page-header h1 {
+    font-size: 1.5em;
+  }
+
+  .feature-card {
+    padding: 25px 15px;
+  }
+
+  .about-content {
+    padding: 25px;
+  }
+
+  .faq-question {
+    padding: 15px 20px;
+  }
+
+  .faq-answer {
+    padding: 15px 20px;
+  }
+
+  .support-section {
+    padding: 25px;
+  }
+
+  .brand h1 {
+    font-size: 1.8em;
+  }
+
+  .brand .logo {
+    font-size: 2.5em;
+  }
+}

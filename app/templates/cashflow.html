@@ -1,135 +1,147 @@
-{% extends "base.html" %}
-
-{% block title %}Cash Flow - SmartExpensesTracker{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Cash Flow - SmartExpensesTracker{%
+endblock %} {% block page_css %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/cashflow.css') }}"
+/>
+{% endblock %} {% block content %}
 <div class="cashflow-container">
-    <div class="cashflow-header">
-        <h1>Cash Flow Analysis</h1>
-        <div class="export-buttons">
-            <a href="{{ url_for('transactions.export_csv') }}" class="btn secondary">Export CSV</a>
-            <a href="{{ url_for('transactions.export_pdf') }}" class="btn secondary">Export PDF</a>
-        </div>
+  <div class="cashflow-header">
+    <h1>Cash Flow Analysis</h1>
+    <div class="export-buttons">
+      <a href="{{ url_for('transactions.export_csv') }}" class="btn secondary"
+        >Export CSV</a
+      >
+      <a href="{{ url_for('transactions.export_pdf') }}" class="btn secondary"
+        >Export PDF</a
+      >
     </div>
+  </div>
 
-    <!-- Summary Cards -->
-    <div class="summary-grid">
-        <div class="summary-card positive">
-            <h3>Total Income</h3>
-            <h2>{{ cash_flow_data.summary.total_income_formatted }}</h2>
-        </div>
-        <div class="summary-card negative">
-            <h3>Total Expenses</h3>
-            <h2>{{ cash_flow_data.summary.total_expenses_formatted }}</h2>
-        </div>
-        <div class="summary-card {% if cash_flow_data.summary.net_cash_flow >= 0 %}positive{% else %}negative{% endif %}">
-            <h3>Net Cash Flow</h3>
-            <h2>{{ cash_flow_data.summary.net_cash_flow_formatted }}</h2>
-        </div>
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card positive">
+      <h3>Total Income</h3>
+      <h2>{{ cash_flow_data.summary.total_income_formatted }}</h2>
     </div>
+    <div class="summary-card negative">
+      <h3>Total Expenses</h3>
+      <h2>{{ cash_flow_data.summary.total_expenses_formatted }}</h2>
+    </div>
+    <div
+      class="summary-card {% if cash_flow_data.summary.net_cash_flow >= 0 %}positive{% else %}negative{% endif %}"
+    >
+      <h3>Net Cash Flow</h3>
+      <h2>{{ cash_flow_data.summary.net_cash_flow_formatted }}</h2>
+    </div>
+  </div>
 
-    <!-- Yearly Comparison Chart -->
-    <div class="chart-section">
-        <h3>Yearly Financial Overview</h3>
-        <div class="chart-container">
-            <canvas id="yearlyChart" width="400" height="200"></canvas>
-        </div>
+  <!-- Yearly Comparison Chart -->
+  <div class="chart-section">
+    <h3>Yearly Financial Overview</h3>
+    <div class="chart-container">
+      <canvas id="yearlyChart" width="400" height="200"></canvas>
     </div>
+  </div>
 
-    <!-- Yearly Data Table -->
-    <div class="data-section">
-        <h3>Yearly Breakdown</h3>
-        <div class="data-table">
-            <div class="table-header">
-                <span>Year</span>
-                <span>Income</span>
-                <span>Expenses</span>
-                <span>Balance</span>
-                <span>Savings Rate</span>
-            </div>
-            {% for year_data in yearly_data %}
-            <div class="table-row">
-                <span class="year">{{ year_data.year }}</span>
-                <span class="income">£{{ "%.2f"|format(year_data.income) }}</span>
-                <span class="expense">£{{ "%.2f"|format(year_data.expenses) }}</span>
-                <span class="balance {% if year_data.balance >= 0 %}positive{% else %}negative{% endif %}">
-                    £{{ "%.2f"|format(year_data.balance) }}
-                </span>
-                <span class="savings-rate">
-                    {% if year_data.income > 0 %}
-                        {{ "%.1f"|format((year_data.balance / year_data.income) * 100) }}%
-                    {% else %}
-                        0%
-                    {% endif %}
-                </span>
-            </div>
-            {% endfor %}
-        </div>
+  <!-- Yearly Data Table -->
+  <div class="data-section">
+    <h3>Yearly Breakdown</h3>
+    <div class="data-table">
+      <div class="table-header">
+        <span>Year</span>
+        <span>Income</span>
+        <span>Expenses</span>
+        <span>Balance</span>
+        <span>Savings Rate</span>
+      </div>
+      {% for year_data in yearly_data %}
+      <div class="table-row">
+        <span class="year">{{ year_data.year }}</span>
+        <span class="income">£{{ "%.2f"|format(year_data.income) }}</span>
+        <span class="expense">£{{ "%.2f"|format(year_data.expenses) }}</span>
+        <span
+          class="balance {% if year_data.balance >= 0 %}positive{% else %}negative{% endif %}"
+        >
+          £{{ "%.2f"|format(year_data.balance) }}
+        </span>
+        <span class="savings-rate">
+          {% if year_data.income > 0 %} {{ "%.1f"|format((year_data.balance /
+          year_data.income) * 100) }}% {% else %} 0% {% endif %}
+        </span>
+      </div>
+      {% endfor %}
     </div>
+  </div>
 
-    <!-- Category Breakdown -->
-    <div class="category-section">
-        <h3>Category Spending Breakdown</h3>
-        <div class="category-grid">
-            {% for category in category_report.categories %}
-            <div class="category-item">
-                <div class="category-header">
-                    <span class="category-name">{{ category.category_name }}</span>
-                    <span class="category-amount">{{ category.amount_formatted }}</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ category.progress_width }}%"></div>
-                </div>
-                <div class="category-percentage">{{ "%.1f"|format(category.percentage) }}%</div>
-            </div>
-            {% endfor %}
+  <!-- Category Breakdown -->
+  <div class="category-section">
+    <h3>Category Spending Breakdown</h3>
+    <div class="category-grid">
+      {% for category in category_report.categories %}
+      <div class="category-item">
+        <div class="category-header">
+          <span class="category-name">{{ category.category_name }}</span>
+          <span class="category-amount">{{ category.amount_formatted }}</span>
         </div>
+        <div class="progress-bar">
+          <div
+            class="progress-fill"
+            style="width: {{ category.progress_width }}%"
+          ></div>
+        </div>
+        <div class="category-percentage">
+          {{ "%.1f"|format(category.percentage) }}%
+        </div>
+      </div>
+      {% endfor %}
     </div>
+  </div>
 </div>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Yearly Chart
-    const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
-    const yearlyData = {
-        labels: [{% for year in yearly_data %}'{{ year.year }}'{% if not loop.last %},{% endif %}{% endfor %}],
-        datasets: [
-            {
-                label: 'Income',
-                data: [{% for year in yearly_data %}{{ year.income }}{% if not loop.last %},{% endif %}{% endfor %}],
-                backgroundColor: '#10B981',
-                borderColor: '#10B981',
-                borderWidth: 2
-            },
-            {
-                label: 'Expenses',
-                data: [{% for year in yearly_data %}{{ year.expenses }}{% if not loop.last %},{% endif %}{% endfor %}],
-                backgroundColor: '#EF4444',
-                borderColor: '#EF4444',
-                borderWidth: 2
-            }
-        ]
-    };
+  document.addEventListener('DOMContentLoaded', function() {
+      // Yearly Chart
+      const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
+      const yearlyData = {
+          labels: [{% for year in yearly_data %}'{{ year.year }}'{% if not loop.last %},{% endif %}{% endfor %}],
+          datasets: [
+              {
+                  label: 'Income',
+                  data: [{% for year in yearly_data %}{{ year.income }}{% if not loop.last %},{% endif %}{% endfor %}],
+                  backgroundColor: '#10B981',
+                  borderColor: '#10B981',
+                  borderWidth: 2
+              },
+              {
+                  label: 'Expenses',
+                  data: [{% for year in yearly_data %}{{ year.expenses }}{% if not loop.last %},{% endif %}{% endfor %}],
+                  backgroundColor: '#EF4444',
+                  borderColor: '#EF4444',
+                  borderWidth: 2
+              }
+          ]
+      };
 
-    new Chart(yearlyCtx, {
-        type: 'bar',
-        data: yearlyData,
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return '£' + value;
-                        }
-                    }
-                }
-            }
-        }
-    });
-});
+      new Chart(yearlyCtx, {
+          type: 'bar',
+          data: yearlyData,
+          options: {
+              responsive: true,
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                      ticks: {
+                          callback: function(value) {
+                              return '£' + value;
+                          }
+                      }
+                  }
+              }
+          }
+      });
+  });
 </script>
 {% endblock %}

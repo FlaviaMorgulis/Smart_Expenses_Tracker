@@ -1,0 +1,235 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Budget - SmartExpensesTracker{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/budget.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="budget-container">
+  <div class="welcome-section">
+    <div class="welcome-content">
+      <h1>Budget Management </h1>
+      <p class="lead">Track and manage your spending budgets effectively</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="alert('Add Budget clicked!')">
+        <i class="icon"></i> Add Budget
+      </button>
+      <button class="btn btn-secondary" onclick="alert('Export clicked!')">
+        <i class="icon"></i> Export Data
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-info">
+        <div class="stat-value">£2,500.00</div>
+        <div class="stat-label">Total Budget</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-info">
+        <div class="stat-value negative">£1,850.00</div>
+        <div class="stat-label">Spent This Month</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-info">
+        <div class="stat-value positive">£650.00</div>
+        <div class="stat-label">Remaining</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon"></div>
+      <div class="stat-info">
+        <div class="stat-value warning">74.0%</div>
+        <div class="stat-label">Budget Used</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="budget-section">
+    <div class="section-header">
+      <h2>Monthly Progress</h2>
+      <span class="section-subtitle">74.0% of budget used</span>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: 74%"></div>
+      </div>
+      <div class="progress-details">
+        <span>£1,850 spent of £2,500 budget</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="budget-section">
+    <div class="section-header">
+      <h2>Category Budgets</h2>
+      <button class="btn btn-outline" onclick="alert('Add category clicked!')">
+        <i class="icon"></i> Add Category
+      </button>
+    </div>
+    
+    <div class="category-grid">
+      <div class="category-card">
+        <div class="category-header">
+          <h3>Food &amp; Dining</h3>
+          <div class="category-actions">
+            <button class="btn-icon" onclick="alert('Edit Food budget')" title="Edit"></button>
+            <button class="btn-icon delete" onclick="alert('Delete Food budget')" title="Delete"></button>
+          </div>
+        </div>
+        <div class="category-amount">£800</div>
+        <div class="category-progress">
+          <div class="progress-bar small">
+            <div class="progress-fill" style="width: 81%"></div>
+          </div>
+          <div class="progress-text">
+            <span>£650 spent</span>
+            <span>81%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="category-card">
+        <div class="category-header">
+          <h3>Transportation</h3>
+          <div class="category-actions">
+            <button class="btn-icon" onclick="alert('Edit Transportation budget')" title="Edit"></button>
+            <button class="btn-icon delete" onclick="alert('Delete Transportation budget')" title="Delete"></button>
+          </div>
+        </div>
+        <div class="category-amount">£300</div>
+        <div class="category-progress">
+          <div class="progress-bar small">
+            <div class="progress-fill" style="width: 82%"></div>
+          </div>
+          <div class="progress-text">
+            <span>£245 spent</span>
+            <span>82%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="category-card">
+        <div class="category-header">
+          <h3>Entertainment</h3>
+          <div class="category-actions">
+            <button class="btn-icon" onclick="alert('Edit Entertainment budget')" title="Edit"></button>
+            <button class="btn-icon delete" onclick="alert('Delete Entertainment budget')" title="Delete"></button>
+          </div>
+        </div>
+        <div class="category-amount">£200</div>
+        <div class="category-progress">
+          <div class="progress-bar small">
+            <div class="progress-fill" style="width: 90%"></div>
+          </div>
+          <div class="progress-text">
+            <span>£180 spent</span>
+            <span>90%</span>
+          </div>
+        </div>
+        <div class="category-alert warning"> Approaching limit</div>
+      </div>
+
+      <div class="category-card">
+        <div class="category-header">
+          <h3>Shopping</h3>
+          <div class="category-actions">
+            <button class="btn-icon" onclick="alert('Edit Shopping budget')" title="Edit"></button>
+            <button class="btn-icon delete" onclick="alert('Delete Shopping budget')" title="Delete"></button>
+          </div>
+        </div>
+        <div class="category-amount">£400</div>
+        <div class="category-progress">
+          <div class="progress-bar small">
+            <div class="progress-fill" style="width: 80%"></div>
+          </div>
+          <div class="progress-text">
+            <span>£320 spent</span>
+            <span>80%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="category-card">
+        <div class="category-header">
+          <h3>Healthcare</h3>
+          <div class="category-actions">
+            <button class="btn-icon" onclick="alert('Edit Healthcare budget')" title="Edit"></button>
+            <button class="btn-icon delete" onclick="alert('Delete Healthcare budget')" title="Delete"></button>
+          </div>
+        </div>
+        <div class="category-amount">£250</div>
+        <div class="category-progress">
+          <div class="progress-bar small">
+            <div class="progress-fill" style="width: 50%"></div>
+          </div>
+          <div class="progress-text">
+            <span>£125 spent</span>
+            <span>50%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="category-card">
+        <div class="category-header">
+          <h3>Utilities</h3>
+          <div class="category-actions">
+            <button class="btn-icon" onclick="alert('Edit Utilities budget')" title="Edit"></button>
+            <button class="btn-icon delete" onclick="alert('Delete Utilities budget')" title="Delete"></button>
+          </div>
+        </div>
+        <div class="category-amount">£350</div>
+        <div class="category-progress">
+          <div class="progress-bar small">
+            <div class="progress-fill" style="width: 94%"></div>
+          </div>
+          <div class="progress-text">
+            <span>£330 spent</span>
+            <span>94%</span>
+          </div>
+        </div>
+        <div class="category-alert warning"> Approaching limit</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+      card.style.transition = 'all 0.4s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 100);
+  });
+
+  const categoryCards = document.querySelectorAll('.category-card');
+  categoryCards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(15px)';
+    setTimeout(() => {
+      card.style.transition = 'all 0.3s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 300 + index * 50);
+  });
+});
+</script>
+
+{% endblock %}
