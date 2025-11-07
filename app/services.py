@@ -3,22 +3,18 @@ from . import db
 from .models import User, Category, Transaction, Member, Budget, MembersTransaction
 
 class CategoryService:
-    """Simple category management"""
+    """Category management service"""
     
     @staticmethod
     def get_all_categories():
-        """Get all categories"""
         return Category.query.all()
     
     @staticmethod
     def get_category_by_id(category_id):
-        """Get category by ID"""
         return Category.query.get(category_id)
     
     @staticmethod
     def create_category(category_name, user_id=None):
-        """Create new category - Note: Categories are Enum-constrained in this model"""
-        # This model uses Enum constraint, so only predefined categories can be created
         valid_categories = ['Transport', 'Utilities', 'Entertainment', 'Food', 'Healthcare', 'Shopping', 'Other']
         
         if category_name not in valid_categories:
@@ -26,7 +22,7 @@ class CategoryService:
         
         category = Category(
             category_name=category_name,  
-            user_id=user_id  # None for system categories
+            user_id=user_id
         )
         db.session.add(category)
         db.session.commit()
@@ -34,17 +30,14 @@ class CategoryService:
     
     @staticmethod
     def get_system_categories():
-        """Get all system categories (user_id is None)"""
         return Category.query.filter_by(user_id=None).all()
     
     @staticmethod 
     def get_categories_by_name(category_name):
-        """Get categories by name"""
         return Category.query.filter_by(category_name=category_name).all()
     
     @staticmethod
     def initialize_system_categories():
-        """Initialize system categories if they don't exist - compatible with seed script"""
         system_categories = ['Transport', 'Utilities', 'Entertainment', 'Food', 'Healthcare', 'Shopping', 'Other']
         created_count = 0
         
@@ -61,23 +54,20 @@ class CategoryService:
 
 
 class UserService:
-    """Basic user management"""
+    """User management service"""
     
     @staticmethod
     def get_user_by_id(user_id):
-        """Get user by ID"""
         return User.query.get(user_id)
     
     @staticmethod
     def get_user_by_email(email):
-        """Get user by email"""
         return User.query.filter_by(email=email).first()
     
     @staticmethod
     def create_user(username, email, password_hash):
-        """Create new user"""
         user = User(
-            user_name=username,  # Model uses user_name, not username
+            user_name=username,
             email=email,
             password_hash=password_hash
         )
@@ -87,7 +77,6 @@ class UserService:
     
     @staticmethod
     def add_member_to_user(user, name, relationship):
-        """Add a member to a user"""
         member = Member(
             user_id=user.user_id,
             name=name,
@@ -99,23 +88,20 @@ class UserService:
 
 
 class TransactionService:
-    """Basic transaction management"""
+    """Transaction management service"""
     
     @staticmethod
     def get_user_transactions(user_id):
-        """Get all transactions for a user"""
         return Transaction.query.filter_by(user_id=user_id).order_by(
             Transaction.transaction_date.desc()
         ).all()
     
     @staticmethod
     def get_transaction_by_id(transaction_id):
-        """Get transaction by ID"""
         return Transaction.query.get(transaction_id)
     
     @staticmethod
     def create_transaction(user_id, amount, category_id, transaction_type, transaction_date=None, user_participates=True):
-        """Create new transaction with participation control"""
         if not transaction_date:
             transaction_date = datetime.now()
             
@@ -133,20 +119,17 @@ class TransactionService:
     
     @staticmethod
     def add_personal_transaction(user, amount, transaction_type, category_id, transaction_date=None):
-        """Add a personal transaction (User only, no members)"""
         return TransactionService.create_transaction(
             user_id=user.user_id,
             amount=amount,
             category_id=category_id,
             transaction_type=transaction_type,
             transaction_date=transaction_date,
-            user_participates=True  # User pays and participates
+            user_participates=True
         )
     
     @staticmethod
     def add_shared_transaction(user, amount, transaction_type, category_id, member_ids, user_participates=True, transaction_date=None):
-        """Add a shared transaction with members"""
-        # Create the transaction
         transaction = TransactionService.create_transaction(
             user_id=user.user_id,
             amount=amount,
@@ -156,7 +139,6 @@ class TransactionService:
             user_participates=user_participates
         )
         
-        # Add members to the transaction
         for member_id in member_ids:
             TransactionService.add_member_to_transaction(transaction, member_id)
         
@@ -164,23 +146,20 @@ class TransactionService:
     
     @staticmethod
     def add_member_transaction(user, member_id, amount, transaction_type, category_id, transaction_date=None):
-        """Add a transaction where User pays for a member (member-only expense)"""
         transaction = TransactionService.create_transaction(
             user_id=user.user_id,
             amount=amount,
             category_id=category_id,
             transaction_type=transaction_type,
             transaction_date=transaction_date,
-            user_participates=False  # User pays but doesn't participate in split
+            user_participates=False
         )
         
-        # Add the member to the transaction
         TransactionService.add_member_to_transaction(transaction, member_id)
         return transaction
     
     @staticmethod
     def add_member_to_transaction(transaction, member_id):
-        """Add a member to an existing transaction"""
         member_transaction = MembersTransaction(
             transaction_id=transaction.transaction_id,
             member_id=member_id
@@ -191,7 +170,6 @@ class TransactionService:
     
     @staticmethod
     def delete_transaction(transaction_id):
-        """Delete a transaction"""
         transaction = Transaction.query.get(transaction_id)
         if transaction:
             db.session.delete(transaction)
@@ -201,14 +179,12 @@ class TransactionService:
     
     @staticmethod
     def get_recent_transactions(user_id, limit=10):
-        """Get recent transactions for user"""
         return Transaction.query.filter_by(user_id=user_id).order_by(
             Transaction.transaction_date.desc()
         ).limit(limit).all()
     
     @staticmethod
     def get_recent_transactions_table_data(user_id, limit=10):
-        """Get recent transactions formatted for table display - beginner version"""
         transactions = TransactionService.get_recent_transactions(user_id, limit)
         
         table_data = []
@@ -230,37 +206,54 @@ class TransactionService:
 
 
 class SimpleAnalyticsService:
-    """Basic analytics """
-    
-    @staticmethod
-    def get_total_income(user_id):
-        """Get total income for user"""
-        transactions = Transaction.query.filter_by(
-            user_id=user_id, 
-            transaction_type='income'
-        ).all()
-        return sum(float(t.amount) for t in transactions)
-    
-    @staticmethod
-    def get_total_expenses(user_id):
-        """Get total expenses for user"""
-        transactions = Transaction.query.filter_by(
-            user_id=user_id, 
-            transaction_type='expense'
-        ).all()
-        return sum(float(t.amount) for t in transactions)
-    
-    @staticmethod
-    def get_balance(user_id):
-        """Get current balance (income - expenses)"""
-        income = SimpleAnalyticsService.get_total_income(user_id)
-        expenses = SimpleAnalyticsService.get_total_expenses(user_id)
-        return income - expenses
+    """Analytics service for spending data"""
     
     @staticmethod
     def get_monthly_totals(user_id, year, month):
-        """Get income/expense totals for specific month"""
-        # Simple date filtering
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)
+        else:
+            end_date = datetime(year, month + 1, 1)
+        
+        monthly_income = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == 'income',
+            Transaction.transaction_date >= start_date,
+            Transaction.transaction_date < end_date
+        ).scalar() or 0
+        
+        monthly_expenses = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == 'expense',
+            Transaction.transaction_date >= start_date,
+            Transaction.transaction_date < end_date
+        ).scalar() or 0
+        
+        return {
+            'income': float(monthly_income),
+            'expenses': float(monthly_expenses),
+            'balance': float(monthly_income) - float(monthly_expenses)
+        }
+    
+    @staticmethod
+    def get_total_income(user_id):
+        total = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == 'income'
+        ).scalar() or 0
+        return float(total)
+    
+    @staticmethod
+    def get_total_expenses(user_id):
+        total = db.session.query(db.func.sum(Transaction.amount)).filter(
+            Transaction.user_id == user_id,
+            Transaction.transaction_type == 'expense'
+        ).scalar() or 0
+        return float(total)
+    
+    @staticmethod
+    def get_monthly_spending_by_category(user_id, year, month):
         start_date = datetime(year, month, 1)
         if month == 12:
             end_date = datetime(year + 1, 1, 1)
@@ -269,23 +262,23 @@ class SimpleAnalyticsService:
         
         transactions = Transaction.query.filter(
             Transaction.user_id == user_id,
+            Transaction.transaction_type == 'expense',
             Transaction.transaction_date >= start_date,
             Transaction.transaction_date < end_date
         ).all()
         
-        income = sum(float(t.amount) for t in transactions if t.transaction_type == 'income')
-        expenses = sum(float(t.amount) for t in transactions if t.transaction_type == 'expense')
+        category_totals = {}
+        for transaction in transactions:
+            category_name = transaction.category.category_name if transaction.category else 'Other'
+            if category_name in category_totals:
+                category_totals[category_name] += float(transaction.amount)
+            else:
+                category_totals[category_name] = float(transaction.amount)
         
-        return {
-            'income': income,
-            'expenses': expenses,
-            'balance': income - expenses,
-            'transaction_count': len(transactions)
-        }
+        return category_totals
     
     @staticmethod
     def get_spending_by_category(user_id):
-        """Get simple spending breakdown by category"""
         transactions = Transaction.query.filter_by(
             user_id=user_id,
             transaction_type='expense'
@@ -303,11 +296,10 @@ class SimpleAnalyticsService:
 
 
 class BudgetService:
-    """Budget management"""
+    """Budget management service"""
     
     @staticmethod
     def create_simple_budget(user_id, category_id, amount, budget_period='monthly'):
-        """Create a budget"""
         budget = Budget(
             user_id=user_id,
             category_id=category_id,
@@ -321,12 +313,10 @@ class BudgetService:
     
     @staticmethod
     def get_user_budgets(user_id):
-        """Get all budgets for user"""
         return Budget.query.filter_by(user_id=user_id, is_active=True).all()
     
     @staticmethod
     def check_budget_status(user_id, category_id):
-        """Budget check - see if user is over budget"""
         budget = Budget.query.filter_by(
             user_id=user_id, 
             category_id=category_id, 
@@ -336,7 +326,6 @@ class BudgetService:
         if not budget:
             return None
         
-        # Get current month spending for this category
         now = datetime.now()
         start_of_month = datetime(now.year, now.month, 1)
         
@@ -360,7 +349,6 @@ class BudgetService:
     
     @staticmethod
     def check_budget_alerts(user_id):
-        """Simple budget alerts"""
         budgets = BudgetService.get_user_budgets(user_id)
         alerts = []
         
@@ -368,7 +356,7 @@ class BudgetService:
             status = BudgetService.check_budget_status(user_id, budget.category_id)
             if status and status['is_over_budget']:
                 alerts.append({
-                    'budget_id': budget.budget_id,  # Model uses budget_id, not id
+                    'budget_id': budget.budget_id,
                     'category_name': budget.category.category_name if budget.category else 'Unknown',
                     'message': f"Over budget in {budget.category.category_name if budget.category else 'category'}",
                     'spent': status['spent'],
@@ -378,18 +366,131 @@ class BudgetService:
         
         return alerts
 
+    @staticmethod
+    def get_user_total_budget(user_id):
+        total_budget = Budget.query.filter_by(
+            user_id=user_id, 
+            is_active=True,
+            category_id=None
+        ).first()
+        
+        if total_budget:
+            return float(total_budget.budget_amount)
+        return 0.0
+    
+    @staticmethod
+    def get_user_budget_alerts(user_id):
+        budgets = Budget.query.filter_by(user_id=user_id, is_active=True).all()
+        alerts = []
+        
+        for budget in budgets:
+            status = BudgetService.check_budget_status(user_id, budget.category_id)
+            if status:
+                alert_data = {
+                    'budget_id': budget.budget_id,
+                    'category_name': budget.category.category_name if budget.category else 'Total Budget',
+                    'budget_amount': status['budget_amount'],
+                    'spent': status['spent'],
+                    'percentage_used': status['percentage_used'],
+                    'remaining': status['remaining'],
+                    'is_over_budget': status['is_over_budget']
+                }
+                
+                if status['is_over_budget']:
+                    alert_data['alert_level'] = 'over-budget'
+                elif status['percentage_used'] > 80:
+                    alert_data['alert_level'] = 'near-limit'
+                else:
+                    alert_data['alert_level'] = 'within-budget'
+                
+                alerts.append(alert_data)
+        
+        return alerts
+    
+    @staticmethod
+    def create_or_update_budget(user_id, budget_amount, category_id=None, budget_period='monthly'):
+        existing_budget = Budget.query.filter_by(
+            user_id=user_id,
+            category_id=category_id,
+            is_active=True
+        ).first()
+        
+        if existing_budget:
+            existing_budget.budget_amount = budget_amount
+            existing_budget.budget_period = budget_period
+            existing_budget.updated_at = datetime.now()
+        else:
+            budget = Budget(
+                user_id=user_id,
+                budget_amount=budget_amount,
+                category_id=category_id,
+                budget_period=budget_period,
+                is_active=True
+            )
+            db.session.add(budget)
+        
+        db.session.commit()
+        return True
+    
+    @staticmethod
+    def create_or_update_total_budget(user_id, budget_amount, budget_period='monthly'):
+        existing_budget = Budget.query.filter_by(
+            user_id=user_id,
+            category_id=None,
+            is_active=True
+        ).first()
+        
+        if existing_budget:
+            existing_budget.budget_amount = budget_amount
+            existing_budget.budget_period = budget_period
+            existing_budget.updated_at = datetime.now()
+        else:
+            budget = Budget(
+                user_id=user_id,
+                budget_amount=budget_amount,
+                category_id=None,
+                budget_period=budget_period,
+                is_active=True
+            )
+            db.session.add(budget)
+        
+        db.session.commit()
+        return True
+    
+    @staticmethod
+    def get_category_budget_status(user_id, category_id):
+        return BudgetService.check_budget_status(user_id, category_id)
+    
+    @staticmethod
+    def get_total_budget_status(user_id):
+        total_budget = BudgetService.get_user_total_budget(user_id)
+        if total_budget == 0:
+            return None
+            
+        now = datetime.now()
+        monthly_data = SimpleAnalyticsService.get_monthly_totals(user_id, now.year, now.month)
+        
+        spent = monthly_data['expenses']
+        remaining = total_budget - spent
+        
+        return {
+            'budget_amount': total_budget,
+            'spent': spent,
+            'remaining': remaining,
+            'is_over_budget': spent > total_budget,
+            'percentage_used': (spent / total_budget * 100) if total_budget > 0 else 0
+        }
+
 
 class MemberService:
-    """Basic member management"""
+    """Member management service"""
     
     @staticmethod
     def get_user_members(user_id):
-        """Get all members for a user"""
         return Member.query.filter_by(user_id=user_id).all()
     
     @staticmethod
     def create_member(user_id, name, email=None):
-        """Create new member"""
         member = Member(
             user_id=user_id,
             name=name,
@@ -401,26 +502,21 @@ class MemberService:
     
     @staticmethod
     def get_member_by_id(member_id):
-        """Get member by ID"""
         return Member.query.get(member_id)
 
 
 class DashboardService:
-    """Simple dashboard data"""
+    """Dashboard data service"""
     
     @staticmethod
     def get_dashboard_summary(user_id):
-        """Get basic dashboard information"""
-        # Get current month data
         now = datetime.now()
         current_month_data = SimpleAnalyticsService.get_monthly_totals(
             user_id, now.year, now.month
         )
         
-        # Get recent transactions using table format
         recent_transactions_data = TransactionService.get_recent_transactions_table_data(user_id, 5)
         
-        # Get active budgets count and alerts
         budgets = BudgetService.get_user_budgets(user_id)
         budget_alerts = BudgetService.check_budget_alerts(user_id)
         
@@ -436,13 +532,11 @@ class DashboardService:
         }
 
 
-#  Export Service
 class ExportService:
-    """Basic data export functionality"""
+    """Data export service"""
     
     @staticmethod
     def export_transactions_to_csv(user_id):
-        """Simple CSV export of transactions"""
         transactions = TransactionService.get_user_transactions(user_id)
         
         csv_data = "Date,Category,Type,Amount,Members,Personal\n"
@@ -456,23 +550,19 @@ class ExportService:
         return csv_data
 
 
-# Utilities
 class UtilityService:
-    """Helper functions for common tasks"""
+    """Utility service for common tasks"""
     
     @staticmethod
     def format_currency(amount):
-        """Format amount as currency"""
         return f"£{float(amount):.2f}"
     
     @staticmethod
     def get_current_month_name():
-        """Get current month name"""
         return datetime.now().strftime('%B')
     
     @staticmethod
     def get_date_range_for_month(year, month):
-        """Get start and end dates for a month"""
         start_date = datetime(year, month, 1)
         if month == 12:
             end_date = datetime(year + 1, 1, 1)
@@ -482,21 +572,18 @@ class UtilityService:
     
     @staticmethod
     def calculate_percentage(part, total):
-        """Calculate percentage safely"""
         if total == 0:
             return 0
         return (part / total) * 100
 
 
 class ReportingService:
-    """Simple reporting functionality for documentation requirements"""
+    """Reporting service"""
     
     @staticmethod
     def get_category_report(user_id):
-        """Get category spending report for reports page"""
         category_breakdown = SimpleAnalyticsService.get_spending_by_category(user_id)
         
-        # Format for reports page display
         formatted_report = []
         total_expenses = sum(category_breakdown.values())
         
@@ -507,7 +594,7 @@ class ReportingService:
                 'amount': amount,
                 'amount_formatted': UtilityService.format_currency(amount),
                 'percentage': percentage,
-                'progress_width': min(percentage, 100)  # Cap at 100% for progress bars
+                'progress_width': min(percentage, 100)
             })
         
         return {
@@ -518,7 +605,6 @@ class ReportingService:
     
     @staticmethod
     def get_monthly_report(user_id, year, month):
-        """Get monthly spending report"""
         monthly_data = SimpleAnalyticsService.get_monthly_totals(user_id, year, month)
         category_data = SimpleAnalyticsService.get_spending_by_category(user_id)
         
@@ -531,17 +617,14 @@ class ReportingService:
 
 
 class CashFlowService:
-    """Simple cash flow analysis for documentation requirements"""
+    """Cash flow analysis service"""
     
     @staticmethod
     def get_cash_flow_summary(user_id):
-        """Get cash flow overview data for cash flow page"""
-        # Get basic totals
         total_income = SimpleAnalyticsService.get_total_income(user_id)
         total_expenses = SimpleAnalyticsService.get_total_expenses(user_id)
         net_cash_flow = total_income - total_expenses
         
-        # Get current month data
         now = datetime.now()
         current_month_data = SimpleAnalyticsService.get_monthly_totals(user_id, now.year, now.month)
         
@@ -567,23 +650,18 @@ class CashFlowService:
 
 
 class FamilyExpenseService:
-    """Simple family expense tracking for documentation requirements"""
+    """Family expense tracking service"""
     
     @staticmethod
     def get_family_dashboard(user_id):
-        """Get family expense dashboard data"""
-        # Get all user members
         members = MemberService.get_user_members(user_id)
         
-        # Get recent shared transactions (transactions with members)
         all_transactions = TransactionService.get_user_transactions(user_id)
         shared_transactions = [t for t in all_transactions if not t.is_personal_transaction()]
         recent_shared = sorted(shared_transactions, key=lambda x: x.transaction_date, reverse=True)[:5]
         
-        # Calculate total family expenses
         total_family_expenses = sum(float(t.amount) for t in shared_transactions if t.transaction_type == 'expense')
         
-        # Format member data
         member_data = []
         for member in members:
             member_transactions = [t for t in shared_transactions if any(mt.member_id == member.member_id for mt in t.members)]
@@ -598,7 +676,6 @@ class FamilyExpenseService:
                 'transaction_count': len(member_transactions)
             })
         
-        # Format recent shared transactions for table
         recent_shared_formatted = []
         for t in recent_shared:
             recent_shared_formatted.append({
@@ -622,5 +699,3 @@ class FamilyExpenseService:
             'members': member_data,
             'recent_shared_transactions': recent_shared_formatted
         }
-
-
