@@ -1,72 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}SmartExpensesTracker{% endblock %}</title>
-    
+
     <!-- Original CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+  </head>
+  <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="nav-container">
-            <div class="brand">
-                <div class="logo">💰</div>
-                <h1><a href="{{ url_for('main.index') }}" style="text-decoration: none; color: inherit;">SmartExpensesTracker</a></h1>
-            </div>
-            
-            <div class="nav-links">
-                {% if current_user.is_authenticated %}
-                <!-- Logged in users -->
-                <a href="{{ url_for('main.dashboard') }}" class="nav-link">Home</a>
-                <a href="{{ url_for('main.transactions') }}" class="nav-link">Transactions</a>
-                <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
-                <a href="{{ url_for('main.faq') }}" class="nav-link">FAQ</a>
-                <div class="user-menu">
-                    <span class="user-name">{{ current_user.user_name }}</span>
-                    <div class="user-dropdown">
-                        <a href="{{ url_for('main.profile') }}">Profile</a>
-                        <a href="{{ url_for('auth.logout') }}">Logout</a>
-                    </div>
-                </div>
-                {% else %}
-                <!-- Not logged in users - ONLY About -->
-                <a href="{{ url_for('main.index') }}" class="nav-link">Home</a>
-                <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
-                {% endif %}
-            </div>
+      <div class="nav-container">
+        <div class="brand">
+          <div class="logo">💰</div>
+          <h1>
+            <a
+              href="{{ url_for('main.index') }}"
+              style="text-decoration: none; color: inherit"
+              >SmartExpensesTracker</a
+            >
+          </h1>
         </div>
+
+        <div class="nav-links">
+          {% if current_user.is_authenticated %}
+          <!-- Logged in users -->
+          <a href="{{ url_for('main.dashboard') }}" class="nav-link">Home</a>
+          <a href="{{ url_for('transactions.transactions') }}" class="nav-link"
+            >Transactions</a
+          >
+          <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
+          <a href="{{ url_for('main.faq') }}" class="nav-link">FAQ</a>
+          <div class="user-menu">
+            <span class="user-name">{{ current_user.user_name }}</span>
+            <div class="user-dropdown">
+              <a href="{{ url_for('main.profile') }}">Profile</a>
+              <a href="{{ url_for('auth.logout') }}">Logout</a>
+            </div>
+          </div>
+          {% else %}
+          <!-- Not logged in users - ONLY About -->
+          <a href="{{ url_for('main.index') }}" class="nav-link">Home</a>
+          <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
+          {% endif %}
+        </div>
+      </div>
     </nav>
 
     <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">
-                        {{ message }}
-                        <button class="flash-close">&times;</button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %}
+    <div class="flash-messages">
+      {% for category, message in messages %}
+      <div class="flash-message {{ category }}">
+        {{ message }}
+        <button class="flash-close">&times;</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
 
     <!-- Main Content -->
-    <main class="wrapper">
-        {% block content %}{% endblock %}
-    </main>
+    <main class="wrapper">{% block content %}{% endblock %}</main>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
-            <p>&copy; 2025 SmartExpensesTracker. All rights reserved.</p>
-        </div>
+      <div class="footer-content">
+        <p>&copy; 2025 SmartExpensesTracker. All rights reserved.</p>
+      </div>
     </footer>
 
     <!-- External JS -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
+  </body>
 </html>
