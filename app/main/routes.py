@@ -773,6 +773,81 @@ def budget():
 def faq():
     return render_template('faq.html', user=current_user)
 
+@main_bp.route('/budget/add', methods=['POST'])
+@login_required
+def add_budget():
+    """Add a new budget"""
+    try:
+        data = request.get_json()
+        category_id = int(data.get('category_id')) if data.get('category_id') else None
+        amount = float(data.get('amount', 0))
+        budget_period = data.get('budget_period', 'monthly')
+        
+        if not amount or amount <= 0:
+            return jsonify({'success': False, 'message': 'Invalid budget amount'}), 400
+        
+        # Use existing service method
+        BudgetService.create_or_update_budget(
+            user_id=current_user.user_id,
+            budget_amount=amount,
+            category_id=category_id,
+            budget_period=budget_period
+        )
+        
+        return jsonify({'success': True, 'message': 'Budget added successfully'})
+    except Exception as e:
+        print(f"Error adding budget: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@main_bp.route('/budget/<int:budget_id>/edit', methods=['POST'])
+@login_required
+def edit_budget(budget_id):
+    """Edit an existing budget"""
+    try:
+        budget = Budget.query.get_or_404(budget_id)
+        
+        # Verify ownership
+        if budget.user_id != current_user.user_id:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        data = request.get_json()
+        amount = float(data.get('amount', 0)) if data.get('amount') else None
+        budget_period = data.get('budget_period')
+        
+        if amount and amount > 0:
+            budget.budget_amount = amount
+        if budget_period:
+            budget.budget_period = budget_period
+        
+        budget.updated_at = datetime.now()
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Budget updated successfully'})
+    except Exception as e:
+        print(f"Error editing budget: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@main_bp.route('/budget/<int:budget_id>/delete', methods=['POST'])
+@login_required
+def delete_budget(budget_id):
+    """Delete a budget"""
+    try:
+        budget = Budget.query.get_or_404(budget_id)
+        
+        # Verify ownership
+        if budget.user_id != current_user.user_id:
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 403
+        
+        db.session.delete(budget)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Budget deleted successfully'})
+    except Exception as e:
+        print(f"Error deleting budget: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @main_bp.route('/api/annual_data')
 @login_required

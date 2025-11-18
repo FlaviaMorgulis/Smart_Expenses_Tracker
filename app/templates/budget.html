@@ -1,235 +1,599 @@
-﻿{% extends "base.html" %}
-
-{% block title %}Budget - SmartExpensesTracker{% endblock %}
-
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/budget.css') }}">
-{% endblock %}
-
-{% block content %}
-<div class="budget-container">
-  <div class="welcome-section">
-    <div class="welcome-content">
-      <h1>Budget Management </h1>
-      <p class="lead">Track and manage your spending budgets effectively</p>
-    </div>
-    <div class="header-actions">
-      <button class="btn btn-primary" onclick="alert('Add Budget clicked!')">
-        <i class="icon"></i> Add Budget
-      </button>
-      <button class="btn btn-secondary" onclick="alert('Export clicked!')">
-        <i class="icon"></i> Export Data
-      </button>
-    </div>
-  </div>
-
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon"></div>
-      <div class="stat-info">
-        <div class="stat-value">£2,500.00</div>
-        <div class="stat-label">Total Budget</div>
-      </div>
+﻿{% extends "base.html" %} {% block title %}Budget - SmartExpensesTracker{%
+endblock %} {% block head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/budget.css') }}"
+/>
+{% endblock %} {% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-content">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h1>Budget Management 💰</h1>
+      <p class="lead">Take control of your spending with smart budgeting</p>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-icon"></div>
-      <div class="stat-info">
-        <div class="stat-value negative">£1,850.00</div>
-        <div class="stat-label">Spent This Month</div>
+    <!-- Monthly Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">💳</div>
+        <div class="stat-info">
+          <h3>TOTAL BUDGET</h3>
+          <h2 class="stat-amount">£2,500.00</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">📉</div>
+        <div class="stat-info">
+          <h3>SPENT THIS MONTH</h3>
+          <h2 class="stat-amount negative">£1,850.00</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+          <h3>REMAINING</h3>
+          <h2 class="stat-amount positive">£650.00</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <h3>BUDGET USED</h3>
+          <h2 class="stat-amount warning">74.0%</h2>
+        </div>
       </div>
     </div>
 
-    <div class="stat-card">
-      <div class="stat-icon"></div>
-      <div class="stat-info">
-        <div class="stat-value positive">£650.00</div>
-        <div class="stat-label">Remaining</div>
+    <!-- Budget Progress Section -->
+    <div class="analytics-section">
+      <div class="analytics-card">
+        <h4>Monthly Progress</h4>
+        <p class="analytics-subtitle">74.0% of budget used</p>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 74%"></div>
+          </div>
+          <div class="progress-details">
+            <span>£1,850 spent of £2,500 budget</span>
+          </div>
+        </div>
       </div>
     </div>
+    <!-- Category Budgets Section -->
+    <div class="analytics-section">
+      <div class="analytics-card full-width">
+        <div class="analytics-header">
+          <h4>Category Budgets</h4>
+          <button
+            class="btn secondary"
+            onclick="openAddModal()"
+            style="background: #6c757d; color: white; border: none"
+          >
+            <i class="icon"></i> Add Budget
+          </button>
+        </div>
 
-    <div class="stat-card">
-      <div class="stat-icon"></div>
-      <div class="stat-info">
-        <div class="stat-value warning">74.0%</div>
-        <div class="stat-label">Budget Used</div>
-      </div>
-    </div>
-  </div>
+        <div class="category-grid">
+          <div class="category-card">
+            <div class="category-header">
+              <h3>Food &amp; Dining</h3>
+              <div class="category-actions">
+                <button
+                  class="btn-icon"
+                  onclick="openEditModal(4, 'Food & Dining', 800, 'monthly')"
+                  title="Edit"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="btn-icon delete"
+                  onclick="deleteBudget(4, 'Food & Dining')"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="category-amount">£800</div>
+            <div class="category-progress">
+              <div class="progress-bar small">
+                <div
+                  class="progress-fill warning-level"
+                  style="width: 81%"
+                ></div>
+              </div>
+              <div class="progress-text">
+                <span>£650 spent</span>
+                <span>81%</span>
+              </div>
+            </div>
+            <div class="category-alert warning">⚠️ 81% - Monitor spending</div>
+          </div>
 
-  <div class="budget-section">
-    <div class="section-header">
-      <h2>Monthly Progress</h2>
-      <span class="section-subtitle">74.0% of budget used</span>
-    </div>
-    <div class="progress-container">
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: 74%"></div>
-      </div>
-      <div class="progress-details">
-        <span>£1,850 spent of £2,500 budget</span>
-      </div>
-    </div>
-  </div>
+          <div class="category-card">
+            <div class="category-header">
+              <h3>Transportation</h3>
+              <div class="category-actions">
+                <button
+                  class="btn-icon"
+                  onclick="openEditModal(1, 'Transportation', 300, 'monthly')"
+                  title="Edit"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="btn-icon delete"
+                  onclick="deleteBudget(1, 'Transportation')"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="category-amount">£300</div>
+            <div class="category-progress">
+              <div class="progress-bar small">
+                <div
+                  class="progress-fill warning-level"
+                  style="width: 82%"
+                ></div>
+              </div>
+              <div class="progress-text">
+                <span>£245 spent</span>
+                <span>82%</span>
+              </div>
+            </div>
+            <div class="category-alert warning">⚠️ 82% - Monitor spending</div>
+          </div>
 
-  <div class="budget-section">
-    <div class="section-header">
-      <h2>Category Budgets</h2>
-      <button class="btn btn-outline" onclick="alert('Add category clicked!')">
-        <i class="icon"></i> Add Category
-      </button>
-    </div>
-    
-    <div class="category-grid">
-      <div class="category-card">
-        <div class="category-header">
-          <h3>Food &amp; Dining</h3>
-          <div class="category-actions">
-            <button class="btn-icon" onclick="alert('Edit Food budget')" title="Edit"></button>
-            <button class="btn-icon delete" onclick="alert('Delete Food budget')" title="Delete"></button>
+          <div class="category-card">
+            <div class="category-header">
+              <h3>Entertainment</h3>
+              <div class="category-actions">
+                <button
+                  class="btn-icon"
+                  onclick="openEditModal(3, 'Entertainment', 200, 'monthly')"
+                  title="Edit"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="btn-icon delete"
+                  onclick="deleteBudget(3, 'Entertainment')"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="category-amount">£200</div>
+            <div class="category-progress">
+              <div class="progress-bar small">
+                <div
+                  class="progress-fill warning-level"
+                  style="width: 90%"
+                ></div>
+              </div>
+              <div class="progress-text">
+                <span>£180 spent</span>
+                <span>90%</span>
+              </div>
+            </div>
+            <div class="category-alert warning">
+              ⚠️ 90% - Approaching limit!
+            </div>
           </div>
-        </div>
-        <div class="category-amount">£800</div>
-        <div class="category-progress">
-          <div class="progress-bar small">
-            <div class="progress-fill" style="width: 81%"></div>
-          </div>
-          <div class="progress-text">
-            <span>£650 spent</span>
-            <span>81%</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="category-card">
-        <div class="category-header">
-          <h3>Transportation</h3>
-          <div class="category-actions">
-            <button class="btn-icon" onclick="alert('Edit Transportation budget')" title="Edit"></button>
-            <button class="btn-icon delete" onclick="alert('Delete Transportation budget')" title="Delete"></button>
+          <div class="category-card">
+            <div class="category-header">
+              <h3>Shopping</h3>
+              <div class="category-actions">
+                <button
+                  class="btn-icon"
+                  onclick="openEditModal(6, 'Shopping', 400, 'monthly')"
+                  title="Edit"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="btn-icon delete"
+                  onclick="deleteBudget(6, 'Shopping')"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="category-amount">£400</div>
+            <div class="category-progress">
+              <div class="progress-bar small">
+                <div
+                  class="progress-fill warning-level"
+                  style="width: 80%"
+                ></div>
+              </div>
+              <div class="progress-text">
+                <span>£320 spent</span>
+                <span>80%</span>
+              </div>
+            </div>
+            <div class="category-alert warning">⚠️ 80% - Watch spending</div>
           </div>
-        </div>
-        <div class="category-amount">£300</div>
-        <div class="category-progress">
-          <div class="progress-bar small">
-            <div class="progress-fill" style="width: 82%"></div>
-          </div>
-          <div class="progress-text">
-            <span>£245 spent</span>
-            <span>82%</span>
-          </div>
-        </div>
-      </div>
 
-      <div class="category-card">
-        <div class="category-header">
-          <h3>Entertainment</h3>
-          <div class="category-actions">
-            <button class="btn-icon" onclick="alert('Edit Entertainment budget')" title="Edit"></button>
-            <button class="btn-icon delete" onclick="alert('Delete Entertainment budget')" title="Delete"></button>
+          <div class="category-card">
+            <div class="category-header">
+              <h3>Healthcare</h3>
+              <div class="category-actions">
+                <button
+                  class="btn-icon"
+                  onclick="openEditModal(5, 'Healthcare', 150, 'monthly')"
+                  title="Edit"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="btn-icon delete"
+                  onclick="deleteBudget(5, 'Healthcare')"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="category-amount">£250</div>
+            <div class="category-progress">
+              <div class="progress-bar small">
+                <div class="progress-fill good-level" style="width: 50%"></div>
+              </div>
+              <div class="progress-text">
+                <span>£125 spent</span>
+                <span>50%</span>
+              </div>
+            </div>
+            <div class="category-alert good">✅ 50% - Well managed!</div>
           </div>
-        </div>
-        <div class="category-amount">£200</div>
-        <div class="category-progress">
-          <div class="progress-bar small">
-            <div class="progress-fill" style="width: 90%"></div>
-          </div>
-          <div class="progress-text">
-            <span>£180 spent</span>
-            <span>90%</span>
-          </div>
-        </div>
-        <div class="category-alert warning"> Approaching limit</div>
-      </div>
 
-      <div class="category-card">
-        <div class="category-header">
-          <h3>Shopping</h3>
-          <div class="category-actions">
-            <button class="btn-icon" onclick="alert('Edit Shopping budget')" title="Edit"></button>
-            <button class="btn-icon delete" onclick="alert('Delete Shopping budget')" title="Delete"></button>
+          <div class="category-card">
+            <div class="category-header">
+              <h3>Utilities</h3>
+              <div class="category-actions">
+                <button
+                  class="btn-icon"
+                  onclick="openEditModal(2, 'Utilities', 250, 'monthly')"
+                  title="Edit"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="btn-icon delete"
+                  onclick="deleteBudget(2, 'Utilities')"
+                  title="Delete"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+            <div class="category-amount">£350</div>
+            <div class="category-progress">
+              <div class="progress-bar small">
+                <div
+                  class="progress-fill critical-level"
+                  style="width: 94%"
+                ></div>
+              </div>
+              <div class="progress-text">
+                <span>£330 spent</span>
+                <span>94%</span>
+              </div>
+            </div>
+            <div class="category-alert critical">
+              🚨 94% - Critical! Near limit!
+            </div>
           </div>
         </div>
-        <div class="category-amount">£400</div>
-        <div class="category-progress">
-          <div class="progress-bar small">
-            <div class="progress-fill" style="width: 80%"></div>
-          </div>
-          <div class="progress-text">
-            <span>£320 spent</span>
-            <span>80%</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="category-card">
-        <div class="category-header">
-          <h3>Healthcare</h3>
-          <div class="category-actions">
-            <button class="btn-icon" onclick="alert('Edit Healthcare budget')" title="Edit"></button>
-            <button class="btn-icon delete" onclick="alert('Delete Healthcare budget')" title="Delete"></button>
-          </div>
-        </div>
-        <div class="category-amount">£250</div>
-        <div class="category-progress">
-          <div class="progress-bar small">
-            <div class="progress-fill" style="width: 50%"></div>
-          </div>
-          <div class="progress-text">
-            <span>£125 spent</span>
-            <span>50%</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="category-card">
-        <div class="category-header">
-          <h3>Utilities</h3>
-          <div class="category-actions">
-            <button class="btn-icon" onclick="alert('Edit Utilities budget')" title="Edit"></button>
-            <button class="btn-icon delete" onclick="alert('Delete Utilities budget')" title="Delete"></button>
-          </div>
-        </div>
-        <div class="category-amount">£350</div>
-        <div class="category-progress">
-          <div class="progress-bar small">
-            <div class="progress-fill" style="width: 94%"></div>
-          </div>
-          <div class="progress-text">
-            <span>£330 spent</span>
-            <span>94%</span>
-          </div>
-        </div>
-        <div class="category-alert warning"> Approaching limit</div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Add Budget Modal -->
+<div id="addBudgetModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add New Budget</h3>
+      <span class="modal-close" onclick="closeAddModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="addBudgetForm">
+        <div class="input-group">
+          <label for="add_category">Category</label>
+          <select
+            id="add_category"
+            name="category_id"
+            class="form-select"
+            required
+          >
+            <option value="">Select Category</option>
+            <option value="1">Transport</option>
+            <option value="2">Utilities</option>
+            <option value="3">Entertainment</option>
+            <option value="4">Food</option>
+            <option value="5">Healthcare</option>
+            <option value="6">Shopping</option>
+            <option value="7">Other</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="add_amount">Budget Amount (£)</label>
+          <input
+            type="number"
+            id="add_amount"
+            name="amount"
+            class="form-input"
+            step="0.01"
+            min="0"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="add_period">Period</label>
+          <select
+            id="add_period"
+            name="budget_period"
+            class="form-select"
+            required
+          >
+            <option value="weekly">Weekly</option>
+            <option value="monthly" selected>Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="closeAddModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Add Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Budget Modal -->
+<div id="editBudgetModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Budget</h3>
+      <span class="modal-close" onclick="closeEditModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="editBudgetForm">
+        <input type="hidden" id="edit_budget_id" name="budget_id" />
+        <div class="input-group">
+          <label for="edit_category">Category</label>
+          <input type="text" id="edit_category" class="form-input" readonly />
+        </div>
+        <div class="input-group">
+          <label for="edit_amount">Budget Amount (£)</label>
+          <input
+            type="number"
+            id="edit_amount"
+            name="amount"
+            class="form-input"
+            step="0.01"
+            min="0"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="edit_period">Period</label>
+          <select
+            id="edit_period"
+            name="budget_period"
+            class="form-select"
+            required
+          >
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn secondary"
+            onclick="closeEditModal()"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Update Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const statCards = document.querySelectorAll('.stat-card');
-  statCards.forEach((card, index) => {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(20px)';
-    setTimeout(() => {
-      card.style.transition = 'all 0.4s ease';
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
-    }, index * 100);
+  document.addEventListener("DOMContentLoaded", function () {
+    // Sort category cards by alert level (critical first, then warning, then good)
+    const categoryGrid = document.querySelector(".category-grid");
+    if (categoryGrid) {
+      const cards = Array.from(categoryGrid.querySelectorAll(".category-card"));
+
+      // Sort cards by priority: critical (3), warning (2), good/no-alert (1)
+      cards.sort((a, b) => {
+        const getPriority = (card) => {
+          if (card.querySelector(".category-alert.critical")) return 3;
+          if (card.querySelector(".category-alert.warning")) return 2;
+          return 1;
+        };
+
+        return getPriority(b) - getPriority(a); // Descending order
+      });
+
+      // Reappend cards in sorted order
+      cards.forEach((card) => categoryGrid.appendChild(card));
+    }
+
+    const statCards = document.querySelectorAll(".stat-card");
+    statCards.forEach((card, index) => {
+      card.style.opacity = "0";
+      card.style.transform = "translateY(20px)";
+      setTimeout(() => {
+        card.style.transition = "all 0.4s ease";
+        card.style.opacity = "1";
+        card.style.transform = "translateY(0)";
+      }, index * 100);
+    });
+
+    const categoryCards = document.querySelectorAll(".category-card");
+    categoryCards.forEach((card, index) => {
+      card.style.opacity = "0";
+      card.style.transform = "translateY(15px)";
+      setTimeout(() => {
+        card.style.transition = "all 0.3s ease";
+        card.style.opacity = "1";
+        card.style.transform = "translateY(0)";
+      }, 300 + index * 50);
+    });
   });
 
-  const categoryCards = document.querySelectorAll('.category-card');
-  categoryCards.forEach((card, index) => {
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(15px)';
-    setTimeout(() => {
-      card.style.transition = 'all 0.3s ease';
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
-    }, 300 + index * 50);
+  // Modal Functions
+  function openAddModal() {
+    document.getElementById("addBudgetModal").style.display = "block";
+  }
+
+  function closeAddModal() {
+    document.getElementById("addBudgetModal").style.display = "none";
+    document.getElementById("addBudgetForm").reset();
+  }
+
+  function openEditModal(budgetId, category, amount, period) {
+    document.getElementById("edit_budget_id").value = budgetId;
+    document.getElementById("edit_category").value = category;
+    document.getElementById("edit_amount").value = amount;
+    document.getElementById("edit_period").value = period;
+    document.getElementById("editBudgetModal").style.display = "block";
+  }
+
+  function closeEditModal() {
+    document.getElementById("editBudgetModal").style.display = "none";
+    document.getElementById("editBudgetForm").reset();
+  }
+
+  function deleteBudget(budgetId, category) {
+    if (
+      !confirm(`Are you sure you want to delete the budget for ${category}?`)
+    ) {
+      return;
+    }
+
+    fetch(`/budget/${budgetId}/delete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch((error) => {
+        alert("Error deleting budget: " + error);
+      });
+  }
+
+  // Close modals when clicking outside
+  window.onclick = function (event) {
+    const addModal = document.getElementById("addBudgetModal");
+    const editModal = document.getElementById("editBudgetModal");
+    if (event.target == addModal) {
+      closeAddModal();
+    }
+    if (event.target == editModal) {
+      closeEditModal();
+    }
+  };
+
+  // Form submission handlers
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("addBudgetForm")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {
+          category_id: formData.get("category_id"),
+          amount: formData.get("amount"),
+          budget_period: formData.get("budget_period"),
+        };
+
+        fetch("/budget/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(data.message);
+              closeAddModal();
+              location.reload();
+            } else {
+              alert("Error: " + data.message);
+            }
+          })
+          .catch((error) => {
+            alert("Error adding budget: " + error);
+          });
+      });
+
+    document
+      .getElementById("editBudgetForm")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const budgetId = document.getElementById("edit_budget_id").value;
+        const formData = new FormData(this);
+        const data = {
+          amount: formData.get("amount"),
+          budget_period: formData.get("budget_period"),
+        };
+
+        fetch(`/budget/${budgetId}/edit`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(data.message);
+              closeEditModal();
+              location.reload();
+            } else {
+              alert("Error: " + data.message);
+            }
+          })
+          .catch((error) => {
+            alert("Error updating budget: " + error);
+          });
+      });
   });
-});
 </script>
 
 {% endblock %}

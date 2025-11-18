@@ -27,7 +27,7 @@ class CategoryService:
         db.session.add(category)
         db.session.commit()
         return category
-    
+
     @staticmethod
     def get_system_categories():
         return Category.query.filter_by(user_id=None).all()

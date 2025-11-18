@@ -44,14 +44,17 @@ function showSettings() {
   // window.location.href = '/settings';
 }
 
-// Member Dropdown Functionality
+// Member Dropdown Functionality (integrated as toggle-select)
 document.addEventListener("DOMContentLoaded", function () {
-  const memberSelect = document.getElementById("memberSelect");
+  const memberSelect =
+    document.getElementById("perMemberSelect") ||
+    document.getElementById("memberSelect");
 
   if (memberSelect) {
     memberSelect.addEventListener("change", function () {
       const selectedMember = this.value;
-      const memberName = this.options[this.selectedIndex].text;
+      const memberName =
+        this.options[this.selectedIndex]?.text || selectedMember;
 
       if (selectedMember && selectedMember !== "") {
         // Update chart or perform member-specific actions
@@ -85,24 +88,74 @@ window.addEventListener("click", function (event) {
 // Chart Management - Restore original single chart
 let chartInstance;
 
+// Normalize various backend data shapes into { labels:[], values:[], colors:[] }
+function toChartDataset(raw) {
+  if (!raw) return { labels: [], values: [], colors: [] };
+
+  // Already in desired shape
+  if (Array.isArray(raw.labels) && Array.isArray(raw.values)) {
+    return {
+      labels: raw.labels,
+      values: raw.values,
+      colors: raw.colors || generateColors(raw.labels.length),
+    };
+  }
+
+  // Array of objects like [{category, amount}]
+  if (Array.isArray(raw)) {
+    const labels = raw.map((x) => x.category ?? x.label ?? x.name ?? "");
+    const values = raw.map((x) => Number(x.amount ?? x.value ?? 0));
+    return { labels, values, colors: generateColors(labels.length) };
+  }
+
+  // Object map {category: amount}
+  if (typeof raw === "object") {
+    const labels = Object.keys(raw);
+    const values = labels.map((k) => Number(raw[k] ?? 0));
+    return { labels, values, colors: generateColors(labels.length) };
+  }
+
+  return { labels: [], values: [], colors: [] };
+}
+
 function createChart(canvasId, data, chartTitle) {
-  const ctx = document.getElementById(canvasId);
-  if (!ctx) return null;
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
 
   // Destroy existing chart if it exists
   if (chartInstance) {
     chartInstance.destroy();
+    chartInstance = null;
+  }
+
+  // Normalize incoming data shape
+  const normalized = toChartDataset(data);
+  const hasData =
+    Array.isArray(normalized.labels) && normalized.labels.length > 0;
+  if (!hasData) {
+    // Render a friendly placeholder message similar to dashboard when no data
+    const ctx2d = canvas.getContext("2d");
+    ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+    ctx2d.font = "14px Arial";
+    ctx2d.fillStyle = "#666";
+    ctx2d.textAlign = "center";
+    const msg =
+      chartTitle && chartTitle.includes("Family")
+        ? "No family category data available"
+        : "No category data available";
+    ctx2d.fillText(msg, canvas.width / 2, canvas.height / 2);
+    return null;
   }
 
   const chartConfig = {
     type: "doughnut",
     data: {
-      labels: data.labels || [],
+      labels: normalized.labels || [],
       datasets: [
         {
-          data: data.values || [],
+          data: normalized.values || [],
           backgroundColor:
-            data.colors || generateColors(data.labels?.length || 0),
+            normalized.colors || generateColors(normalized.labels?.length || 0),
           borderWidth: 2,
           borderColor: "#fff",
         },
@@ -162,7 +215,7 @@ function createChart(canvasId, data, chartTitle) {
     },
   };
 
-  chartInstance = new Chart(ctx, chartConfig);
+  chartInstance = new Chart(canvas, chartConfig);
   return chartInstance;
 }
 
@@ -187,8 +240,9 @@ function generateColors(count) {
 }
 
 function updateChart(view) {
-  const memberSelector = document.getElementById("memberSelector");
-  const memberSelect = document.getElementById("memberSelect");
+  const memberSelect =
+    document.getElementById("perMemberSelect") ||
+    document.getElementById("memberSelect");
 
   if (!familyData || !memberData) {
     console.error("Chart data not available");
@@ -196,21 +250,21 @@ function updateChart(view) {
   }
 
   if (view === "member") {
-    memberSelector.style.display = "block";
-    const selectedMember = memberSelect.value;
-    const data = memberData[selectedMember] || {
-      labels: [],
-      values: [],
-      colors: [],
-    };
+    const selectedMember = memberSelect && memberSelect.value;
+    const raw =
+      (selectedMember && memberData && memberData[selectedMember]) || [];
+    const data = toChartDataset(raw);
     createChart(
       "categoryChart",
       data,
       `${selectedMember} - Expense Categories`
     );
   } else {
-    memberSelector.style.display = "none";
-    createChart("categoryChart", familyData, "Family - Expense Categories");
+    createChart(
+      "categoryChart",
+      toChartDataset(familyData),
+      "Family - Expense Categories"
+    );
   }
 }
 
@@ -449,38 +503,106 @@ function selectMember(memberId) {
 // Initialize All Event Listeners
 document.addEventListener("DOMContentLoaded", function () {
   // Initialize event listeners for all buttons and interactive elements
-  initializeEventListeners();
+  // (Removed) initializeEventListeners() was redundant after inlining listeners below
 
   // Initialize Charts if data exists
-  if (typeof familyData !== "undefined" && typeof memberData !== "undefined") {
+  if (typeof familyData !== "undefined") {
     // Initialize with family view
-    createChart("categoryChart", familyData, "Family - Expense Categories");
+    createChart(
+      "categoryChart",
+      toChartDataset(familyData),
+      "Family - Expense Categories"
+    );
+  }
 
-    // Chart view toggle functionality
-    const familyViewRadio = document.getElementById("familyView");
-    const memberViewRadio = document.getElementById("memberView");
-    const memberSelect = document.getElementById("memberSelect");
+  // Chart view toggle functionality (always set up; chart updates are guarded)
+  const wholeFamilyBtn = document.getElementById("wholeFamilyBtn");
+  const perMemberSelect = document.getElementById("perMemberSelect");
+  const memberSelect =
+    perMemberSelect || document.getElementById("memberSelect");
 
-    if (familyViewRadio && memberViewRadio) {
-      familyViewRadio.addEventListener("change", function () {
-        if (this.checked) {
-          updateChart("family");
-        }
+  if (wholeFamilyBtn && memberSelect) {
+    wholeFamilyBtn.addEventListener("click", function () {
+      // Update active state
+      wholeFamilyBtn.classList.add("active");
+      if (perMemberSelect) perMemberSelect.classList.remove("active");
+
+      updateChart("family");
+    });
+  }
+
+  if (memberSelect) {
+    memberSelect.addEventListener("change", function () {
+      // When a member is chosen, activate per-member view
+      if (perMemberSelect) perMemberSelect.classList.add("active");
+      wholeFamilyBtn && wholeFamilyBtn.classList.remove("active");
+      updateChart("member");
+    });
+  }
+
+  // Initialize Family Monthly Comparison (right chart)
+  const monthlyCanvas = document.getElementById("familyMonthlyComparisonChart");
+  if (monthlyCanvas) {
+    const ctx = monthlyCanvas.getContext("2d");
+    const mc = Array.isArray(window.familyMonthlyComparison)
+      ? window.familyMonthlyComparison
+      : [];
+
+    // Update months count badge
+    const monthsCountEl = document.getElementById("familyMonthsCount");
+    if (monthsCountEl) monthsCountEl.textContent = mc.length || 0;
+
+    const labels = mc.map((d) => d.month_short);
+    const incomeSeries = mc.map((d) => d.income);
+    const expenseSeries = mc.map((d) => d.expenses);
+
+    if (labels.length > 0) {
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Income",
+              data: incomeSeries,
+              borderColor: "#10B981",
+              backgroundColor: "rgba(16,185,129,0.1)",
+              tension: 0.4,
+              fill: true,
+            },
+            {
+              label: "Expenses",
+              data: expenseSeries,
+              borderColor: "#EF4444",
+              backgroundColor: "rgba(239,68,68,0.1)",
+              tension: 0.4,
+              fill: true,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "top" },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function (value) {
+                  return "£" + value;
+                },
+              },
+            },
+          },
+        },
       });
-
-      memberViewRadio.addEventListener("change", function () {
-        if (this.checked) {
-          updateChart("member");
-        }
-      });
-    }
-
-    if (memberSelect) {
-      memberSelect.addEventListener("change", function () {
-        if (memberViewRadio && memberViewRadio.checked) {
-          updateChart("member");
-        }
-      });
+    } else {
+      // Show an inline text message if there's no data
+      ctx.font = "14px Arial";
+      ctx.fillStyle = "#666";
+      ctx.textAlign = "center";
+      ctx.fillText("No monthly comparison data available", 200, 150);
     }
   }
 
@@ -529,10 +651,8 @@ document.addEventListener("DOMContentLoaded", function () {
       event.target.style.display = "none";
     }
   };
-});
 
-// Initialize all event listeners (cleaner than inline onclick)
-function initializeEventListeners() {
+  // Initialize all event listeners that were previously in separate function
   // Header action buttons
   const addMemberBtn = document.querySelector('[data-action="add-member"]');
   const addExpenseBtn = document.querySelector('[data-action="add-expense"]');
@@ -614,4 +734,4 @@ function initializeEventListeners() {
       closeModal(modalId);
     });
   });
-}
+});
