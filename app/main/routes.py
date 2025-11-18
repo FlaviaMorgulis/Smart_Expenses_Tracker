@@ -751,7 +751,6 @@ def update_family_budget():
         flash(f'Invalid amount or category: {str(e)}', 'error')
     except Exception as e:
         flash(f'Error creating budget: {str(e)}', 'error')
-        print(f"Budget creation error: {str(e)}")  # Debug log
     
     return redirect(url_for('main.family_management'))
 

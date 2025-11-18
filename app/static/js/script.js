@@ -30,11 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Optional: Add form validation or loading states here in the future
   loginForm.addEventListener("submit", (e) => {
     // Form will submit naturally to Flask backend
-    console.log("Login form submitting...");
   });
 
   signupForm.addEventListener("submit", (e) => {
     // Form will submit naturally to Flask backend
-    console.log("Signup form submitting...");
   });
 });

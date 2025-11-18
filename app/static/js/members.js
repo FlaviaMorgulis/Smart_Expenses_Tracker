@@ -351,13 +351,9 @@ function showAddExpenseModal() {
 }
 
 function showBudgetModal() {
-  console.log("showBudgetModal called");
   const modal = document.getElementById("budgetModal");
   if (modal) {
     modal.style.display = "block";
-    console.log("Modal displayed");
-  } else {
-    console.error("budgetModal not found");
   }
 }
 
@@ -508,27 +504,13 @@ document.addEventListener("DOMContentLoaded", function () {
     '[data-action="manage-budget"]'
   );
 
-  console.log("=== BUTTON DEBUG INFO ===");
-  console.log("Header buttons found:", {
-    addMemberBtn,
-    addExpenseBtn,
-    manageBudgetBtn,
-  });
-  console.log("manageBudgetBtn element:", manageBudgetBtn);
-  console.log("budgetModal element:", document.getElementById("budgetModal"));
-
   if (addMemberBtn) addMemberBtn.addEventListener("click", showAddMemberModal);
   if (addExpenseBtn)
     addExpenseBtn.addEventListener("click", showAddExpenseModal);
   if (manageBudgetBtn) {
-    console.log("Adding click listener to manage budget button");
     manageBudgetBtn.addEventListener("click", function (e) {
-      console.log("=== BUTTON CLICKED ===");
-      console.log("Event:", e);
       showBudgetModal();
     });
-  } else {
-    console.error("manageBudgetBtn NOT FOUND!");
   }
 
   // Member action buttons (dynamic content)

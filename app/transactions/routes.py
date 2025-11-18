@@ -61,7 +61,6 @@ def add_transaction():
         except Exception as e:
             db.session.rollback()
             flash('Error adding transaction. Please try again.', 'error')
-            print(f"Transaction error: {e}")
     else:
         for field, errors in form.errors.items():
             for error in errors:
@@ -110,7 +109,6 @@ def edit_transaction(transaction_id):
         except Exception as e:
             db.session.rollback()
             flash('Error updating transaction.', 'error')
-            print(f"Edit transaction error: {e}")
     
     return render_template('edit_transaction.html', 
                          form=form, 
@@ -135,7 +133,6 @@ def delete_transaction(transaction_id):
     except Exception as e:
         db.session.rollback()
         flash('Error deleting transaction.', 'error')
-        print(f"Delete error: {e}")
     
     return redirect(url_for('transactions.transactions'))
 
@@ -168,7 +165,6 @@ def transaction_stats():
             'recent_transactions': recent_count
         })
     except Exception as e:
-        print(f"API error: {e}")
         return jsonify({
             'total_income': 0,
             'total_expenses': 0,
@@ -191,7 +187,6 @@ def category_spending():
         result = [{'category': cat, 'amount': float(amount)} for cat, amount in category_data]
         return jsonify(result)
     except Exception as e:
-        print(f"Category spending API error: {e}")
         return jsonify([])
 
 @transactions_bp.route('/budgets', methods=['GET', 'POST'])
@@ -228,7 +223,6 @@ def budgets():
         except Exception as e:
             db.session.rollback()
             flash('Error saving budget.', 'error')
-            print(f"Budget error: {e}")
     
     # Get user budgets
     user_budgets = Budget.query.filter_by(user_id=current_user.user_id, is_active=True).all()
