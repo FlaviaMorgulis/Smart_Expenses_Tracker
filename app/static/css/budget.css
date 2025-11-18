@@ -460,10 +460,14 @@ h6 {
   font-size: 1.1em;
 }
 
-.category-grid {
+.category-grid,
+.budget-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .category-budget-card {
@@ -933,7 +937,8 @@ h6 {
     font-size: 1.3em;
   }
 
-  .category-grid {
+  .category-grid,
+  .budget-cards-grid {
     grid-template-columns: 1fr;
   }
 
@@ -2231,6 +2236,9 @@ h6 {
   position: relative;
   overflow: visible;
   min-height: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .category-card::before,

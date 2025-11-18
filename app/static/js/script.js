@@ -4,6 +4,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("loginForm");
   const signupForm = document.getElementById("signupForm");
 
+  // Only run if login/signup elements exist (i.e., we're on the login page)
+  if (!loginTab || !signupTab || !loginForm || !signupForm) {
+    return;
+  }
+
   // Toggle between Login / Sign Up
   const switchToLogin = () => {
     loginTab.classList.add("active");
@@ -21,9 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loginTab.addEventListener("click", switchToLogin);
   signupTab.addEventListener("click", switchToSignup);
-
-  // Allow forms to submit normally - remove preventDefault to enable actual form submission
-  // Forms will now submit to their respective Flask routes
 
   // Optional: Add form validation or loading states here in the future
   loginForm.addEventListener("submit", (e) => {

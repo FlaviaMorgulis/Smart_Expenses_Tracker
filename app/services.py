@@ -299,12 +299,11 @@ class BudgetService:
     """Budget management service"""
     
     @staticmethod
-    def create_simple_budget(user_id, category_id, amount, budget_period='monthly'):
+    def create_simple_budget(user_id, category_id, amount):
         budget = Budget(
             user_id=user_id,
             category_id=category_id,
             budget_amount=amount,
-            budget_period=budget_period,
             is_active=True
         )
         db.session.add(budget)
@@ -408,7 +407,7 @@ class BudgetService:
         return alerts
     
     @staticmethod
-    def create_or_update_budget(user_id, budget_amount, category_id=None, budget_period='monthly'):
+    def create_or_update_budget(user_id, budget_amount, category_id=None):
         existing_budget = Budget.query.filter_by(
             user_id=user_id,
             category_id=category_id,
@@ -417,14 +416,12 @@ class BudgetService:
         
         if existing_budget:
             existing_budget.budget_amount = budget_amount
-            existing_budget.budget_period = budget_period
             existing_budget.updated_at = datetime.now()
         else:
             budget = Budget(
                 user_id=user_id,
                 budget_amount=budget_amount,
                 category_id=category_id,
-                budget_period=budget_period,
                 is_active=True
             )
             db.session.add(budget)
@@ -433,7 +430,7 @@ class BudgetService:
         return True
     
     @staticmethod
-    def create_or_update_total_budget(user_id, budget_amount, budget_period='monthly'):
+    def create_or_update_total_budget(user_id, budget_amount):
         existing_budget = Budget.query.filter_by(
             user_id=user_id,
             category_id=None,
@@ -442,14 +439,12 @@ class BudgetService:
         
         if existing_budget:
             existing_budget.budget_amount = budget_amount
-            existing_budget.budget_period = budget_period
             existing_budget.updated_at = datetime.now()
         else:
             budget = Budget(
                 user_id=user_id,
                 budget_amount=budget_amount,
                 category_id=None,
-                budget_period=budget_period,
                 is_active=True
             )
             db.session.add(budget)

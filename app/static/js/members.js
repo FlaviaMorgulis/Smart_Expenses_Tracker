@@ -19,52 +19,22 @@ function deleteMember(memberId, name) {
     fetch(`/delete_member/${memberId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-    }).then((response) => {
-      if (response.ok) {
-        location.reload();
-      } else {
+    })
+      .then((response) => {
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert("Error deleting member");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting member:", error);
         alert("Error deleting member");
-      }
-    });
+      });
   }
-}
-
-// Owner/User Profile Functions
-function editProfile() {
-  // Redirect to profile edit page or show modal
-  alert("Edit Profile functionality - redirect to user profile page");
-  // You can implement this to redirect to a profile page:
-  // window.location.href = '/profile/edit';
-}
-
-function showSettings() {
-  // Show settings modal or redirect to settings page
-  alert("Settings functionality - show account settings");
-  // You can implement this to show a settings modal or redirect:
-  // window.location.href = '/settings';
 }
 
 // Member Dropdown Functionality (integrated as toggle-select)
-document.addEventListener("DOMContentLoaded", function () {
-  const memberSelect =
-    document.getElementById("perMemberSelect") ||
-    document.getElementById("memberSelect");
-
-  if (memberSelect) {
-    memberSelect.addEventListener("change", function () {
-      const selectedMember = this.value;
-      const memberName =
-        this.options[this.selectedIndex]?.text || selectedMember;
-
-      if (selectedMember && selectedMember !== "") {
-        // Update chart or perform member-specific actions
-        console.log(`Selected member: ${memberName} (ID: ${selectedMember})`);
-      }
-    });
-  }
-});
-
-// Modal Functions (Member-specific)
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
@@ -72,21 +42,10 @@ function closeModal(modalId) {
   }
 }
 
-// Close modals when clicking outside
-window.addEventListener("click", function (event) {
-  const modals = ["addMemberModal", "editMemberModal"];
-
-  modals.forEach((modalId) => {
-    const modal = document.getElementById(modalId);
-    if (modal && event.target === modal) {
-      modal.style.display = "none";
-    }
-  });
-});
-
 // Chart Management Functions
-// Chart Management - Restore original single chart
+
 let chartInstance;
+let pieChartInstance;
 
 // Normalize various backend data shapes into { labels:[], values:[], colors:[] }
 function toChartDataset(raw) {
@@ -133,7 +92,7 @@ function createChart(canvasId, data, chartTitle) {
   const hasData =
     Array.isArray(normalized.labels) && normalized.labels.length > 0;
   if (!hasData) {
-    // Render a friendly placeholder message similar to dashboard when no data
+    // Render a friendly placeholder message
     const ctx2d = canvas.getContext("2d");
     ctx2d.clearRect(0, 0, canvas.width, canvas.height);
     ctx2d.font = "14px Arial";
@@ -147,19 +106,34 @@ function createChart(canvasId, data, chartTitle) {
     return null;
   }
 
+  const colors = [
+    "#4A90E2",
+    "#50C878",
+    "#FF6B6B",
+    "#FFA500",
+    "#9B59B6",
+    "#1ABC9C",
+    "#E74C3C",
+    "#3498DB",
+  ];
+
+  // Create a simple bar chart showing current category totals
+  const datasets = [
+    {
+      label: "Spending by Category",
+      data: normalized.values,
+      backgroundColor:
+        normalized.colors || colors.slice(0, normalized.labels.length),
+      borderWidth: 1,
+      borderColor: "#fff",
+    },
+  ];
+
   const chartConfig = {
-    type: "doughnut",
+    type: "bar",
     data: {
-      labels: normalized.labels || [],
-      datasets: [
-        {
-          data: normalized.values || [],
-          backgroundColor:
-            normalized.colors || generateColors(normalized.labels?.length || 0),
-          borderWidth: 2,
-          borderColor: "#fff",
-        },
-      ],
+      labels: normalized.labels,
+      datasets: datasets,
     },
     options: {
       responsive: true,
@@ -167,51 +141,39 @@ function createChart(canvasId, data, chartTitle) {
       plugins: {
         title: {
           display: true,
-          text: chartTitle || "Expense Categories",
+          text: chartTitle || "Category Spending",
           font: { size: 16, weight: "bold" },
         },
         legend: {
-          position: "bottom",
-          labels: {
-            padding: 20,
-            usePointStyle: true,
-            pointStyle: "circle",
-            generateLabels: function (chart) {
-              const data = chart.data;
-              if (data.labels.length && data.datasets.length) {
-                return data.labels.map((label, i) => {
-                  const dataset = data.datasets[0];
-                  const value = dataset.data[i];
-                  const total = dataset.data.reduce((a, b) => a + b, 0);
-                  const percentage =
-                    total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                  return {
-                    text: `${label}: $${value.toFixed(2)} (${percentage}%)`,
-                    fillStyle: dataset.backgroundColor[i],
-                    strokeStyle: dataset.borderColor,
-                    lineWidth: dataset.borderWidth,
-                    index: i,
-                  };
-                });
-              }
-              return [];
-            },
-          },
+          display: false,
         },
         tooltip: {
           callbacks: {
             label: function (context) {
-              const label = context.label || "";
-              const value = context.parsed;
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage =
-                total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-              return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+              const value = context.parsed.y;
+              return `£${value.toFixed(2)}`;
             },
           },
         },
       },
-      cutout: "50%",
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function (value) {
+              return "£" + value.toFixed(0);
+            },
+          },
+          grid: {
+            color: "#e9ecef",
+          },
+        },
+        x: {
+          grid: {
+            display: false,
+          },
+        },
+      },
     },
   };
 
@@ -239,6 +201,114 @@ function generateColors(count) {
   return result;
 }
 
+function updatePieChart(data) {
+  const canvas = document.getElementById("familyMonthlyComparisonChart");
+  if (!canvas) return;
+
+  const pieData = toChartDataset(data);
+
+  if (pieData.labels.length === 0) {
+    // No data - destroy chart and show message
+    if (pieChartInstance) {
+      pieChartInstance.destroy();
+      pieChartInstance = null;
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "14px Arial";
+    ctx.fillStyle = "#666";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "No expense data available",
+      canvas.width / 2,
+      canvas.height / 2
+    );
+    return;
+  }
+
+  const pieColors = [
+    "#FF6B6B",
+    "#4ECDC4",
+    "#FFE66D",
+    "#95E1D3",
+    "#A8E6CF",
+    "#FF8B94",
+    "#C7CEEA",
+    "#FFDAC1",
+  ];
+
+  // If chart exists, update it; otherwise create new
+  if (pieChartInstance) {
+    pieChartInstance.data.labels = pieData.labels;
+    pieChartInstance.data.datasets[0].data = pieData.values;
+    pieChartInstance.data.datasets[0].backgroundColor = pieColors.slice(
+      0,
+      pieData.labels.length
+    );
+    pieChartInstance.update();
+  } else {
+    const ctx = canvas.getContext("2d");
+    pieChartInstance = new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: pieData.labels,
+        datasets: [
+          {
+            label: "Expenses by Category",
+            data: pieData.values,
+            backgroundColor: pieColors.slice(0, pieData.labels.length),
+            borderColor: "#fff",
+            borderWidth: 2,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: "right",
+            labels: {
+              padding: 15,
+              font: { size: 12 },
+              generateLabels: function (chart) {
+                const data = chart.data;
+                if (data.labels.length && data.datasets.length) {
+                  const dataset = data.datasets[0];
+                  const total = dataset.data.reduce((a, b) => a + b, 0);
+                  return data.labels.map((label, i) => {
+                    const value = dataset.data[i];
+                    const percentage = ((value / total) * 100).toFixed(1);
+                    return {
+                      text: `${label} (${percentage}%)`,
+                      fillStyle: dataset.backgroundColor[i],
+                      hidden: false,
+                      index: i,
+                    };
+                  });
+                }
+                return [];
+              },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                const label = context.label || "";
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label}: £${value.toFixed(2)} (${percentage}%)`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+}
+
 function updateChart(view) {
   const memberSelect =
     document.getElementById("perMemberSelect") ||
@@ -259,143 +329,16 @@ function updateChart(view) {
       data,
       `${selectedMember} - Expense Categories`
     );
+    // Update pie chart for selected member
+    updatePieChart(raw);
   } else {
     createChart(
       "categoryChart",
       toChartDataset(familyData),
       "Family - Expense Categories"
     );
-  }
-}
-
-function createFamilyChart(data) {
-  console.log("createFamilyChart called with data:", data);
-
-  if (familyChart) {
-    familyChart.destroy();
-  }
-
-  const ctx = document.getElementById("familyChart").getContext("2d");
-
-  // Default data if no data provided
-  const defaultData = [
-    { category: "Food", amount: 420 },
-    { category: "Bills", amount: 320 },
-    { category: "Transport", amount: 180 },
-    { category: "Entertainment", amount: 125 },
-  ];
-
-  const chartData = data && data.length > 0 ? data : defaultData;
-  console.log("Using family chart data:", chartData);
-
-  familyChart = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: chartData.map((item) => item.category),
-      datasets: [
-        {
-          data: chartData.map((item) => item.amount),
-          backgroundColor: [
-            "#4A90E2",
-            "#50C878",
-            "#FFB84D",
-            "#E85D75",
-            "#9B59B6",
-            "#1ABC9C",
-          ],
-          borderWidth: 0,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { usePointStyle: true, padding: 15 },
-        },
-      },
-    },
-  });
-}
-
-function createMemberChart(data, memberName) {
-  console.log(
-    "createMemberChart called with data:",
-    data,
-    "for member:",
-    memberName
-  );
-
-  if (memberChart) {
-    memberChart.destroy();
-  }
-
-  const ctx = document.getElementById("memberChart").getContext("2d");
-
-  // Default data if no data provided
-  const defaultData = [{ category: "No Data", amount: 100 }];
-
-  const chartData = data && data.length > 0 ? data : defaultData;
-  console.log("Using member chart data:", chartData);
-
-  memberChart = new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: chartData.map((item) => item.category),
-      datasets: [
-        {
-          data: chartData.map((item) => item.amount),
-          backgroundColor:
-            chartData.length === 1
-              ? ["#E0E0E0"]
-              : [
-                  "#4A90E2",
-                  "#50C878",
-                  "#FFB84D",
-                  "#E85D75",
-                  "#9B59B6",
-                  "#1ABC9C",
-                ],
-          borderWidth: 0,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { usePointStyle: true, padding: 15 },
-        },
-      },
-    },
-  });
-
-  // Update the chart title
-  const rightChartTitle = document.getElementById("rightChartTitle");
-  if (rightChartTitle) {
-    rightChartTitle.textContent = memberName || "Select a Member";
-  }
-}
-
-function updateChartsBasedOnSelection(selectedValue) {
-  console.log("Updating charts for selection:", selectedValue);
-
-  if (selectedValue === "family") {
-    // Show family data in left chart
-    createFamilyChart(familyData);
-    // Clear member chart or show placeholder
-    createMemberChart([], "Select a Member");
-  } else {
-    // Show family data in left chart (always visible)
-    createFamilyChart(familyData);
-    // Show selected member data in right chart
-    const memberData =
-      (window.memberData && window.memberData[selectedValue]) || [];
-    createMemberChart(memberData, selectedValue);
+    // Update pie chart for whole family
+    updatePieChart(familyData);
   }
 }
 
@@ -407,17 +350,15 @@ function showAddExpenseModal() {
   document.getElementById("addExpenseModal").style.display = "block";
 }
 
-function showEditExpenseModal() {
-  document.getElementById("editExpenseModal").style.display = "block";
-}
-
 function showBudgetModal() {
-  document.getElementById("budgetModal").style.display = "block";
-}
-
-function showBudgetDetailsModal() {
-  // For now, redirect to budget details or show the existing budget modal
-  document.getElementById("budgetModal").style.display = "block";
+  console.log("showBudgetModal called");
+  const modal = document.getElementById("budgetModal");
+  if (modal) {
+    modal.style.display = "block";
+    console.log("Modal displayed");
+  } else {
+    console.error("budgetModal not found");
+  }
 }
 
 // Expense Management Functions
@@ -473,30 +414,18 @@ function deleteExpense(expenseId) {
   if (confirm("Are you sure you want to delete this expense?")) {
     fetch(`/delete_expense/${expenseId}`, {
       method: "POST",
-    }).then((response) => {
-      if (response.ok) {
-        location.reload();
-      } else {
+    })
+      .then((response) => {
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert("Error deleting expense");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting expense:", error);
         alert("Error deleting expense");
-      }
-    });
-  }
-}
-
-// Member Dropdown Functions
-function selectMember(memberId) {
-  // Close dropdown
-  const menu = document.getElementById("memberDropdownMenu");
-  if (menu) {
-    menu.style.display = "none";
-  }
-
-  if (memberId === "owner") {
-    console.log("Selected owner");
-    // Here you can add functionality for when owner is selected
-  } else {
-    console.log("Selected member:", memberId);
-    // Here you can add functionality for when a specific member is selected
+      });
   }
 }
 
@@ -540,70 +469,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // Initialize Family Monthly Comparison (right chart)
-  const monthlyCanvas = document.getElementById("familyMonthlyComparisonChart");
-  if (monthlyCanvas) {
-    const ctx = monthlyCanvas.getContext("2d");
-    const mc = Array.isArray(window.familyMonthlyComparison)
-      ? window.familyMonthlyComparison
-      : [];
-
-    // Update months count badge
-    const monthsCountEl = document.getElementById("familyMonthsCount");
-    if (monthsCountEl) monthsCountEl.textContent = mc.length || 0;
-
-    const labels = mc.map((d) => d.month_short);
-    const incomeSeries = mc.map((d) => d.income);
-    const expenseSeries = mc.map((d) => d.expenses);
-
-    if (labels.length > 0) {
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "Income",
-              data: incomeSeries,
-              borderColor: "#10B981",
-              backgroundColor: "rgba(16,185,129,0.1)",
-              tension: 0.4,
-              fill: true,
-            },
-            {
-              label: "Expenses",
-              data: expenseSeries,
-              borderColor: "#EF4444",
-              backgroundColor: "rgba(239,68,68,0.1)",
-              tension: 0.4,
-              fill: true,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "top" },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: function (value) {
-                  return "£" + value;
-                },
-              },
-            },
-          },
-        },
-      });
-    } else {
-      // Show an inline text message if there's no data
-      ctx.font = "14px Arial";
-      ctx.fillStyle = "#666";
-      ctx.textAlign = "center";
-      ctx.fillText("No monthly comparison data available", 200, 150);
-    }
+  // Initialize Family Monthly Expenses Pie Chart (right chart)
+  if (typeof familyData !== "undefined") {
+    updatePieChart(familyData);
   }
 
   // Member dropdown functionality
@@ -615,42 +483,22 @@ document.addEventListener("DOMContentLoaded", function () {
         menu.style.display = menu.style.display === "block" ? "none" : "block";
       }
     });
-
-    // Close dropdown when clicking outside
-    document.addEventListener("click", function (event) {
-      if (!event.target.closest(".member-dropdown")) {
-        const menu = document.getElementById("memberDropdownMenu");
-        if (menu) {
-          menu.style.display = "none";
-        }
-      }
-    });
   }
 
-  // Member card hover effects
-  const memberCards = document.querySelectorAll(".member-card");
-  memberCards.forEach((card) => {
-    card.addEventListener("mouseenter", function () {
-      const actions = this.querySelector(".member-actions");
-      if (actions) {
-        actions.style.opacity = "1";
-      }
-    });
-
-    card.addEventListener("mouseleave", function () {
-      const actions = this.querySelector(".member-actions");
-      if (actions) {
-        actions.style.opacity = "0";
-      }
-    });
-  });
-
-  // Close modal when clicking outside
+  // Close modal when clicking outside (consolidated handler)
   window.onclick = function (event) {
     if (event.target.classList.contains("modal")) {
       event.target.style.display = "none";
     }
   };
+
+  // Close dropdowns when clicking outside
+  document.addEventListener("click", function (event) {
+    if (!event.target.closest(".member-dropdown")) {
+      const menu = document.getElementById("memberDropdownMenu");
+      if (menu) menu.style.display = "none";
+    }
+  });
 
   // Initialize all event listeners that were previously in separate function
   // Header action buttons
@@ -660,18 +508,28 @@ document.addEventListener("DOMContentLoaded", function () {
     '[data-action="manage-budget"]'
   );
 
+  console.log("=== BUTTON DEBUG INFO ===");
+  console.log("Header buttons found:", {
+    addMemberBtn,
+    addExpenseBtn,
+    manageBudgetBtn,
+  });
+  console.log("manageBudgetBtn element:", manageBudgetBtn);
+  console.log("budgetModal element:", document.getElementById("budgetModal"));
+
   if (addMemberBtn) addMemberBtn.addEventListener("click", showAddMemberModal);
   if (addExpenseBtn)
     addExpenseBtn.addEventListener("click", showAddExpenseModal);
-  if (manageBudgetBtn)
-    manageBudgetBtn.addEventListener("click", showBudgetModal);
-
-  // Owner/User action buttons
-  const editProfileBtn = document.querySelector('[data-action="edit-profile"]');
-  const settingsBtn = document.querySelector('[data-action="settings"]');
-
-  if (editProfileBtn) editProfileBtn.addEventListener("click", editProfile);
-  if (settingsBtn) settingsBtn.addEventListener("click", showSettings);
+  if (manageBudgetBtn) {
+    console.log("Adding click listener to manage budget button");
+    manageBudgetBtn.addEventListener("click", function (e) {
+      console.log("=== BUTTON CLICKED ===");
+      console.log("Event:", e);
+      showBudgetModal();
+    });
+  } else {
+    console.error("manageBudgetBtn NOT FOUND!");
+  }
 
   // Member action buttons (dynamic content)
   document.addEventListener("click", function (e) {

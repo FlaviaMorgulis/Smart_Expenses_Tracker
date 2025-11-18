@@ -1,3 +1,15 @@
+"""
+Main Routes Module
+==================
+This module contains all main application routes organized by functionality:
+- General Pages (index, about, dashboard)
+- Cash Flow & Analytics
+- User Profile
+- Family Management (members, family expenses)
+- Budget Management
+- API Endpoints
+"""
+
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from app import db
@@ -11,8 +23,14 @@ from app.services import CashFlowService, SimpleAnalyticsService, ReportingServi
 
 main_bp = Blueprint('main', __name__)
 
+
+# ============================================================================
+# GENERAL PAGES
+# ============================================================================
+
 @main_bp.route('/')
 def index():
+    """Landing page - redirects to dashboard if authenticated"""
     if current_user.is_authenticated:
         return redirect(url_for('main.dashboard'))
     
@@ -20,10 +38,13 @@ def index():
     signup_form = SignupForm()
     return render_template('index.html', login_form=login_form, signup_form=signup_form)
 
+
 @main_bp.route('/about')
 @login_required
 def about():
+    """About page"""
     return render_template('about.html')
+
 
 @main_bp.route('/dashboard')
 @login_required
@@ -144,16 +165,29 @@ def dashboard():
                              monthly_expenses=0,
                              remaining_budget=0,
                              total_budget=0,
-                             current_month=now.strftime('%B %Y'),
-                             current_month_short=now.strftime('%b'),
+                             current_month=datetime.now().strftime('%B %Y'),
+                             current_month_short=datetime.now().strftime('%b'),
                              monthly_comparison=[],
                              category_spending={},
                              budget_alerts=[],
                              current_time_range='6months')
-    
+
+
+@main_bp.route('/faq')
+@login_required
+def faq():
+    """FAQ page"""
+    return render_template('faq_new.html')
+
+
+# ============================================================================
+# CASH FLOW & ANALYTICS
+# ============================================================================
+
 @main_bp.route('/cashflow')
 @login_required
 def cash_flow():
+    """Cash flow analysis page with income/expense tracking"""
     try:
         # Get cash flow summary
         cash_flow_data = CashFlowService.get_cash_flow_summary(current_user.user_id)
@@ -254,10 +288,16 @@ def cash_flow():
                              cash_flow_data=empty_data,
                              category_report=empty_categories,
                              yearly_data=empty_yearly)
-    
+
+
+# ============================================================================
+# USER PROFILE
+# ============================================================================
+
 @main_bp.route('/profile')
 @login_required
 def profile():
+    """User profile page with statistics and account information"""
     # Get user statistics
     transaction_count = Transaction.query.filter_by(user_id=current_user.user_id).count()
     
@@ -286,16 +326,22 @@ def profile():
                          categories_used=categories_used,
                          days_active=days_active)
 
+
+# ============================================================================
+# FAMILY MANAGEMENT
+# ============================================================================
+
 @main_bp.route('/members')
 @login_required
 def members():
     """Redirect to the new family management page"""
     return redirect(url_for('main.family_management'))
 
+
 @main_bp.route('/family_management')
 @login_required
 def family_management():
-    """Comprehensive family management page"""
+    """Comprehensive family management page with members, expenses, and budgets"""
     from app.models import Member, Category
     from datetime import datetime, timedelta
     
@@ -314,19 +360,23 @@ def family_management():
     total_family_expenses = float(total_expenses_query) if total_expenses_query else 0
     
     # Family budget total - get from active user budgets
-    active_budgets = Budget.query.filter(
+    # First try to get total budget (category_id is None)
+    total_budget = Budget.query.filter(
         Budget.user_id == current_user.user_id,
         Budget.is_active == True,
-        Budget.category_id == None  # Total budget (not category-specific)
-    ).all()
+        Budget.category_id == None
+    ).first()
     
-    family_budget_total = 0
-    for budget in active_budgets:
-        family_budget_total += float(budget.budget_amount)
-    
-    # If no active budgets, use 0 (no fallback)
-    if family_budget_total == 0:
-        family_budget_total = 0  # Show 0 for new users
+    if total_budget:
+        family_budget_total = float(total_budget.budget_amount)
+    else:
+        # If no total budget, sum all category budgets
+        category_budgets_sum = db.session.query(db.func.sum(Budget.budget_amount)).filter(
+            Budget.user_id == current_user.user_id,
+            Budget.is_active == True,
+            Budget.category_id != None
+        ).scalar()
+        family_budget_total = float(category_budgets_sum) if category_budgets_sum else 0
     
     budget_percentage = (total_family_expenses / family_budget_total * 100) if family_budget_total > 0 else 0
     
@@ -356,7 +406,7 @@ def family_management():
     for cat in category_data:
         category_expenses[cat[0]] = float(cat[1])
     
-    # Get category-specific budgets from database
+    # Get category-specific budgets from database (only non-zero budgets)
     category_budgets = {}
     category_budget_records = Budget.query.filter(
         Budget.user_id == current_user.user_id,
@@ -365,39 +415,58 @@ def family_management():
     ).all()
     
     for budget in category_budget_records:
-        if budget.category:
+        if budget.category and budget.budget_amount > 0:
             category_budgets[budget.category.category_name] = float(budget.budget_amount)
     
-    # Set default budgets to 0 if none exist in database
-    default_category_budgets = {
-        'Food': 0,
-        'Utilities': 0, 
-        'Transport': 0,
-        'Entertainment': 0,
-        'Shopping': 0,
-        'Healthcare': 0,
-        'Other': 0
-    }
-    
-    # Merge with defaults for missing categories
-    for category, default_amount in default_category_budgets.items():
-        if category not in category_budgets:
-            category_budgets[category] = default_amount
-    
-    # Per-member category data (simplified for now)
+    # Per-member category data from actual transactions
     per_member_category_data = {}
-    per_member_category_data[current_user.user_name or 'You'] = [
-        {'category': 'Food', 'amount': 280.0},
-        {'category': 'Utilities', 'amount': 150.0},
-        {'category': 'Transport', 'amount': 90.0}
-    ]
     
-    for i, member in enumerate(family_members):
-        per_member_category_data[member.name] = [
-            {'category': 'Food', 'amount': 200.0 - (i * 20)},
-            {'category': 'Utilities', 'amount': 100.0 - (i * 10)},
-            {'category': 'Transport', 'amount': 60.0 - (i * 5)}
-        ]
+    # Get current user's share of expenses (only expenses where they participated)
+    user_spending_by_category = {}
+    user_transactions = Transaction.query.filter_by(
+        user_id=current_user.user_id,
+        transaction_type='expense'
+    ).all()
+    
+    for transaction in user_transactions:
+        if transaction.category and transaction.user_participates:
+            cat_name = transaction.category.category_name
+            # Calculate user's share of this expense
+            cost_per_person = transaction.get_cost_per_person()
+            
+            if cat_name in user_spending_by_category:
+                user_spending_by_category[cat_name] += cost_per_person
+            else:
+                user_spending_by_category[cat_name] = cost_per_person
+    
+    user_spending_list = []
+    for cat_name, amount in user_spending_by_category.items():
+        if amount > 0:
+            user_spending_list.append({'category': cat_name, 'amount': float(amount)})
+    
+    if user_spending_list:
+        per_member_category_data[current_user.user_name or 'You'] = user_spending_list
+    
+    # For family members, show their portion of shared expenses
+    for member in family_members:
+        member_expenses = []
+        # Get transactions this member participated in (via MembersTransaction junction table)
+        for mt in member.transactions:
+            transaction = mt.transaction  # Access actual Transaction object
+            if transaction.transaction_type == 'expense' and transaction.category:
+                cat_name = transaction.category.category_name
+                # Calculate member's share
+                cost_per_person = transaction.get_cost_per_person()
+                
+                # Find or create category entry
+                existing = next((e for e in member_expenses if e['category'] == cat_name), None)
+                if existing:
+                    existing['amount'] += cost_per_person
+                else:
+                    member_expenses.append({'category': cat_name, 'amount': cost_per_person})
+        
+        if member_expenses:
+            per_member_category_data[member.name] = member_expenses
     
     # Recent expenses (both personal and family expenses)
     recent_shared_expenses = db.session.query(Transaction).filter(
@@ -436,9 +505,15 @@ def family_management():
                          recent_shared_expenses=recent_expenses_data,
                          categories=all_categories)
 
+
+# ----------------------------------------------------------------------------
+# Family Member Management Routes
+# ----------------------------------------------------------------------------
+
 @main_bp.route('/add_member', methods=['POST'])
 @login_required
 def add_member():
+    """Add a new family member"""
     from app.models import Member
     
     name = request.form.get('name')
@@ -455,12 +530,13 @@ def add_member():
         flash(f'Family member {name} added successfully!', 'success')
     else:
         flash('Please provide both name and relationship.', 'error')
-    
     return redirect(url_for('main.family_management'))
+
 
 @main_bp.route('/edit_member', methods=['POST'])
 @login_required
 def edit_member():
+    """Edit an existing family member"""
     from app.models import Member
     
     member_id = request.form.get('member_id')
@@ -485,9 +561,11 @@ def edit_member():
     
     return redirect(url_for('main.family_management'))
 
+
 @main_bp.route('/delete_member/<int:member_id>', methods=['POST'])
 @login_required
 def delete_member(member_id):
+    """Delete a family member"""
     from app.models import Member
     
     member = Member.query.filter_by(
@@ -504,9 +582,15 @@ def delete_member(member_id):
         flash('Member not found.', 'error')
         return jsonify({'status': 'error'}), 404
 
+
+# ----------------------------------------------------------------------------
+# Family Expense Management Routes
+# ----------------------------------------------------------------------------
+
 @main_bp.route('/add_family_expense', methods=['POST'])
 @login_required
 def add_family_expense():
+    """Add a new family shared expense"""
     from app.models import Member, MembersTransaction
     from datetime import datetime
     
@@ -559,6 +643,7 @@ def add_family_expense():
 @main_bp.route('/edit_family_expense', methods=['POST'])
 @login_required
 def edit_family_expense():
+    """Edit an existing family shared expense"""
     from app.models import Member, MembersTransaction
     
     expense_id = request.form.get('expense_id')
@@ -607,9 +692,11 @@ def edit_family_expense():
     
     return redirect(url_for('main.family_management'))
 
+
 @main_bp.route('/get_expense/<int:expense_id>')
 @login_required
 def get_expense(expense_id):
+    """Get expense details for editing (API endpoint)"""
     from app.models import MembersTransaction
     
     transaction = Transaction.query.filter_by(
@@ -638,21 +725,41 @@ def get_expense(expense_id):
 @main_bp.route('/update_family_budget', methods=['POST'])
 @login_required
 def update_family_budget():
-    monthly_budget = request.form.get('monthly_budget')
-    food_budget = request.form.get('food_budget')
-    bills_budget = request.form.get('bills_budget')
-    transport_budget = request.form.get('transport_budget')
-    entertainment_budget = request.form.get('entertainment_budget')
+    """Create or update category budget for family management"""
+    from app.services import BudgetService
     
-    # Here you would typically save these to a user settings table
-    # For now, we'll just flash a success message
-    flash('Family budget updated successfully!', 'success')
+    category_id = request.form.get('category_id')
+    amount = request.form.get('amount')
+    
+    if not category_id or not amount:
+        flash('Please select a category and enter an amount.', 'error')
+        return redirect(url_for('main.family_management'))
+    
+    try:
+        amount = float(amount)
+        category_id = int(category_id)
+        
+        # Create or update the budget for this category (note: budget_amount comes before category_id)
+        budget = BudgetService.create_or_update_budget(
+            user_id=current_user.user_id,
+            budget_amount=amount,
+            category_id=category_id
+        )
+        
+        flash('Category budget added successfully!', 'success')
+    except ValueError as e:
+        flash(f'Invalid amount or category: {str(e)}', 'error')
+    except Exception as e:
+        flash(f'Error creating budget: {str(e)}', 'error')
+        print(f"Budget creation error: {str(e)}")  # Debug log
     
     return redirect(url_for('main.family_management'))
+
 
 @main_bp.route('/delete_expense/<int:expense_id>', methods=['POST'])
 @login_required
 def delete_expense(expense_id):
+    """Delete a family expense"""
     transaction = Transaction.query.filter_by(
         transaction_id=expense_id,
         user_id=current_user.user_id
@@ -668,12 +775,14 @@ def delete_expense(expense_id):
         return jsonify({'status': 'error'}), 404
 
 
-
-
+# ============================================================================
+# BUDGET MANAGEMENT
+# ============================================================================
 
 @main_bp.route('/budget')
 @login_required
 def budget():
+    """Budget management page with category budgets and alerts"""
     try:
         # Get all user budgets
         user_budgets = BudgetService.get_user_budgets(current_user.user_id)
@@ -753,6 +862,7 @@ def budget():
                              category_spending=category_spending,
                              budget_alerts=budget_alerts,
                              monthly_trends=monthly_trends,
+                             categories=categories,
                              current_month=now.strftime('%B %Y'))
                              
     except Exception as e:
@@ -766,17 +876,14 @@ def budget():
                              category_spending={},
                              budget_alerts=[],
                              monthly_trends=[],
+                             categories=[],
                              current_month=now.strftime('%B %Y'))
 
-@main_bp.route('/faq')
-@login_required
-def faq():
-    return render_template('faq.html', user=current_user)
 
 @main_bp.route('/budget/add', methods=['POST'])
 @login_required
 def add_budget():
-    """Add a new budget"""
+    """Add a new category budget"""
     try:
         data = request.get_json()
         category_id = int(data.get('category_id')) if data.get('category_id') else None
@@ -799,9 +906,11 @@ def add_budget():
         print(f"Error adding budget: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
+
 @main_bp.route('/budget/<int:budget_id>/edit', methods=['POST'])
 @login_required
 def edit_budget(budget_id):
+    """Edit an existing budget"""
     """Edit an existing budget"""
     try:
         budget = Budget.query.get_or_404(budget_id)
@@ -849,10 +958,14 @@ def delete_budget(budget_id):
         return jsonify({'success': False, 'message': str(e)}), 500
 
 
+# ============================================================================
+# API ENDPOINTS
+# ============================================================================
+
 @main_bp.route('/api/annual_data')
 @login_required
 def annual_data():
-    """API for annual financial data"""
+    """API endpoint for annual financial data"""
     from app.services import SimpleAnalyticsService
     import datetime
     

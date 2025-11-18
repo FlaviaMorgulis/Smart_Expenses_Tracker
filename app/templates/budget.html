@@ -6,8 +6,7 @@ endblock %} {% block head %}
 />
 {% endblock %} {% block content %}
 <div class="dashboard-container">
-  <div class="dashboard-content">
-    <!-- Welcome Section -->
+  <!-- Welcome Section -->
     <div class="welcome-section">
       <h1>Budget Management 💰</h1>
       <p class="lead">Take control of your spending with smart budgeting</p>
@@ -19,7 +18,7 @@ endblock %} {% block head %}
         <div class="stat-icon">💳</div>
         <div class="stat-info">
           <h3>TOTAL BUDGET</h3>
-          <h2 class="stat-amount">£2,500.00</h2>
+          <h2 class="stat-amount">£{{ "%.2f"|format(total_budget) }}</h2>
         </div>
       </div>
 
@@ -27,7 +26,9 @@ endblock %} {% block head %}
         <div class="stat-icon">📉</div>
         <div class="stat-info">
           <h3>SPENT THIS MONTH</h3>
-          <h2 class="stat-amount negative">£1,850.00</h2>
+          <h2 class="stat-amount negative">
+            £{{ "%.2f"|format(monthly_spent) }}
+          </h2>
         </div>
       </div>
 
@@ -35,7 +36,11 @@ endblock %} {% block head %}
         <div class="stat-icon">💰</div>
         <div class="stat-info">
           <h3>REMAINING</h3>
-          <h2 class="stat-amount positive">£650.00</h2>
+          <h2
+            class="stat-amount {{ 'positive' if remaining_budget > 0 else 'negative' }}"
+          >
+            £{{ "%.2f"|format(remaining_budget) }}
+          </h2>
         </div>
       </div>
 
@@ -43,7 +48,11 @@ endblock %} {% block head %}
         <div class="stat-icon">📊</div>
         <div class="stat-info">
           <h3>BUDGET USED</h3>
-          <h2 class="stat-amount warning">74.0%</h2>
+          <h2
+            class="stat-amount {{ 'warning' if budget_percentage >= 75 else 'positive' }}"
+          >
+            {{ "%.1f"|format(budget_percentage) }}%
+          </h2>
         </div>
       </div>
     </div>
@@ -52,13 +61,21 @@ endblock %} {% block head %}
     <div class="analytics-section">
       <div class="analytics-card">
         <h4>Monthly Progress</h4>
-        <p class="analytics-subtitle">74.0% of budget used</p>
+        <p class="analytics-subtitle">
+          {{ "%.1f"|format(budget_percentage) }}% of budget used
+        </p>
         <div class="progress-container">
           <div class="progress-bar">
-            <div class="progress-fill" style="width: 74%"></div>
+            <div
+              class="progress-fill"
+              style="width: {{ budget_percentage|round(0) }}%"
+            ></div>
           </div>
           <div class="progress-details">
-            <span>£1,850 spent of £2,500 budget</span>
+            <span
+              >£{{ "%.2f"|format(monthly_spent) }} spent of £{{
+              "%.2f"|format(total_budget) }} budget</span
+            >
           </div>
         </div>
       </div>
@@ -70,6 +87,7 @@ endblock %} {% block head %}
           <h4>Category Budgets</h4>
           <button
             class="btn secondary"
+            data-action="add-budget"
             onclick="openAddModal()"
             style="background: #6c757d; color: white; border: none"
           >
@@ -77,223 +95,68 @@ endblock %} {% block head %}
           </button>
         </div>
 
-        <div class="category-grid">
-          <div class="category-card">
-            <div class="category-header">
-              <h3>Food &amp; Dining</h3>
-              <div class="category-actions">
-                <button
-                  class="btn-icon"
-                  onclick="openEditModal(4, 'Food & Dining', 800, 'monthly')"
-                  title="Edit"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="btn-icon delete"
-                  onclick="deleteBudget(4, 'Food & Dining')"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-            <div class="category-amount">£800</div>
-            <div class="category-progress">
-              <div class="progress-bar small">
-                <div
-                  class="progress-fill warning-level"
-                  style="width: 81%"
-                ></div>
-              </div>
-              <div class="progress-text">
-                <span>£650 spent</span>
-                <span>81%</span>
-              </div>
-            </div>
-            <div class="category-alert warning">⚠️ 81% - Monitor spending</div>
-          </div>
+        <div class="budget-cards-grid">
+          {% if category_spending %} {# Create a list of tuples with category
+          data and sort by percentage (highest first) #} {% set budget_list = []
+          %} {% for category_name, data in category_spending.items() %} {% if
+          data.budget > 0 %} {% set _ = budget_list.append((category_name,
+          data.budget, data.spent, data.percentage)) %} {% endif %} {% endfor %}
+          {# Sort by percentage descending (red to green) #} {% set
+          sorted_budgets = budget_list|sort(attribute='3', reverse=True) %} {%
+          for category_name, budget_amount, spent, percentage in sorted_budgets
+          %} {% set progress_class = 'critical-level' if percentage >= 90 else
+          ('warning-level' if percentage >= 75 else 'good-level') %} {% set
+          alert_class = 'critical' if percentage >= 90 else ('warning' if
+          percentage >= 75 else 'good') %}
 
           <div class="category-card">
             <div class="category-header">
-              <h3>Transportation</h3>
+              <h3>{{ category_name }}</h3>
               <div class="category-actions">
                 <button
                   class="btn-icon"
-                  onclick="openEditModal(1, 'Transportation', 300, 'monthly')"
+                  onclick="openEditModal({{ loop.index }}, '{{ category_name }}', {{ budget_amount }})"
                   title="Edit"
                 >
                   ✏️
                 </button>
                 <button
                   class="btn-icon delete"
-                  onclick="deleteBudget(1, 'Transportation')"
+                  onclick="deleteBudget({{ loop.index }}, '{{ category_name }}')"
                   title="Delete"
                 >
                   🗑️
                 </button>
               </div>
             </div>
-            <div class="category-amount">£300</div>
+            <div class="category-amount">
+              £{{ "%.0f"|format(budget_amount) }}
+            </div>
             <div class="category-progress">
               <div class="progress-bar small">
                 <div
-                  class="progress-fill warning-level"
-                  style="width: 82%"
+                  class="progress-fill {{ progress_class }}"
+                  style="width: {{ percentage|round(0) }}%"
                 ></div>
               </div>
               <div class="progress-text">
-                <span>£245 spent</span>
-                <span>82%</span>
+                <span>£{{ "%.0f"|format(spent) }} spent</span>
+                <span>{{ "%.0f"|format(percentage) }}%</span>
               </div>
             </div>
-            <div class="category-alert warning">⚠️ 82% - Monitor spending</div>
-          </div>
-
-          <div class="category-card">
-            <div class="category-header">
-              <h3>Entertainment</h3>
-              <div class="category-actions">
-                <button
-                  class="btn-icon"
-                  onclick="openEditModal(3, 'Entertainment', 200, 'monthly')"
-                  title="Edit"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="btn-icon delete"
-                  onclick="deleteBudget(3, 'Entertainment')"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-            <div class="category-amount">£200</div>
-            <div class="category-progress">
-              <div class="progress-bar small">
-                <div
-                  class="progress-fill warning-level"
-                  style="width: 90%"
-                ></div>
-              </div>
-              <div class="progress-text">
-                <span>£180 spent</span>
-                <span>90%</span>
-              </div>
-            </div>
-            <div class="category-alert warning">
-              ⚠️ 90% - Approaching limit!
+            <div class="category-alert {{ alert_class }}">
+              {% if percentage >= 90 %} 🚨 {{ "%.0f"|format(percentage) }}% -
+              Critical! Near limit! {% elif percentage >= 75 %} ⚠️ {{
+              "%.0f"|format(percentage) }}% - Monitor spending {% else %} ✅ {{
+              "%.0f"|format(percentage) }}% - Well managed! {% endif %}
             </div>
           </div>
-
-          <div class="category-card">
-            <div class="category-header">
-              <h3>Shopping</h3>
-              <div class="category-actions">
-                <button
-                  class="btn-icon"
-                  onclick="openEditModal(6, 'Shopping', 400, 'monthly')"
-                  title="Edit"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="btn-icon delete"
-                  onclick="deleteBudget(6, 'Shopping')"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-            <div class="category-amount">£400</div>
-            <div class="category-progress">
-              <div class="progress-bar small">
-                <div
-                  class="progress-fill warning-level"
-                  style="width: 80%"
-                ></div>
-              </div>
-              <div class="progress-text">
-                <span>£320 spent</span>
-                <span>80%</span>
-              </div>
-            </div>
-            <div class="category-alert warning">⚠️ 80% - Watch spending</div>
-          </div>
-
-          <div class="category-card">
-            <div class="category-header">
-              <h3>Healthcare</h3>
-              <div class="category-actions">
-                <button
-                  class="btn-icon"
-                  onclick="openEditModal(5, 'Healthcare', 150, 'monthly')"
-                  title="Edit"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="btn-icon delete"
-                  onclick="deleteBudget(5, 'Healthcare')"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-            <div class="category-amount">£250</div>
-            <div class="category-progress">
-              <div class="progress-bar small">
-                <div class="progress-fill good-level" style="width: 50%"></div>
-              </div>
-              <div class="progress-text">
-                <span>£125 spent</span>
-                <span>50%</span>
-              </div>
-            </div>
-            <div class="category-alert good">✅ 50% - Well managed!</div>
-          </div>
-
-          <div class="category-card">
-            <div class="category-header">
-              <h3>Utilities</h3>
-              <div class="category-actions">
-                <button
-                  class="btn-icon"
-                  onclick="openEditModal(2, 'Utilities', 250, 'monthly')"
-                  title="Edit"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="btn-icon delete"
-                  onclick="deleteBudget(2, 'Utilities')"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
-              </div>
-            </div>
-            <div class="category-amount">£350</div>
-            <div class="category-progress">
-              <div class="progress-bar small">
-                <div
-                  class="progress-fill critical-level"
-                  style="width: 94%"
-                ></div>
-              </div>
-              <div class="progress-text">
-                <span>£330 spent</span>
-                <span>94%</span>
-              </div>
-            </div>
-            <div class="category-alert critical">
-              🚨 94% - Critical! Near limit!
-            </div>
-          </div>
+          {% endfor %} {% else %}
+          <p style="color: #6c757d; padding: 20px; text-align: center">
+            No budgets configured yet. Click "Add Budget" to create your first
+            budget.
+          </p>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -339,19 +202,6 @@ endblock %} {% block head %}
             required
           />
         </div>
-        <div class="input-group">
-          <label for="add_period">Period</label>
-          <select
-            id="add_period"
-            name="budget_period"
-            class="form-select"
-            required
-          >
-            <option value="weekly">Weekly</option>
-            <option value="monthly" selected>Monthly</option>
-            <option value="yearly">Yearly</option>
-          </select>
-        </div>
         <div class="modal-actions">
           <button type="button" class="btn secondary" onclick="closeAddModal()">
             Cancel
@@ -388,19 +238,6 @@ endblock %} {% block head %}
             min="0"
             required
           />
-        </div>
-        <div class="input-group">
-          <label for="edit_period">Period</label>
-          <select
-            id="edit_period"
-            name="budget_period"
-            class="form-select"
-            required
-          >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-          </select>
         </div>
         <div class="modal-actions">
           <button
@@ -535,7 +372,6 @@ endblock %} {% block head %}
         const data = {
           category_id: formData.get("category_id"),
           amount: formData.get("amount"),
-          budget_period: formData.get("budget_period"),
         };
 
         fetch("/budget/add", {
@@ -569,7 +405,6 @@ endblock %} {% block head %}
         const formData = new FormData(this);
         const data = {
           amount: formData.get("amount"),
-          budget_period: formData.get("budget_period"),
         };
 
         fetch(`/budget/${budgetId}/edit`, {
@@ -595,5 +430,5 @@ endblock %} {% block head %}
       });
   });
 </script>
-
+</div>
 {% endblock %}

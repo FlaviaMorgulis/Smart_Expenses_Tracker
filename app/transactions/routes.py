@@ -210,7 +210,6 @@ def budgets():
                 BudgetService.create_or_update_total_budget(
                     user_id=current_user.user_id,
                     budget_amount=form.budget_amount.data,
-                    budget_period=form.budget_period.data,
                     alert_threshold=form.alert_threshold.data
                 )
                 flash('Total budget saved successfully!', 'success')
@@ -220,7 +219,6 @@ def budgets():
                     user_id=current_user.user_id,
                     budget_amount=form.budget_amount.data,
                     category_id=form.category_id.data,
-                    budget_period=form.budget_period.data,
                     alert_threshold=form.alert_threshold.data
                 )
                 flash('Category budget saved successfully!', 'success')

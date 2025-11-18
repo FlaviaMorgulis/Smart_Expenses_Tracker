@@ -282,7 +282,6 @@ class Budget(db.Model):
     
     budget_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     budget_amount = db.Column(db.Numeric(10, 2), nullable=False)
-    budget_period = db.Column(db.Enum('weekly', 'monthly', 'yearly', name='budget_period_enum'), nullable=False, default='monthly')
     is_active = db.Column(db.Boolean, nullable=False, default=True)  # Whether budget is currently active
     alert_threshold = db.Column(db.Numeric(5, 2), nullable=False, default=80.0)  # Alert when % of budget is reached (default 80%)
     notifications_enabled = db.Column(db.Boolean, nullable=False, default=True)  # Enable/disable budget alerts

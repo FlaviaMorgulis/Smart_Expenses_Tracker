@@ -5,82 +5,75 @@ SmartExpensesTracker{% endblock %} {% block head %}
   rel="stylesheet"
   href="{{ url_for('static', filename='css/members.css') }}"
 />
-
-<!-- Members & Family Management JavaScript -->
-<script src="{{ url_for('static', filename='js/members.js') }}"></script>
+<!-- Budget CSS for category cards -->
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/budget.css') }}"
+/>
 {% endblock %} {% block content %}
 
-<div class="family-management-container">
+<div class="dashboard-container">
   <!-- Welcome Section -->
-  <div class="welcome-section">
+  <div class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; padding: 30px 0; margin-bottom: 20px;">
     <div class="welcome-content">
-      <h1>Family Expenses 👨‍👩‍👧‍👦</h1>
-      <p class="lead">Shared household tracking and savings goals</p>
+      <h1 style="margin-bottom: 8px;">Family Expenses 👨‍👩‍👧‍👦</h1>
+      <p class="lead" style="margin: 0; color: #6c757d;">Shared household tracking and savings goals</p>
     </div>
-    <div class="header-actions">
-      <button class="btn secondary" data-action="add-member" style="background: #6c757d; color: white; border: none;">
-        👥 Add Member
+    <div class="header-actions" style="display: flex; gap: 12px;">
+      <button class="btn secondary" data-action="add-member" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;">
+        Add Member
       </button>
-      <button class="btn secondary" data-action="add-expense" style="background: #6c757d; color: white; border: none;">
-        💰 Add Expense
+      <button class="btn secondary" data-action="add-expense" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;">
+        Add Expense
       </button>
-      <button class="btn secondary" data-action="manage-budget" style="background: #6c757d; color: white; border: none;">
-        📊 Manage Budget
+      <button class="btn secondary" data-action="manage-budget" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;">
+        Manage Budget
       </button>
     </div>
   </div>
 
-  <!-- Main Dashboard Grid -->
-  <div class="dashboard-grid">
-    <!-- Family Overview Cards -->
-    <div class="overview-section">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">👨‍👩‍👧‍👦</div>
-          <div class="stat-info">
-            <div class="stat-value">{{ member_count + 1 }}</div>
-            <div class="stat-label">Family Members</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">💰</div>
-          <div class="stat-info">
-            <div class="stat-value">
-              £{{ "%.0f"|format(total_family_expenses) }}
-            </div>
-            <div class="stat-label">Total Expenses</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
-          <div class="stat-info">
-            <div class="stat-value">
-              £{{ "%.0f"|format(family_budget_total) }}
-            </div>
-            <div class="stat-label">Monthly Budget</div>
-          </div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">📈</div>
-          <div class="stat-info">
-            <div class="stat-value">
-              {{ "%.0f"|format(budget_percentage if budget_percentage else 0)
-              }}%
-            </div>
-            <div class="stat-label">Budget Used</div>
-          </div>
-        </div>
+  <!-- Monthly Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">👨‍👩‍👧‍👦</div>
+      <div class="stat-info">
+        <h3>FAMILY MEMBERS</h3>
+        <h2 class="stat-amount">{{ member_count + 1 }}</h2>
       </div>
     </div>
 
-    <!-- Family Members Section -->
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-info">
+        <h3>TOTAL EXPENSES</h3>
+        <h2 class="stat-amount negative">£{{ "%.0f"|format(total_family_expenses) }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-info">
+        <h3>MONTHLY BUDGET</h3>
+        <h2 class="stat-amount">£{{ "%.0f"|format(family_budget_total) }}</h2>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-info">
+        <h3>BUDGET USED</h3>
+        <h2 class="stat-amount {{ 'warning' if budget_percentage >= 75 else 'positive' }}">
+          {{ "%.0f"|format(budget_percentage if budget_percentage else 0) }}%
+        </h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dashboard Grid -->
+  <div class="dashboard-grid">    <!-- Family Members Section -->
     <div class="members-section">
       <div class="members-header">
         <h3>Family Members</h3>
-        <button id="addMemberBtn" class="btn secondary" style="background: #6c757d; color: white; border: none;">+ Add Member</button>
       </div>
       <div class="members-grid">
         <!-- Current User (Owner) -->
@@ -198,20 +191,20 @@ SmartExpensesTracker{% endblock %} {% block head %}
             </div>
           </div>
           <div class="analytics-grid">
-            <!-- Card 1: Spending Breakdown / Expense Categories -->
+            <!-- Card 1: Category Spending Over Time -->
             <div class="analytics-card">
               <div class="chart-header">
-                <h4>Expense Categories</h4>
+                <h4>Category Spending Trends</h4>
               </div>
               <div class="chart-container">
                 <canvas id="categoryChart" width="400" height="300"></canvas>
               </div>
             </div>
 
-            <!-- Card 2: Income vs Expenses (family) -->
+            <!-- Card 2: Category Distribution -->
             <div class="analytics-card">
               <div class="chart-header">
-                <h4>Income vs Expenses <small>(<span id="familyMonthsCount">0</span> months)</small></h4>
+                <h4>Category Distribution</h4>
               </div>
               <div class="chart-container">
                 <canvas id="familyMonthlyComparisonChart" width="400" height="300"></canvas>
@@ -220,166 +213,71 @@ SmartExpensesTracker{% endblock %} {% block head %}
           </div>
         </div>
 
-        <!-- Family Budget Section -->
-        <div class="family-budget-section">
-          <div class="budget-header">
-            <h3>Family Budget Overview</h3>
+      <!-- Category Budgets Section -->
+      <div class="category-budgets-section">
+        <div class="section-header">
+          <h3>Category Budgets</h3>
+          <button
+            class="btn secondary"
+            data-action="manage-budget"
+            onclick="console.log('Inline onclick fired'); showBudgetModal(); return false;"
+            style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;"
+          >
+            Add Category Budget
+          </button>
         </div>
-
-        <div class="budget-grid">
-          <!-- Monthly Budget Card -->
-          <div class="budget-card">
-            <div class="budget-card-header">
-              <h4>Monthly Budget</h4>
-              <div class="budget-amount">
-                £{{ "%.0f"|format(family_budget_total) }}
-              </div>
-            </div>
-            <div class="budget-progress">
-              <div class="progress-bar">
-                <div
-                  class="progress-fill"
-                  style="width: {{ '%.0f'|format(budget_percentage if budget_percentage else 0) }}%;"
-                ></div>
-              </div>
-              <div class="progress-text">
-                £{{ "%.0f"|format(total_family_expenses) }} of £{{
-                "%.0f"|format(family_budget_total) }} used
-              </div>
-            </div>
-          </div>
-
-          <!-- Budget Categories -->
-          <div class="budget-categories">
-            <h4>Budget by Category</h4>
-            <div class="category-budgets">
-              <div class="category-budget-item">
-                <div class="category-info">
-                  <span class="category-icon">🍽️</span>
-                  <span class="category-name">Food & Dining</span>
-                </div>
-                <div class="category-amounts">
-                  <span class="spent"
-                    >£{{ "%.0f"|format(category_expenses.get('Food', 0))
-                    }}</span
-                  >
-                  <span class="budget"
-                    >/ £{{ "%.0f"|format(category_budgets.get('Food', 0))
-                    }}</span
-                  >
-                </div>
-              </div>
-
-              <div class="category-budget-item">
-                <div class="category-info">
-                  <span class="category-icon">💡</span>
-                  <span class="category-name">Bills & Utilities</span>
-                </div>
-                <div class="category-amounts">
-                  <span class="spent"
-                    >£{{ "%.0f"|format(category_expenses.get('Utilities', 0))
-                    }}</span
-                  >
-                  <span class="budget"
-                    >/ £{{ "%.0f"|format(category_budgets.get('Utilities', 0))
-                    }}</span
-                  >
-                </div>
-              </div>
-
-              <div class="category-budget-item">
-                <div class="category-info">
-                  <span class="category-icon">🚗</span>
-                  <span class="category-name">Transport</span>
-                </div>
-                <div class="category-amounts">
-                  <span class="spent"
-                    >£{{ "%.0f"|format(category_expenses.get('Transport', 0))
-                    }}</span
-                  >
-                  <span class="budget"
-                    >/ £{{ "%.0f"|format(category_budgets.get('Transport', 0))
-                    }}</span
-                  >
-                </div>
-              </div>
-
-              <div class="category-budget-item">
-                <div class="category-info">
-                  <span class="category-icon">🎬</span>
-                  <span class="category-name">Entertainment</span>
-                </div>
-                <div class="category-amounts">
-                  <span class="spent"
-                    >£{{ "%.0f"|format(category_expenses.get('Entertainment',
-                    0)) }}</span
-                  >
-                  <span class="budget"
-                    >/ £{{ "%.0f"|format(category_budgets.get('Entertainment',
-                    0)) }}</span
-                  >
-                </div>
-              </div>
-
-              <div class="category-budget-item">
-                <div class="category-info">
-                  <span class="category-icon">🛒</span>
-                  <span class="category-name">Shopping & Other</span>
-                </div>
-                <div class="category-amounts">
-                  <span class="spent"
-                    >£{{ "%.0f"|format(category_expenses.get('Shopping', 0))
-                    }}</span
-                  >
-                  <span class="budget"
-                    >/ £{{ "%.0f"|format(category_budgets.get('Shopping', 0))
-                    }}</span
-                  >
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Budget Alerts -->
-          <div class="budget-alerts">
-            <h4>Budget Alerts</h4>
-            <div class="alert-items">
-              {% if budget_percentage and budget_percentage > 80 %}
-              <div class="alert-item warning">
-                <span class="alert-icon">⚠️</span>
-                <div class="alert-content">
-                  <strong>Budget Warning</strong>
-                  <p>
-                    You've used {{ "%.0f"|format(budget_percentage) }}% of your
-                    monthly budget
-                  </p>
-                </div>
-              </div>
+        
+        <div class="budget-cards-grid">
+          {% if category_budgets %}
+            {# Create a list of tuples with category data and sort by percentage (highest first) #}
+            {% set budget_list = [] %}
+            {% for category_name, budget_amount in category_budgets.items() %}
+              {% if budget_amount > 0 %}
+                {% set spent = category_expenses.get(category_name, 0) %}
+                {% set percentage = (spent / budget_amount * 100) if budget_amount > 0 else 0 %}
+                {% set _ = budget_list.append((category_name, budget_amount, spent, percentage)) %}
               {% endif %}
-
-              <div class="alert-item info">
-                <span class="alert-icon">📊</span>
-                <div class="alert-content">
-                  <strong>Spending Trend</strong>
-                  <p>
-                    Your family spending is {{ "higher than" if
-                    (budget_percentage or 42) > 50 else "within" }} average this
-                    month
-                  </p>
+            {% endfor %}
+            
+            {# Sort by percentage descending (red to green) #}
+            {% set sorted_budgets = budget_list|sort(attribute='3', reverse=True) %}
+            
+            {% for category_name, budget_amount, spent, percentage in sorted_budgets %}
+                {% set progress_class = 'critical-level' if percentage >= 90 else ('warning-level' if percentage >= 75 else 'good-level') %}
+                {% set alert_class = 'critical' if percentage >= 90 else ('warning' if percentage >= 75 else 'success') %}
+                
+                <div class="category-card">
+                  <div class="category-header">
+                    <h3>{{ category_name }}</h3>
+                    <div class="category-actions">
+                      <button class="btn-icon" onclick="editCategoryBudget('{{ category_name }}', {{ budget_amount }})" title="Edit">✏️</button>
+                      <button class="btn-icon delete" onclick="deleteCategoryBudget('{{ category_name }}')" title="Delete">🗑️</button>
+                    </div>
+                  </div>
+                  <div class="category-amount">£{{ "%.0f"|format(budget_amount) }}</div>
+                  <div class="category-progress">
+                    <div class="progress-bar small">
+                      <div class="progress-fill {{ progress_class }}" style="width: {{ percentage|round(0) }}%"></div>
+                    </div>
+                    <div class="progress-text">
+                      <span>£{{ "%.0f"|format(spent) }} spent</span>
+                      <span>{{ "%.0f"|format(percentage) }}%</span>
+                    </div>
+                  </div>
+                  <div class="category-alert {{ alert_class }}">
+                    {% if percentage >= 90 %}
+                      ⚠️ {{ "%.0f"|format(percentage) }}% - Critical! Near limit!
+                    {% elif percentage >= 75 %}
+                      ⚠️ {{ "%.0f"|format(percentage) }}% - Monitor spending
+                    {% else %}
+                      ✅ {{ "%.0f"|format(percentage) }}% - Well managed!
+                    {% endif %}
+                  </div>
                 </div>
-              </div>
-
-              <div class="alert-item success">
-                <span class="alert-icon">💡</span>
-                <div class="alert-content">
-                  <strong>Savings Tip</strong>
-                  <p>
-                    Consider meal planning to reduce food expenses by 15-20%
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+            {% endfor %}
+          {% else %}
+            <p style="color: #6c757d; padding: 20px; text-align: center;">No budgets configured yet. Click "Add Category Budget" to create your first budget.</p>
+          {% endif %}
         </div>
       </div>
 
@@ -387,60 +285,56 @@ SmartExpensesTracker{% endblock %} {% block head %}
       <div class="expenses-section">
         <div class="expenses-header">
           <h3>Recent Family Expenses</h3>
-          <div class="expenses-actions">
-            <button
-              class="btn secondary"
-              data-action="add-expense-section"
-              style="background: #6c757d; color: white; border: none;"
-            >
-            💰 Add Expense
+          <button
+            class="btn secondary"
+            data-action="add-expense-section"
+            style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;"
+          >
+            Add Expense
           </button>
         </div>
         <div class="expenses-table-container">
           <table class="expenses-table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Paid By</th>
-                <th>Split Between</th>
-                <th>Actions</th>
+                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DATE</th>
+                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DESCRIPTION</th>
+                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">CATEGORY</th>
+                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">AMOUNT</th>
+                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">PAID BY</th>
+                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">SPLIT BETWEEN</th>
+                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {% for expense in recent_shared_expenses %}
-              <tr>
-                <td>{{ expense.date }}</td>
-                <td>{{ expense.description or 'Family Expense' }}</td>
-                <td>{{ expense.category }}</td>
-                <td>£{{ "%.2f"|format(expense.amount) }}</td>
-                <td>
-                  <div class="payer">
-                    <div class="payer-avatar">
-                      {{ current_user.user_name[0].upper() if
-                      current_user.user_name else 'U' }}
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                <td style="padding: 16px 12px; color: #2c3e50;">{{ expense.date }}</td>
+                <td style="padding: 16px 12px; color: #2c3e50;">{{ expense.description or 'Family Expense' }}</td>
+                <td style="padding: 16px 12px; color: #d9534f; font-weight: 500;">{{ expense.category }}</td>
+                <td style="padding: 16px 12px; color: #2c3e50; font-weight: 600;">£{{ "%.2f"|format(expense.amount) }}</td>
+                <td style="padding: 16px 12px;">
+                  <div class="payer" style="display: flex; align-items: center; gap: 8px;">
+                    <div class="payer-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: #6c757d; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
+                      {{ current_user.user_name[0].upper() if current_user.user_name else 'D' }}
                     </div>
-                    {{ current_user.user_name or 'You' }}
+                    <span style="color: #2c3e50;">{{ current_user.user_name or 'Demo User' }}</span>
                   </div>
                 </td>
-                <td>
+                <td style="padding: 16px 12px;">
                   <div class="members-involved">
-                    {% for member_name in expense.members %}
-                    <span class="member-tag">{{ member_name }}</span>
-                    {% endfor %}
-                    <span class="split-info"
-                      >({{ expense.member_count }} people)</span
-                    >
+                    <span style="color: #007bff; font-weight: 500;">nnbv</span>
+                    <span class="split-info" style="color: #6c757d; font-size: 13px; margin-left: 4px;">({{ expense.member_count }} people)</span>
                   </div>
                 </td>
-                <td>
-                  <div class="expense-actions">
+                <td style="padding: 16px 12px;">
+                  <div class="expense-actions" style="display: flex; gap: 8px;">
                     <button
                       class="action-btn edit"
                       data-action="edit-expense"
                       data-expense-id="{{ expense.id }}"
+                      style="background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px;"
+                      title="Edit"
                     >
                       ✏️
                     </button>
@@ -448,6 +342,8 @@ SmartExpensesTracker{% endblock %} {% block head %}
                       class="action-btn delete"
                       data-action="delete-expense"
                       data-expense-id="{{ expense.id }}"
+                      style="background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; color: #dc3545;"
+                      title="Delete"
                     >
                       🗑️
                     </button>
@@ -742,11 +638,11 @@ SmartExpensesTracker{% endblock %} {% block head %}
     </div>
   </div>
 
-  <!-- Budget Management Modal -->
+  <!-- Category Budget Modal -->
   <div id="budgetModal" class="modal">
-    <div class="modal-content large">
+    <div class="modal-content">
       <div class="modal-header">
-        <h3>Family Budget Management</h3>
+        <h3>Add Category Budget</h3>
         <button
           class="close-btn"
           onclick="event.stopPropagation(); closeModal('budgetModal');"
@@ -760,77 +656,44 @@ SmartExpensesTracker{% endblock %} {% block head %}
           method="POST"
           action="{{ url_for('main.update_family_budget') }}"
         >
-          <div class="budget-grid">
-            <div class="form-group">
-              <label for="monthlyBudget">Total Monthly Budget (£)</label>
-              <input
-                type="number"
-                id="monthlyBudget"
-                name="monthly_budget"
-                step="0.01"
-                min="0"
-                value="{{ family_budget_total or 2500 }}"
-                required
-              />
-            </div>
-
-            <h4>Category Budgets</h4>
-            <div class="category-budgets">
-              <div class="form-group">
-                <label for="foodBudget">Food (£)</label>
-                <input
-                  type="number"
-                  id="foodBudget"
-                  name="food_budget"
-                  step="0.01"
-                  min="0"
-                  placeholder="500"
-                />
-              </div>
-              <div class="form-group">
-                <label for="billsBudget">Bills (£)</label>
-                <input
-                  type="number"
-                  id="billsBudget"
-                  name="bills_budget"
-                  step="0.01"
-                  min="0"
-                  placeholder="800"
-                />
-              </div>
-              <div class="form-group">
-                <label for="transportBudget">Transport (£)</label>
-                <input
-                  type="number"
-                  id="transportBudget"
-                  name="transport_budget"
-                  step="0.01"
-                  min="0"
-                  placeholder="300"
-                />
-              </div>
-              <div class="form-group">
-                <label for="entertainmentBudget">Entertainment (£)</label>
-                <input
-                  type="number"
-                  id="entertainmentBudget"
-                  name="entertainment_budget"
-                  step="0.01"
-                  min="0"
-                  placeholder="200"
-                />
-              </div>
-            </div>
+          <div class="form-group">
+            <label for="categorySelect">Category</label>
+            <select
+              id="categorySelect"
+              name="category_id"
+              class="form-select"
+              required
+              style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid #e9ecef; border-radius: 8px;"
+            >
+              <option value="">Select Category</option>
+              {% for category in categories %}
+              <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+              {% endfor %}
+            </select>
           </div>
-          <div class="modal-actions">
+          <div class="form-group">
+            <label for="budgetAmount">Budget Amount (£)</label>
+            <input
+              type="number"
+              id="budgetAmount"
+              name="amount"
+              step="0.01"
+              min="0"
+              required
+              placeholder="Enter budget amount"
+              style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid #e9ecef; border-radius: 8px;"
+            />
+          </div>
+          <div class="modal-actions" style="margin-top: 25px;">
             <button
               type="button"
               class="btn btn-secondary"
               onclick="closeModal('budgetModal')"
+              style="padding: 10px 20px; border-radius: 8px;"
             >
               Cancel
             </button>
-            <button type="submit" class="btn secondary" style="background: #6c757d; color: white; border: none;">Update Budget</button>
+            <button type="submit" class="btn secondary" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px;">Add Budget</button>
           </div>
         </form>
       </div>
@@ -846,5 +709,7 @@ SmartExpensesTracker{% endblock %} {% block head %}
     const familyMonthlyComparison = {{ family_monthly_comparison | default([], true) | tojson | safe }};
   </script>
 
-  {% endblock %}
+  <!-- Members & Family Management JavaScript - loaded at end to ensure DOM is ready -->
+  <script src="{{ url_for('static', filename='js/members.js') }}"></script>
 </div>
+{% endblock %}
