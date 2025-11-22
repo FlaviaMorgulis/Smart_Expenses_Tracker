@@ -1,0 +1,428 @@
+﻿{% extends "base.html" %} {% block title %}Budget - SmartExpensesTracker{%
+endblock %} {% block head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/budget.css') }}"
+/>
+{% endblock %} {% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-content">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h1>Budget Management 💰</h1>
+      <p class="lead">Take control of your spending with smart budgeting</p>
+    </div>
+
+    <!-- Monthly Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">💳</div>
+        <div class="stat-info">
+          <h3>TOTAL BUDGET</h3>
+          <h2 class="stat-amount">£{{ "%.2f"|format(total_budget) }}</h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">📉</div>
+        <div class="stat-info">
+          <h3>SPENT THIS MONTH</h3>
+          <h2 class="stat-amount negative">
+            £{{ "%.2f"|format(monthly_spent) }}
+          </h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info">
+          <h3>REMAINING</h3>
+          <h2
+            class="stat-amount {{ 'positive' if remaining_budget > 0 else 'negative' }}"
+          >
+            £{{ "%.2f"|format(remaining_budget) }}
+          </h2>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <h3>BUDGET USED</h3>
+          <h2
+            class="stat-amount {{ 'warning' if budget_percentage >= 75 else 'positive' }}"
+          >
+            {{ "%.1f"|format(budget_percentage) }}%
+          </h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget Progress Section -->
+    <div class="analytics-section">
+      <div class="analytics-card">
+        <h4>Monthly Progress</h4>
+        <p class="analytics-subtitle">
+          {{ "%.1f"|format(budget_percentage) }}% of budget used
+        </p>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              style="width: {{ budget_percentage|round(0) }}%"
+            ></div>
+          </div>
+          <div class="progress-details">
+            <span
+              >£{{ "%.2f"|format(monthly_spent) }} spent of £{{
+              "%.2f"|format(total_budget) }} budget</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Budgets Section -->
+    <div class="analytics-section">
+      <div class="analytics-card full-width">
+        <div class="section-header">
+          <h3>Category Budgets</h3>
+          <button
+            class="btn secondary"
+            data-action="add-budget"
+            onclick="openAddModal()"
+            style="background: #6c757d; color: white; border: none"
+          >
+            <i class="icon"></i> Add Budget
+          </button>
+        </div>
+
+        <div class="budget-alerts-container">
+          {% if category_spending %}
+            {% set budget_list = [] %}
+            {% for category_name, data in category_spending.items() %}
+              {% if data.budget > 0 %}
+                {% set spent = data.spent %}
+                {% set budget_amount = data.budget %}
+                {% set percentage = data.percentage %}
+                {% set alert_level = 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget') %}
+                {% set _ = budget_list.append((category_name, budget_amount, spent, percentage, alert_level)) %}
+              {% endif %}
+            {% endfor %}
+            
+            {% set sorted_budgets = budget_list|sort(attribute='3', reverse=True) %}
+            
+            {% for category_name, budget_amount, spent, percentage, alert_level in sorted_budgets %}
+            <div class="budget-alert {{ alert_level }}">
+              <div class="alert-header">
+                <div class="alert-category">{{ category_name }}</div>
+                <div class="category-actions">
+                  <button
+                    class="btn-icon"
+                    onclick="openEditModal({{ loop.index }}, '{{ category_name }}', {{ budget_amount }})"
+                    title="Edit"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    class="btn-icon delete"
+                    onclick="deleteBudget({{ loop.index }}, '{{ category_name }}')"
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              <div class="alert-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: {{ percentage }}%"></div>
+                </div>
+                <span class="progress-text">{{ "%.1f"|format(percentage) }}%</span>
+              </div>
+              <div class="alert-amount">£{{ "%.2f"|format(spent) }} / £{{ "%.2f"|format(budget_amount) }}</div>
+              <div class="alert-status">
+                {% if alert_level == 'over-budget' %}
+                  Over Budget
+                {% elif alert_level == 'near-limit' %}
+                  Near Limit
+                {% else %}
+                  Within Budget
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="no-alerts">
+              <p>No budgets configured yet. Click "Add Budget" to create your first budget.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Budget Modal -->
+<div id="addBudgetModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add New Budget</h3>
+      <span class="modal-close" onclick="closeAddModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="addBudgetForm">
+        <div class="input-group">
+          <label for="add_category">Category</label>
+          <select
+            id="add_category"
+            name="category_id"
+            class="form-select"
+            required
+          >
+            <option value="">Select Category</option>
+            {% for category in available_categories %}
+            <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="add_amount">Budget Amount (£)</label>
+          <input
+            type="number"
+            id="add_amount"
+            name="amount"
+            class="form-input"
+            step="0.01"
+            min="0"
+            required
+          />
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" onclick="closeAddModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Add Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Budget Modal -->
+<div id="editBudgetModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Budget</h3>
+      <span class="modal-close" onclick="closeEditModal()">&times;</span>
+    </div>
+    <div class="modal-body">
+      <form id="editBudgetForm">
+        <input type="hidden" id="edit_budget_id" name="budget_id" />
+        <div class="input-group">
+          <label for="edit_category">Category</label>
+          <input type="text" id="edit_category" class="form-input" readonly />
+        </div>
+        <div class="input-group">
+          <label for="edit_amount">Budget Amount (£)</label>
+          <input
+            type="number"
+            id="edit_amount"
+            name="amount"
+            class="form-input"
+            step="0.01"
+            min="0"
+            required
+          />
+        </div>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn secondary"
+            onclick="closeEditModal()"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">Update Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Sort budget alerts by percentage (highest first)
+    const budgetAlertsContainer = document.querySelector(".budget-alerts-container");
+    if (budgetAlertsContainer) {
+      const alerts = Array.from(budgetAlertsContainer.querySelectorAll(".budget-alert"));
+      
+      // Sort alerts by priority: over-budget (3), near-limit (2), within-budget (1)
+      alerts.sort((a, b) => {
+        const getPriority = (alert) => {
+          if (alert.classList.contains('over-budget')) return 3;
+          if (alert.classList.contains('near-limit')) return 2;
+          return 1;
+        };
+
+        return getPriority(b) - getPriority(a); // Descending order
+      });
+
+      // Reappend alerts in sorted order
+      alerts.forEach((alert) => budgetAlertsContainer.appendChild(alert));
+    }
+
+    const statCards = document.querySelectorAll(".stat-card");
+    statCards.forEach((card, index) => {
+      card.style.opacity = "0";
+      card.style.transform = "translateY(20px)";
+      setTimeout(() => {
+        card.style.transition = "all 0.4s ease";
+        card.style.opacity = "1";
+        card.style.transform = "translateY(0)";
+      }, index * 100);
+    });
+
+    const budgetAlerts = document.querySelectorAll(".budget-alert");
+    budgetAlerts.forEach((alert, index) => {
+      alert.style.opacity = "0";
+      alert.style.transform = "translateY(15px)";
+      setTimeout(() => {
+        alert.style.transition = "all 0.3s ease";
+        alert.style.opacity = "1";
+        alert.style.transform = "translateY(0)";
+      }, 300 + index * 50);
+    });
+  });
+
+  // Modal Functions (aynı kalacak)
+  function openAddModal() {
+    document.getElementById("addBudgetModal").style.display = "block";
+  }
+
+  function closeAddModal() {
+    document.getElementById("addBudgetModal").style.display = "none";
+    document.getElementById("addBudgetForm").reset();
+  }
+
+  function openEditModal(budgetId, category, amount, period) {
+    document.getElementById("edit_budget_id").value = budgetId;
+    document.getElementById("edit_category").value = category;
+    document.getElementById("edit_amount").value = amount;
+    document.getElementById("edit_period").value = period;
+    document.getElementById("editBudgetModal").style.display = "block";
+  }
+
+  function closeEditModal() {
+    document.getElementById("editBudgetModal").style.display = "none";
+    document.getElementById("editBudgetForm").reset();
+  }
+
+  function deleteBudget(budgetId, category) {
+    if (
+      !confirm(`Are you sure you want to delete the budget for ${category}?`)
+    ) {
+      return;
+    }
+
+    fetch(`/budget/${budgetId}/delete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert("Error: " + data.message);
+        }
+      })
+      .catch((error) => {
+        alert("Error deleting budget: " + error);
+      });
+  }
+
+  // Close modals when clicking outside
+  window.onclick = function (event) {
+    const addModal = document.getElementById("addBudgetModal");
+    const editModal = document.getElementById("editBudgetModal");
+    if (event.target == addModal) {
+      closeAddModal();
+    }
+    if (event.target == editModal) {
+      closeEditModal();
+    }
+  };
+
+  // Form submission handlers
+  document.addEventListener("DOMContentLoaded", function () {
+    document
+      .getElementById("addBudgetForm")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {
+          category_id: formData.get("category_id"),
+          amount: formData.get("amount"),
+        };
+
+        fetch("/budget/add", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(data.message);
+              closeAddModal();
+              location.reload();
+            } else {
+              alert("Error: " + data.message);
+            }
+          })
+          .catch((error) => {
+            alert("Error adding budget: " + error);
+          });
+      });
+
+    document
+      .getElementById("editBudgetForm")
+      .addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const budgetId = document.getElementById("edit_budget_id").value;
+        const formData = new FormData(this);
+        const data = {
+          amount: formData.get("amount"),
+        };
+
+        fetch(`/budget/${budgetId}/edit`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(data.message);
+              closeEditModal();
+              location.reload();
+            } else {
+              alert("Error: " + data.message);
+            }
+          })
+          .catch((error) => {
+            alert("Error updating budget: " + error);
+          });
+      });
+  });
+</script>
+{% endblock %}

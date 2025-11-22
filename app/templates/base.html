@@ -1,72 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}SmartExpensesTracker{% endblock %}</title>
-    
+
     <!-- Original CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/style.css') }}"
+    />
+    {% block head %}{% endblock %}
+  </head>
+  <body>
     <!-- Navigation -->
     <nav class="navbar">
-        <div class="nav-container">
-            <div class="brand">
-                <div class="logo">💰</div>
-                <h1><a href="{{ url_for('main.index') }}" style="text-decoration: none; color: inherit;">SmartExpensesTracker</a></h1>
-            </div>
-            
-            <div class="nav-links">
-                {% if current_user.is_authenticated %}
-                <!-- Logged in users -->
-                <a href="{{ url_for('main.dashboard') }}" class="nav-link">Home</a>
-                <a href="{{ url_for('transactions.transactions') }}" class="nav-link">Transactions</a>
-                <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
-                <a href="{{ url_for('main.faq') }}" class="nav-link">FAQ</a>
-                <div class="user-menu">
-                    <span class="user-name">{{ current_user.user_name }}</span>
-                    <div class="user-dropdown">
-                        <a href="{{ url_for('main.profile') }}">Profile</a>
-                        <a href="{{ url_for('auth.logout') }}">Logout</a>
-                    </div>
-                </div>
-                {% else %}
-                <!-- Not logged in users - ONLY About -->
-                <a href="{{ url_for('main.index') }}" class="nav-link">Home</a>
-                <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
-                {% endif %}
-            </div>
+      <div class="nav-container">
+        <div class="brand">
+          <div class="logo">💰</div>
+          <h1>
+            <a
+              href="{{ url_for('main.index') }}"
+              style="text-decoration: none; color: inherit"
+              >SmartExpensesTracker</a
+            >
+          </h1>
         </div>
+
+        <div class="nav-links">
+          {% if current_user.is_authenticated %}
+          <!-- Logged in users -->
+          <a href="{{ url_for('main.dashboard') }}" class="nav-link">Home</a>
+          <a href="{{ url_for('main.family_management') }}" class="nav-link">Family</a>
+          <div class="user-menu">
+            <h3 class="user-name">Financial Overview</h3>
+            <div class="user-dropdown">
+            <a href="{{ url_for('transactions.transactions') }}" class="nav-link"
+            >Transactions</a>
+            <a href="{{ url_for('main.budget') }}" class="nav-link">Budget</a>
+            <a href="{{ url_for('main.cash_flow') }}" class="nav-link">Cashflow</a>
+            </div>
+          </div>
+          <div class="user-menu">
+            <span class="user-name">{{ current_user.user_name }}</span>
+            <div class="user-dropdown">
+              <a href="{{ url_for('main.profile') }}">Profile</a>
+              <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
+              <a href="{{ url_for('main.faq') }}" class="nav-link">FAQ</a>
+              <a href="{{ url_for('auth.logout') }}">Logout</a>
+            </div>
+          </div>
+          {% else %}
+          <!-- Not logged in users - ONLY About -->
+          <a href="{{ url_for('main.index') }}" class="nav-link">Home</a>
+          <a href="{{ url_for('main.about') }}" class="nav-link">About Us</a>
+          {% endif %}
+        </div>
+      </div>
     </nav>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">
-                        {{ message }}
-                        <button class="flash-close">&times;</button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash-message {{ category }}">
+            <span class="flash-text">{{ message }}</span>
+            <button class="flash-close" onclick="closeFlashMessage(this)">&times;</button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
     {% endwith %}
 
     <!-- Main Content -->
-    <main class="wrapper">
-        {% block content %}{% endblock %}
-    </main>
+    <main class="wrapper">{% block content %}{% endblock %}</main>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
-            <p>&copy; 2025 SmartExpensesTracker. All rights reserved.</p>
-        </div>
+      <div class="footer-content">
+        <p>&copy; 2025 SmartExpensesTracker. All rights reserved.</p>
+      </div>
     </footer>
 
     <!-- External JS -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-</body>
+    <script src="{{ url_for('static', filename='js/members.js') }}"></script>
+  </body>
 </html>
+
+<script>
+// Flash message close function
+function closeFlashMessage(button) {
+    const flashMessage = button.closest('.flash-message');
+    if (flashMessage) {
+        flashMessage.classList.add('hiding');
+        setTimeout(() => {
+            flashMessage.remove();
+            // Remove container if all flash messages are closed
+            const flashContainer = document.querySelector('.flash-messages');
+            if (flashContainer && flashContainer.children.length === 0) {
+                flashContainer.remove();
+            }
+        }, 300);
+    }
+}
+
+// Auto close functionality
+function autoCloseFlashMessages() {
+    const flashMessages = document.querySelectorAll('.flash-message');
+    flashMessages.forEach(message => {
+        setTimeout(() => {
+            if (message.parentNode) {
+                closeFlashMessage(message.querySelector('.flash-close'));
+            }
+        }, 5000); // Auto close after 5 seconds
+    });
+}
+
+// Functions to run when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    autoCloseFlashMessages();
+    
+    // Also check modal close functions here
+    initModalCloseFunctions();
+});
+
+// Modal close functions
+function initModalCloseFunctions() {
+    // Close modal by clicking outside
+    window.onclick = function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
+    
+    // Close modal with ESC key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+    });
+}
+
+// General close function - for all closeable elements
+function setupCloseButtons() {
+    // Flash message close buttons
+    document.querySelectorAll('.flash-close').forEach(button => {
+        button.onclick = function() {
+            closeFlashMessage(this);
+        };
+    });
+    
+    // Modal close buttons
+    document.querySelectorAll('.modal-close, .close-btn').forEach(button => {
+        button.onclick = function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        };
+    });
+}
+
+// Set up all close buttons when page loads
+document.addEventListener('DOMContentLoaded', setupCloseButtons);
+</script>

@@ -98,43 +98,52 @@
             </div>
         </div>
 
-        <!-- Budget Alerts Slider -->
-        <div class="budget-alerts-section">
-            <div class="section-header">
-                <h3>Budget Alerts - {{ current_month }}</h3>
-                <a href="{{ url_for('transactions.budgets') }}" class="view-all">Manage Budgets</a>
-            </div>
+        <!-- Budget Alerts Section -->
+<div class="budget-alerts-section">
+    <div class="section-header">
+        <h3>Budget Alerts - {{ current_month }}</h3>
+        <a href="{{ url_for('main.budget') }}" class="view-all">Manage Budgets</a>
+    </div>
+    
+    <div class="budget-alerts-container" id="budgetAlertsSlider">
+        {% if budget_alerts %}
+            {% set alert_list = [] %}
+            {% for alert in budget_alerts %}
+                {% set spent = alert.spent %}
+                {% set budget_amount = alert.budget_amount %}
+                {% set percentage = (spent / budget_amount * 100) if budget_amount > 0 else 0 %}
+                {% set alert_level = 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget') %}
+                {% set _ = alert_list.append((alert.category_name, budget_amount, spent, percentage, alert_level)) %}
+            {% endfor %}
             
-            <div class="budget-alerts-container" id="budgetAlertsSlider">
-                {% if budget_alerts %}
-                    {% for alert in budget_alerts %}
-                    <div class="budget-alert {{ alert.alert_level }}">
-                        <div class="alert-category">{{ alert.category_name }}</div>
-                        <div class="alert-progress">
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: {{ alert.percentage_used }}%"></div>
-                            </div>
-                            <span class="progress-text">{{ "%.1f"|format(alert.percentage_used) }}%</span>
-                        </div>
-                        <div class="alert-amount">£{{ "%.2f"|format(alert.spent) }} / £{{ "%.2f"|format(alert.budget_amount) }}</div>
-                        <div class="alert-status">
-                            {% if alert.alert_level == 'over-budget' %}
-                                Over Budget
-                            {% elif alert.alert_level == 'near-limit' %}
-                                Near Limit
-                            {% else %}
-                                Within Budget
-                            {% endif %}
-                        </div>
+            {% set sorted_alerts = alert_list|sort(attribute='3', reverse=True) %}
+            
+            {% for category_name, budget_amount, spent, percentage, alert_level in sorted_alerts %}
+            <div class="budget-alert {{ alert_level }}">
+                <div class="alert-category">{{ category_name }}</div>
+                <div class="alert-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ percentage }}%"></div>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="no-alerts">
-                        <p>No budget alerts. All good! ✅</p>
-                    </div>
-                {% endif %}
+                    <span class="progress-text">{{ "%.1f"|format(percentage) }}%</span>
+                </div>
+                <div class="alert-amount">£{{ "%.2f"|format(spent) }} / £{{ "%.2f"|format(budget_amount) }}</div>
+                <div class="alert-status">
+                    {% if alert_level == 'over-budget' %}
+                        Over Budget
+                    {% elif alert_level == 'near-limit' %}
+                        Near Limit
+                    {% else %}
+                        Within Budget
+                    {% endif %}
+                </div>
             </div>
-        </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-alerts">
+                <p>No budget alerts. All good! ✅</p>
+            </div>
+        {% endif %}
     </div>
 </div>
 
@@ -143,7 +152,6 @@
 
 <script>
 function changeTimeRange(range) {
-    // URL'yi güncelle ve sayfayı yenile
     const url = new URL(window.location.href);
     url.searchParams.set('range', range);
     window.location.href = url.toString();
@@ -268,36 +276,6 @@ document.addEventListener('DOMContentLoaded', function() {
         monthlyCtx.fillStyle = '#666';
         monthlyCtx.textAlign = 'center';
         monthlyCtx.fillText('No monthly comparison data available', 200, 150);
-    }
-
-    // Budget Alerts Slider Functionality
-    const slider = document.getElementById('budgetAlertsSlider');
-    if (slider && slider.scrollWidth > slider.clientWidth) {
-        let isDown = false;
-        let startX;
-        let scrollLeft;
-
-        slider.addEventListener('mousedown', (e) => {
-            isDown = true;
-            startX = e.pageX - slider.offsetLeft;
-            scrollLeft = slider.scrollLeft;
-        });
-
-        slider.addEventListener('mouseleave', () => {
-            isDown = false;
-        });
-
-        slider.addEventListener('mouseup', () => {
-            isDown = false;
-        });
-
-        slider.addEventListener('mousemove', (e) => {
-            if (!isDown) return;
-            e.preventDefault();
-            const x = e.pageX - slider.offsetLeft;
-            const walk = (x - startX) * 2;
-            slider.scrollLeft = scrollLeft - walk;
-        });
     }
 });
 </script>

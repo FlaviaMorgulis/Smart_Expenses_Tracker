@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Transaction, Category, Budget
 from datetime import datetime, timedelta
-from app.services import BudgetService, SimpleAnalyticsService, ExportService 
+from app.services import BudgetService, SimpleAnalyticsService, ExportService, CategoryService
 import json
 
 transactions_bp = Blueprint('transactions', __name__)
@@ -22,9 +22,21 @@ def transactions():
         user_id=current_user.user_id
     ).order_by(Transaction.transaction_date.desc()).all()
     
+    # Calculate total balance (total income - total expenses)
+    total_income = SimpleAnalyticsService.get_total_income(current_user.user_id)
+    total_expenses = SimpleAnalyticsService.get_total_expenses(current_user.user_id)
+    total_balance = total_income - total_expenses
+    
+    # Calculate this month's balance
+    now = datetime.now()
+    monthly_data = SimpleAnalyticsService.get_monthly_totals(current_user.user_id, now.year, now.month)
+    monthly_balance = monthly_data['balance']
+    
     return render_template('transactions.html', 
                          form=form, 
-                         transactions=user_transactions)
+                         transactions=user_transactions,
+                         total_balance=total_balance,
+                         monthly_balance=monthly_balance)
 
 @transactions_bp.route('/add_transaction', methods=['POST'])
 @login_required
@@ -61,7 +73,6 @@ def add_transaction():
         except Exception as e:
             db.session.rollback()
             flash('Error adding transaction. Please try again.', 'error')
-            print(f"Transaction error: {e}")
     else:
         for field, errors in form.errors.items():
             for error in errors:
@@ -110,7 +121,6 @@ def edit_transaction(transaction_id):
         except Exception as e:
             db.session.rollback()
             flash('Error updating transaction.', 'error')
-            print(f"Edit transaction error: {e}")
     
     return render_template('edit_transaction.html', 
                          form=form, 
@@ -135,7 +145,6 @@ def delete_transaction(transaction_id):
     except Exception as e:
         db.session.rollback()
         flash('Error deleting transaction.', 'error')
-        print(f"Delete error: {e}")
     
     return redirect(url_for('transactions.transactions'))
 
@@ -168,7 +177,6 @@ def transaction_stats():
             'recent_transactions': recent_count
         })
     except Exception as e:
-        print(f"API error: {e}")
         return jsonify({
             'total_income': 0,
             'total_expenses': 0,
@@ -191,7 +199,6 @@ def category_spending():
         result = [{'category': cat, 'amount': float(amount)} for cat, amount in category_data]
         return jsonify(result)
     except Exception as e:
-        print(f"Category spending API error: {e}")
         return jsonify([])
 
 @transactions_bp.route('/budgets', methods=['GET', 'POST'])
@@ -210,7 +217,6 @@ def budgets():
                 BudgetService.create_or_update_total_budget(
                     user_id=current_user.user_id,
                     budget_amount=form.budget_amount.data,
-                    budget_period=form.budget_period.data,
                     alert_threshold=form.alert_threshold.data
                 )
                 flash('Total budget saved successfully!', 'success')
@@ -220,7 +226,6 @@ def budgets():
                     user_id=current_user.user_id,
                     budget_amount=form.budget_amount.data,
                     category_id=form.category_id.data,
-                    budget_period=form.budget_period.data,
                     alert_threshold=form.alert_threshold.data
                 )
                 flash('Category budget saved successfully!', 'success')
@@ -230,7 +235,6 @@ def budgets():
         except Exception as e:
             db.session.rollback()
             flash('Error saving budget.', 'error')
-            print(f"Budget error: {e}")
     
     # Get user budgets
     user_budgets = Budget.query.filter_by(user_id=current_user.user_id, is_active=True).all()

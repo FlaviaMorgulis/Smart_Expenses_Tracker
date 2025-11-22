@@ -24,6 +24,10 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db)
     
+    # Initialize Flask-Admin with security boundaries
+    from app.admin import init_admin
+    init_admin(app, db)
+    
     # User loader
     @login_manager.user_loader
     def load_user(user_id):
