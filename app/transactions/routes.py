@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Transaction, Category, Budget
 from datetime import datetime, timedelta
-from app.services import BudgetService, SimpleAnalyticsService, ExportService 
+from app.services import BudgetService, SimpleAnalyticsService, ExportService, CategoryService
 import json
 
 transactions_bp = Blueprint('transactions', __name__)
@@ -22,9 +22,21 @@ def transactions():
         user_id=current_user.user_id
     ).order_by(Transaction.transaction_date.desc()).all()
     
+    # Calculate total balance (total income - total expenses)
+    total_income = SimpleAnalyticsService.get_total_income(current_user.user_id)
+    total_expenses = SimpleAnalyticsService.get_total_expenses(current_user.user_id)
+    total_balance = total_income - total_expenses
+    
+    # Calculate this month's balance
+    now = datetime.now()
+    monthly_data = SimpleAnalyticsService.get_monthly_totals(current_user.user_id, now.year, now.month)
+    monthly_balance = monthly_data['balance']
+    
     return render_template('transactions.html', 
                          form=form, 
-                         transactions=user_transactions)
+                         transactions=user_transactions,
+                         total_balance=total_balance,
+                         monthly_balance=monthly_balance)
 
 @transactions_bp.route('/add_transaction', methods=['POST'])
 @login_required
