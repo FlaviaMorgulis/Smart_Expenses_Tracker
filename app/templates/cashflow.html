@@ -1,5 +1,5 @@
 {% extends "base.html" %} {% block title %}Cash Flow - SmartExpensesTracker{%
-endblock %} {% block page_css %}
+endblock %} {% block head %}
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/cashflow.css') }}"
@@ -87,7 +87,7 @@ endblock %} {% block page_css %}
         <div class="progress-bar">
           <div
             class="progress-fill"
-            style="width: {{ category.progress_width }}%"
+            style="width: {{ category.percentage }}%"
           ></div>
         </div>
         <div class="category-percentage">
