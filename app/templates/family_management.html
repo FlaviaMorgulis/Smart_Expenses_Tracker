@@ -1,715 +1,1306 @@
-{% extends "base.html" %} {% block title %}Family Management -
-SmartExpensesTracker{% endblock %} {% block head %}
-<!-- Members & Family Management CSS -->
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/members.css') }}"
-/>
-<!-- Budget CSS for category cards -->
-<link
-  rel="stylesheet"
-  href="{{ url_for('static', filename='css/budget.css') }}"
-/>
-{% endblock %} {% block content %}
+{% extends "base.html" %}
 
+{% block title %}Family Management - SmartExpensesTracker{% endblock %}
+
+{% block content %}
 <div class="dashboard-container">
-  <!-- Welcome Section -->
-  <div class="welcome-section" style="display: flex; justify-content: space-between; align-items: center; padding: 30px 0; margin-bottom: 20px;">
-    <div class="welcome-content">
-      <h1 style="margin-bottom: 8px;">Family Expenses 👨‍👩‍👧‍👦</h1>
-      <p class="lead" style="margin: 0; color: #6c757d;">Shared household tracking and savings goals</p>
-    </div>
-    <div class="header-actions" style="display: flex; gap: 12px;">
-      <button class="btn secondary" data-action="add-member" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;">
-        Add Member
-      </button>
-      <button class="btn secondary" data-action="add-expense" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;">
-        Add Expense
-      </button>
-      <button class="btn secondary" data-action="manage-budget" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;">
-        Manage Budget
-      </button>
-    </div>
-  </div>
-
-  <!-- Monthly Stats Cards -->
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-icon">👨‍👩‍👧‍👦</div>
-      <div class="stat-info">
-        <h3>FAMILY MEMBERS</h3>
-        <h2 class="stat-amount">{{ member_count + 1 }}</h2>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">💰</div>
-      <div class="stat-info">
-        <h3>TOTAL EXPENSES</h3>
-        <h2 class="stat-amount negative">£{{ "%.0f"|format(total_family_expenses) }}</h2>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">📊</div>
-      <div class="stat-info">
-        <h3>MONTHLY BUDGET</h3>
-        <h2 class="stat-amount">£{{ "%.0f"|format(family_budget_total) }}</h2>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon">📈</div>
-      <div class="stat-info">
-        <h3>BUDGET USED</h3>
-        <h2 class="stat-amount {{ 'warning' if budget_percentage >= 75 else 'positive' }}">
-          {{ "%.0f"|format(budget_percentage if budget_percentage else 0) }}%
-        </h2>
-      </div>
-    </div>
-  </div>
-
-  <!-- Main Dashboard Grid -->
-  <div class="dashboard-grid">    <!-- Family Members Section -->
-    <div class="members-section">
-      <div class="members-header">
-        <h3>Family Members</h3>
-      </div>
-      <div class="members-grid">
-        <!-- Current User (Owner) -->
-        <div class="member-card owner">
-          <div class="member-actions">
-            <button
-              class="action-btn edit"
-              onclick="editProfile()"
-                  title="Edit Profile"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="action-btn settings"
-                  onclick="showSettings()"
-                  title="Account Settings"
-                >
-                  ⚙️
-                </button>
-              </div>
-              <div class="member-header">
-                <div class="member-avatar owner-avatar">
-                  {{ current_user.user_name[0].upper() if current_user.user_name
-                  else 'U' }}
-                </div>
-                <div class="owner-badge">Owner</div>
-              </div>
-              <div class="member-info">
-                <div class="member-name">
-                  {{ current_user.user_name or 'You' }}
-                </div>
-                <div class="member-role">Account Owner</div>
-                <div class="member-stats">
-                  <div class="stat">
-                    <span class="value"
-                      >£{{ "%.0f"|format(total_family_expenses * 0.4 if
-                      total_family_expenses > 0 else 0) }}</span
-                    >
-                    <span class="label">Paid</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Family Members -->
-            {% for member in members %} {% set stats =
-            member.get_lifetime_stats() %}
-            <div class="member-card" data-member-id="{{ member.member_id }}">
-              <div class="member-actions">
-                <button
-                  class="action-btn edit"
-                  data-action="edit-member"
-                  data-member-id="{{ member.member_id }}"
-                  data-member-name="{{ member.name|e }}"
-                  data-member-relationship="{{ member.relationship|e }}"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="action-btn delete"
-                  data-action="delete-member"
-                  data-member-id="{{ member.member_id }}"
-                  data-member-name="{{ member.name|e }}"
-                >
-                  🗑️
-                </button>
-              </div>
-              <div class="member-header">
-                <div class="member-avatar">{{ member.name[0].upper() }}</div>
-              </div>
-              <div class="member-info">
-                <div class="member-name">{{ member.name }}</div>
-                <div class="member-role">{{ member.relationship }}</div>
-                <div class="member-stats">
-                  <div class="stat">
-                    <span class="value"
-                      >£{{ "%.0f"|format(stats.total_contribution) }}</span
-                    >
-                    <span class="label">Contributed</span>
-                  </div>
-                  <div class="stat">
-                    <span class="value">{{ stats.total_transactions }}</span>
-                    <span class="label">Expenses</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            {% endfor %}
-
-            <!-- Add Member Card -->
-            <div class="member-card add-member">
-              <div class="add-member-content">
-                <div class="add-icon">➕</div>
-                <div class="add-text">Add Family Member</div>
-              </div>
-            </div>
-          </div>
+    <div class="dashboard-content">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1>Family Expenses 👨‍👩‍👧‍👦</h1>
+            <p class="lead">Shared household tracking and savings goals</p>
         </div>
 
-        <!-- Charts Section in Dashboard Style -->
+        <!-- Monthly Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👨‍👩‍👧‍👦</div>
+                <div class="stat-info">
+                    <h3>FAMILY MEMBERS</h3>
+                    <h2 class="stat-amount">{{ member_count + 1 }}</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-info">
+                    <h3>TOTAL EXPENSES</h3>
+                    <h2 class="stat-amount negative">£{{ "%.0f"|format(total_family_expenses) }}</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <h3>MONTHLY BUDGET</h3>
+                    <h2 class="stat-amount">£{{ "%.0f"|format(family_budget_total) }}</h2>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-info">
+                    <h3>BUDGET USED</h3>
+                    <h2 class="stat-amount {% if budget_percentage >= 75 %}negative{% else %}positive{% endif %}">
+                        {{ "%.0f"|format(budget_percentage if budget_percentage else 0) }}%
+                    </h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Family Members Section -->
         <div class="analytics-section">
-          <!-- Global controls for charts (outside cards) -->
-          <div class="chart-controls outside">
-            <div class="view-toggle-buttons">
-              <button id="wholeFamilyBtn" class="toggle-btn active" data-view="family">Whole Family</button>
-              <select id="perMemberSelect" class="toggle-select" data-view="member">
-                <option value="" disabled selected>Per Member</option>
-                <option value="{{ current_user.user_name or 'You' }}">
-                  🏠 {{ current_user.user_name or 'You' }} (Owner)
-                </option>
-                {% for member in members %}
-                <option value="{{ member.name }}">👤 {{ member.name }} ({{ member.relationship }})</option>
-                {% endfor %}
-              </select>
+            <div class="section-header">
+                <h3>Family Members</h3>
             </div>
-          </div>
-          <div class="analytics-grid">
-            <!-- Card 1: Category Spending Over Time -->
-            <div class="analytics-card">
-              <div class="chart-header">
-                <h4>Category Spending Trends</h4>
-              </div>
-              <div class="chart-container">
-                <canvas id="categoryChart" width="400" height="300"></canvas>
-              </div>
-            </div>
-
-            <!-- Card 2: Category Distribution -->
-            <div class="analytics-card">
-              <div class="chart-header">
-                <h4>Category Distribution</h4>
-              </div>
-              <div class="chart-container">
-                <canvas id="familyMonthlyComparisonChart" width="400" height="300"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      <!-- Category Budgets Section -->
-      <div class="category-budgets-section">
-        <div class="section-header">
-          <h3>Category Budgets</h3>
-          <button
-            class="btn secondary"
-            data-action="manage-budget"
-            onclick="console.log('Inline onclick fired'); showBudgetModal(); return false;"
-            style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;"
-          >
-            Add Category Budget
-          </button>
-        </div>
-        
-        <div class="budget-cards-grid">
-          {% if category_budgets %}
-            {# Create a list of tuples with category data and sort by percentage (highest first) #}
-            {% set budget_list = [] %}
-            {% for category_name, budget_amount in category_budgets.items() %}
-              {% if budget_amount > 0 %}
-                {% set spent = category_expenses.get(category_name, 0) %}
-                {% set percentage = (spent / budget_amount * 100) if budget_amount > 0 else 0 %}
-                {% set _ = budget_list.append((category_name, budget_amount, spent, percentage)) %}
-              {% endif %}
-            {% endfor %}
             
-            {# Sort by percentage descending (red to green) #}
-            {% set sorted_budgets = budget_list|sort(attribute='3', reverse=True) %}
-            
-            {% for category_name, budget_amount, spent, percentage in sorted_budgets %}
-                {% set progress_class = 'critical-level' if percentage >= 90 else ('warning-level' if percentage >= 75 else 'good-level') %}
-                {% set alert_class = 'critical' if percentage >= 90 else ('warning' if percentage >= 75 else 'success') %}
-                
-                <div class="category-card">
-                  <div class="category-header">
-                    <h3>{{ category_name }}</h3>
-                    <div class="category-actions">
-                      <button class="btn-icon" onclick="editCategoryBudget('{{ category_name }}', {{ budget_amount }})" title="Edit">✏️</button>
-                      <button class="btn-icon delete" onclick="deleteCategoryBudget('{{ category_name }}')" title="Delete">🗑️</button>
+            <div class="members-grid">
+                <!-- Current User (Owner) -->
+                <div class="member-card">
+                    <div class="member-actions">
+                        <button class="btn-icon" onclick="editProfile()" title="Edit Profile">
+                            ✏️
+                        </button>
                     </div>
-                  </div>
-                  <div class="category-amount">£{{ "%.0f"|format(budget_amount) }}</div>
-                  <div class="category-progress">
-                    <div class="progress-bar small">
-                      <div class="progress-fill {{ progress_class }}" style="width: {{ percentage|round(0) }}%"></div>
+                    <div class="avatar-placeholder small">
+                        {{ current_user.user_name[0].upper() if current_user.user_name else 'U' }}
                     </div>
-                    <div class="progress-text">
-                      <span>£{{ "%.0f"|format(spent) }} spent</span>
-                      <span>{{ "%.0f"|format(percentage) }}%</span>
+                    <div class="member-info">
+                        <h3>ACCOUNT OWNER</h3>
+                        <h2 class="member-name">{{ current_user.user_name or 'You' }}</h2>
+                        <small>£{{ "%.0f"|format(user_contribution) }} contributed</small>
                     </div>
-                  </div>
-                  <div class="category-alert {{ alert_class }}">
-                    {% if percentage >= 90 %}
-                      ⚠️ {{ "%.0f"|format(percentage) }}% - Critical! Near limit!
-                    {% elif percentage >= 75 %}
-                      ⚠️ {{ "%.0f"|format(percentage) }}% - Monitor spending
-                    {% else %}
-                      ✅ {{ "%.0f"|format(percentage) }}% - Well managed!
-                    {% endif %}
-                  </div>
                 </div>
-            {% endfor %}
-          {% else %}
-            <p style="color: #6c757d; padding: 20px; text-align: center;">No budgets configured yet. Click "Add Category Budget" to create your first budget.</p>
-          {% endif %}
-        </div>
-      </div>
 
-      <!-- Recent Expenses Section -->
-      <div class="expenses-section">
-        <div class="expenses-header">
-          <h3>Recent Family Expenses</h3>
-          <button
-            class="btn secondary"
-            data-action="add-expense-section"
-            style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; min-width: 140px;"
-          >
-            Add Expense
-          </button>
-        </div>
-        <div class="expenses-table-container">
-          <table class="expenses-table">
-            <thead>
-              <tr>
-                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DATE</th>
-                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">DESCRIPTION</th>
-                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">CATEGORY</th>
-                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">AMOUNT</th>
-                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">PAID BY</th>
-                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">SPLIT BETWEEN</th>
-                <th style="text-transform: uppercase; font-size: 12px; font-weight: 600; color: #6c757d; letter-spacing: 0.5px;">ACTIONS</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for expense in recent_shared_expenses %}
-              <tr style="border-bottom: 1px solid #e9ecef;">
-                <td style="padding: 16px 12px; color: #2c3e50;">{{ expense.date }}</td>
-                <td style="padding: 16px 12px; color: #2c3e50;">{{ expense.description or 'Family Expense' }}</td>
-                <td style="padding: 16px 12px; color: #d9534f; font-weight: 500;">{{ expense.category }}</td>
-                <td style="padding: 16px 12px; color: #2c3e50; font-weight: 600;">£{{ "%.2f"|format(expense.amount) }}</td>
-                <td style="padding: 16px 12px;">
-                  <div class="payer" style="display: flex; align-items: center; gap: 8px;">
-                    <div class="payer-avatar" style="width: 32px; height: 32px; border-radius: 50%; background: #6c757d; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px;">
-                      {{ current_user.user_name[0].upper() if current_user.user_name else 'D' }}
+                <!-- Family Members -->
+                {% for member in members %}
+                <div class="member-card">
+                    <div class="member-actions">
+                        <button class="btn-icon edit-member" 
+                                data-member-id="{{ member.member_id }}"
+                                data-member-name="{{ member.name|e }}"
+                                data-member-relationship="{{ member.relationship|e }}"
+                                title="Edit">
+                            ✏️
+                        </button>
+                        <button class="btn-icon delete-member" 
+                                data-member-id="{{ member.member_id }}"
+                                data-member-name="{{ member.name|e }}"
+                                title="Delete">
+                            🗑️
+                        </button>
                     </div>
-                    <span style="color: #2c3e50;">{{ current_user.user_name or 'Demo User' }}</span>
-                  </div>
-                </td>
-                <td style="padding: 16px 12px;">
-                  <div class="members-involved">
-                    <span style="color: #007bff; font-weight: 500;">nnbv</span>
-                    <span class="split-info" style="color: #6c757d; font-size: 13px; margin-left: 4px;">({{ expense.member_count }} people)</span>
-                  </div>
-                </td>
-                <td style="padding: 16px 12px;">
-                  <div class="expense-actions" style="display: flex; gap: 8px;">
-                    <button
-                      class="action-btn edit"
-                      data-action="edit-expense"
-                      data-expense-id="{{ expense.id }}"
-                      style="background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px;"
-                      title="Edit"
-                    >
-                      ✏️
-                    </button>
-                    <button
-                      class="action-btn delete"
-                      data-action="delete-expense"
-                      data-expense-id="{{ expense.id }}"
-                      style="background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px; color: #dc3545;"
-                      title="Delete"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+                    <div class="avatar-placeholder small member-avatar">
+                        {{ member.name[0].upper() }}
+                    </div>
+                    <div class="member-info">
+                        <h3>{{ member.relationship|upper }}</h3>
+                        <h2 class="member-name">{{ member.name }}</h2>
+                        <small>£{{ "%.0f"|format(member_contributions[member.member_id]) }} contributed</small>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Add Member Card -->
+                <div class="member-card add-member">
+                    <div class="avatar-placeholder small add-avatar">
+                        ➕
+                    </div>
+                    <div class="member-info">
+                        <h3>ADD FAMILY MEMBER</h3>
+                        <h2 class="member-name">Click to Add</h2>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- Analytics Graphics Section -->
+        <div class="analytics-section">
+            <div class="analytics-header">
+                <div class="time-range-selector">
+                    <label>View:</label>
+                    <div class="view-toggle-buttons">
+                        <button id="wholeFamilyBtn" class="btn secondary active">Whole Family</button>
+                        <div class="member-dropdown">
+                            <button id="perMemberSelect" class="btn secondary">
+                                Per Member ▼
+                            </button>
+                            <div id="memberDropdownMenu" class="dropdown-menu">
+                                <div class="dropdown-item" data-member="all">All Members</div>
+                                <div class="dropdown-item" data-member="{{ current_user.user_name or 'You' }}">
+                                    {{ current_user.user_name or 'You' }} (Owner)
+                                </div>
+                                {% for member in members %}
+                                <div class="dropdown-item" data-member="{{ member.name }}">
+                                    {{ member.name }} ({{ member.relationship }})
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-grid">
+                <!-- Category Spending Chart -->
+                <div class="analytics-card">
+                    <h4>Spending by Category</h4>
+                    <div class="chart-container">
+                        <canvas id="categoryChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Monthly Comparison Chart -->
+                <div class="analytics-card">
+                    <h4>Monthly Trends</h4>
+                    <div class="chart-container">
+                        <canvas id="familyMonthlyComparisonChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Alerts Section -->
+        <div class="budget-alerts-section">
+            <div class="section-header">
+                <h3>Category Budgets</h3>
+                <button class="btn secondary" onclick="showBudgetModal()">
+                    Add Category Budget
+                </button>
+            </div>
+            
+            <div class="budget-alerts-container">
+                {% if category_budgets %}
+                    {% set budget_list = [] %}
+                    {% for category_name, budget_amount in category_budgets.items() %}
+                        {% if budget_amount > 0 %}
+                            {% set spent = category_expenses.get(category_name, 0) %}
+                            {% set percentage = (spent / budget_amount * 100) if budget_amount > 0 else 0 %}
+                            {% set alert_level = 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget') %}
+                            {% set _ = budget_list.append((category_name, budget_amount, spent, percentage, alert_level)) %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% set sorted_budgets = budget_list|sort(attribute='3', reverse=True) %}
+                    
+                    {% for category_name, budget_amount, spent, percentage, alert_level in sorted_budgets %}
+                    <div class="budget-alert {{ alert_level }}">
+                        <div class="alert-category">{{ category_name }}</div>
+                        <div class="alert-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ percentage }}%"></div>
+                            </div>
+                            <span class="progress-text">{{ "%.1f"|format(percentage) }}%</span>
+                        </div>
+                        <div class="alert-amount">£{{ "%.2f"|format(spent) }} / £{{ "%.2f"|format(budget_amount) }}</div>
+                        <div class="alert-status">
+                            {% if alert_level == 'over-budget' %}
+                                Over Budget
+                            {% elif alert_level == 'near-limit' %}
+                                Near Limit
+                            {% else %}
+                                Within Budget
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-alerts">
+                        <p>No budgets configured yet. Click "Add Category Budget" to create your first budget.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Expenses Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h3>Recent Family Expenses</h3>
+                <button class="btn secondary add-expense-btn">
+                    Add Expense
+                </button>
+            </div>
+            
+            <div class="analytics-card expenses-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>CATEGORY</th>
+                            <th>AMOUNT</th>
+                            <th>SHARED WITH</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for expense in recent_shared_expenses %}
+                        <tr>
+                            <td>{{ expense.date }}</td>
+                            <td class="expense-category">{{ expense.category }}</td>
+                            <td class="expense-amount">£{{ "%.2f"|format(expense.amount) }}</td>
+                            <td>
+                                <div class="shared-with">
+                                    {% if expense.shared_with and expense.shared_with|length > 0 %}
+                                        <div class="participants">
+                                            {% for participant in expense.shared_with %}
+                                                <span class="participant-tag">{{ participant }}</span>
+                                            {% endfor %}
+                                        </div>
+                                        <span class="cost-per-person">
+                                            £{{ "%.2f"|format(expense.cost_per_person) }} per person
+                                        </span>
+                                    {% else %}
+                                        <span class="not-shared">Not shared</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div class="expense-actions">
+                                    <button class="btn-icon edit-expense" 
+                                            data-expense-id="{{ expense.id }}"
+                                            title="Edit">
+                                        ✏️
+                                    </button>
+                                    <button class="btn-icon delete-expense" 
+                                            data-expense-id="{{ expense.id }}"
+                                            title="Delete">
+                                        🗑️
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <!-- Modals -->
-  <!-- Add Member Modal -->
-  <div id="addMemberModal" class="modal">
+<!-- Add Family Member Modal -->
+<div id="addMemberModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h3>Add Family Member</h3>
-        <button
-          class="close-btn"
-          data-action="close-modal"
-          data-modal-id="addMemberModal"
-        >
-          &times;
-        </button>
-      </div>
-      <form
-        id="addMemberForm"
-        method="POST"
-        action="{{ url_for('main.add_member') }}"
-      >
-        <div class="form-group">
-          <label for="memberName">Name</label>
-          <input
-            type="text"
-            id="memberName"
-            name="name"
-            required
-            placeholder="Enter member name"
-          />
+        <div class="modal-header">
+            <h3>Add Family Member</h3>
+            <span class="modal-close" data-modal-id="addMemberModal">&times;</span>
         </div>
-        <div class="form-group">
-          <label for="memberRelationship">Relationship</label>
-          <select id="memberRelationship" name="relationship" required>
-            <option value="">Select relationship</option>
-            <option value="Spouse">Spouse</option>
-            <option value="Child">Child</option>
-            <option value="Parent">Parent</option>
-            <option value="Sibling">Sibling</option>
-            <option value="Other">Other</option>
-          </select>
+        <div class="modal-body">
+            <form id="addMemberForm" method="POST" action="{{ url_for('main.add_member') }}">
+                <div class="input-group">
+                    <label for="member_name">Name</label>
+                    <input type="text" id="member_name" name="name" class="form-input" required>
+                </div>
+                <div class="input-group">
+                    <label for="member_relationship">Relationship</label>
+                    <select id="member_relationship" name="relationship" class="form-select" required>
+                        <option value="">Select Relationship</option>
+                        <option value="Spouse">Spouse</option>
+                        <option value="Child">Child</option>
+                        <option value="Parent">Parent</option>
+                        <option value="Sibling">Sibling</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" data-modal-id="addMemberModal">Cancel</button>
+                    <button type="submit" class="btn primary">Add Member</button>
+                </div>
+            </form>
         </div>
-        <div class="modal-actions">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            data-action="cancel"
-            data-modal-id="addMemberModal"
-          >
-            Cancel
-          </button>
-          <button type="submit" class="btn secondary" style="background: #6c757d; color: white; border: none;">Add Member</button>
-        </div>
-      </form>
     </div>
-  </div>
-
-  <!-- Edit Member Modal -->
-  <div id="editMemberModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Edit Family Member</h3>
-        <button
-          class="close-btn"
-          onclick="event.stopPropagation(); closeModal('editMemberModal');"
-        >
-          &times;
-        </button>
-      </div>
-      <form
-        id="editMemberForm"
-        method="POST"
-        action="{{ url_for('main.edit_member') }}"
-      >
-        <input type="hidden" id="editMemberId" name="member_id" />
-        <div class="form-group">
-          <label for="editMemberName">Name</label>
-          <input type="text" id="editMemberName" name="name" required />
-        </div>
-        <div class="form-group">
-          <label for="editMemberRelationship">Relationship</label>
-          <select id="editMemberRelationship" name="relationship" required>
-            <option value="Spouse">Spouse</option>
-            <option value="Child">Child</option>
-            <option value="Parent">Parent</option>
-            <option value="Sibling">Sibling</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-        <div class="modal-actions">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="closeModal('editMemberModal')"
-          >
-            Cancel
-          </button>
-          <button type="submit" class="btn secondary" style="background: #6c757d; color: white; border: none;">Update Member</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Add Expense Modal -->
-  <div id="addExpenseModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Add Family Expense</h3>
-        <button
-          class="close-btn"
-          onclick="event.stopPropagation(); closeModal('addExpenseModal');"
-        >
-          &times;
-        </button>
-      </div>
-      <form
-        id="addExpenseForm"
-        method="POST"
-        action="{{ url_for('main.add_family_expense') }}"
-      >
-        <div class="form-group">
-          <label for="expenseDate">Date</label>
-          <input type="date" id="expenseDate" name="expense_date" required />
-        </div>
-        <div class="form-group">
-          <label for="expenseDescription">Description (Optional)</label>
-          <input
-            type="text"
-            id="expenseDescription"
-            name="description"
-            placeholder="What was this expense for?"
-          />
-        </div>
-        <div class="form-group">
-          <label for="expenseAmount">Amount (£)</label>
-          <input
-            type="number"
-            id="expenseAmount"
-            name="amount"
-            step="0.01"
-            min="0"
-            required
-            placeholder="0.00"
-          />
-        </div>
-        <div class="form-group">
-          <label for="expenseCategory">Category</label>
-          <select id="expenseCategory" name="category_id" required>
-            <option value="">Select category</option>
-            {% for category in categories %}
-            <option value="{{ category.category_id }}">
-              {{ category.category_name }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Split between:</label>
-          <div class="member-checkboxes">
-            <label class="checkbox-label">
-              <input type="checkbox" name="include_user" value="true" checked />
-              {{ current_user.user_name or 'You' }} (Owner)
-            </label>
-            {% for member in members %}
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                name="member_ids"
-                value="{{ member.member_id }}"
-              />
-              {{ member.name }}
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-        <div class="modal-actions">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="closeModal('addExpenseModal')"
-          >
-            Cancel
-          </button>
-          <button type="submit" class="btn secondary" style="background: #6c757d; color: white; border: none;">Add Expense</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit Expense Modal -->
-  <div id="editExpenseModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Edit Family Expense</h3>
-        <button
-          class="close-btn"
-          onclick="event.stopPropagation(); closeModal('editExpenseModal');"
-        >
-          &times;
-        </button>
-      </div>
-      <form
-        id="editExpenseForm"
-        method="POST"
-        action="{{ url_for('main.edit_family_expense') }}"
-      >
-        <input type="hidden" id="editExpenseId" name="expense_id" />
-        <div class="form-group">
-          <label for="editExpenseDate">Date</label>
-          <input
-            type="date"
-            id="editExpenseDate"
-            name="expense_date"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="editExpenseDescription">Description (Optional)</label>
-          <input
-            type="text"
-            id="editExpenseDescription"
-            name="description"
-            placeholder="What was this expense for?"
-          />
-        </div>
-        <div class="form-group">
-          <label for="editExpenseAmount">Amount (£)</label>
-          <input
-            type="number"
-            id="editExpenseAmount"
-            name="amount"
-            step="0.01"
-            min="0"
-            required
-            placeholder="0.00"
-          />
-        </div>
-        <div class="form-group">
-          <label for="editExpenseCategory">Category</label>
-          <select id="editExpenseCategory" name="category_id" required>
-            <option value="">Select category</option>
-            {% for category in categories %}
-            <option value="{{ category.category_id }}">
-              {{ category.category_name }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Split between:</label>
-          <div class="member-checkboxes" id="editMemberCheckboxes">
-            <label class="checkbox-label">
-              <input type="checkbox" name="include_user" value="true" />
-              {{ current_user.user_name or 'You' }} (Owner)
-            </label>
-            {% for member in members %}
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                name="member_ids"
-                value="{{ member.member_id }}"
-              />
-              {{ member.name }}
-            </label>
-            {% endfor %}
-          </div>
-        </div>
-        <div class="modal-actions">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            onclick="closeModal('editExpenseModal')"
-          >
-            Cancel
-          </button>
-          <button type="submit" class="btn secondary" style="background: #6c757d; color: white; border: none;">Update Expense</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Category Budget Modal -->
-  <div id="budgetModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Add Category Budget</h3>
-        <button
-          class="close-btn"
-          onclick="event.stopPropagation(); closeModal('budgetModal');"
-        >
-          &times;
-        </button>
-      </div>
-      <div class="budget-content">
-        <form
-          id="budgetForm"
-          method="POST"
-          action="{{ url_for('main.update_family_budget') }}"
-        >
-          <div class="form-group">
-            <label for="categorySelect">Category</label>
-            <select
-              id="categorySelect"
-              name="category_id"
-              class="form-select"
-              required
-              style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid #e9ecef; border-radius: 8px;"
-            >
-              <option value="">Select Category</option>
-              {% for category in categories %}
-              <option value="{{ category.category_id }}">{{ category.category_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="budgetAmount">Budget Amount (£)</label>
-            <input
-              type="number"
-              id="budgetAmount"
-              name="amount"
-              step="0.01"
-              min="0"
-              required
-              placeholder="Enter budget amount"
-              style="width: 100%; padding: 12px; font-size: 16px; border: 1px solid #e9ecef; border-radius: 8px;"
-            />
-          </div>
-          <div class="modal-actions" style="margin-top: 25px;">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              onclick="closeModal('budgetModal')"
-              style="padding: 10px 20px; border-radius: 8px;"
-            >
-              Cancel
-            </button>
-            <button type="submit" class="btn secondary" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px;">Add Budget</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    // Chart Data - Available globally for members.js
-    const familyData = {{ category_chart_data | tojson | safe }};
-    const memberData = {{ per_member_category_data | tojson | safe }};
-    const familyMonthlyComparison = {{ family_monthly_comparison | default([], true) | tojson | safe }};
-  </script>
-
-  <!-- Members & Family Management JavaScript - loaded at end to ensure DOM is ready -->
-  <script src="{{ url_for('static', filename='js/members.js') }}"></script>
 </div>
+
+<!-- Edit Family Member Modal -->
+<div id="editMemberModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Family Member</h3>
+            <span class="modal-close" data-modal-id="editMemberModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editMemberForm" method="POST" action="{{ url_for('main.edit_member') }}">
+                <input type="hidden" id="editMemberId" name="member_id">
+                <div class="input-group">
+                    <label for="editMemberName">Name</label>
+                    <input type="text" id="editMemberName" name="name" class="form-input" required>
+                </div>
+                <div class="input-group">
+                    <label for="editMemberRelationship">Relationship</label>
+                    <select id="editMemberRelationship" name="relationship" class="form-select" required>
+                        <option value="">Select Relationship</option>
+                        <option value="Spouse">Spouse</option>
+                        <option value="Child">Child</option>
+                        <option value="Parent">Parent</option>
+                        <option value="Sibling">Sibling</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" data-modal-id="editMemberModal">Cancel</button>
+                    <button type="submit" class="btn primary">Update Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Family Expense Modal -->
+<div id="addExpenseModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Family Expense</h3>
+            <span class="modal-close" data-modal-id="addExpenseModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addExpenseForm" method="POST" action="{{ url_for('main.add_family_expense') }}">
+                <div class="input-group">
+                    <label for="expense_amount">Amount (£)</label>
+                    <input type="number" id="expense_amount" name="amount" class="form-input" step="0.01" min="0" required>
+                </div>
+                <div class="input-group">
+                    <label for="expense_category">Category</label>
+                    <select id="expense_category" name="category_id" class="form-select" required>
+                        <option value="">Select Category</option>
+                        {% for category in categories %}
+                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="expense_date">Date</label>
+                    <input type="date" id="expense_date" name="expense_date" class="form-input" value="{{ now().strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="input-group">
+                    <label>Share With</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="include_user" value="true" checked>
+                            <span>Include me in expense sharing</span>
+                        </label>
+                    </div>
+                    <div class="members-checkbox-group">
+                        {% for member in members %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="member_ids" value="{{ member.member_id }}">
+                            <span>{{ member.name }} ({{ member.relationship }})</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" data-modal-id="addExpenseModal">Cancel</button>
+                    <button type="submit" class="btn primary">Add Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Budget Modal -->
+<div id="budgetModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Add Category Budget</h3>
+            <span class="modal-close" data-modal-id="budgetModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="addCategoryBudgetForm" method="POST" action="{{ url_for('main.update_family_budget') }}">
+                <div class="input-group">
+                    <label for="budget_category">Category</label>
+                    <select id="budget_category" name="category_id" class="form-select" required>
+                        <option value="">Select Category</option>
+                        {% for category in categories %}
+                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="budget_amount">Monthly Budget (£)</label>
+                    <input type="number" id="budget_amount" name="amount" class="form-input" step="0.01" min="0" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" data-modal-id="budgetModal">Cancel</button>
+                    <button type="submit" class="btn primary">Add Budget</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Family Expense Modal -->
+<div id="editExpenseModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Family Expense</h3>
+            <span class="modal-close" data-modal-id="editExpenseModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editExpenseForm" method="POST">
+                <input type="hidden" id="editExpenseId" name="expense_id">
+                <div class="input-group">
+                    <label for="editExpenseAmount">Amount (£)</label>
+                    <input type="number" id="editExpenseAmount" name="amount" class="form-input" step="0.01" min="0" required>
+                </div>
+                <div class="input-group">
+                    <label for="editExpenseCategory">Category</label>
+                    <select id="editExpenseCategory" name="category_id" class="form-select" required>
+                        <option value="">Select Category</option>
+                        {% for category in categories %}
+                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="editExpenseDate">Date</label>
+                    <input type="date" id="editExpenseDate" name="expense_date" class="form-input">
+                </div>
+                <div class="input-group">
+                    <label>Share With</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="editUserParticipates" name="include_user" value="true">
+                            <span>Include me in expense sharing</span>
+                        </label>
+                    </div>
+                    <div id="editMemberCheckboxes" class="members-checkbox-group">
+                        {% for member in members %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="member_ids" value="{{ member.member_id }}" class="member-checkbox">
+                            <span>{{ member.name }} ({{ member.relationship }})</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" data-modal-id="editExpenseModal">Cancel</button>
+                    <button type="submit" class="btn primary">Update Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Chart Data
+const familyData = {{ category_chart_data | tojson | safe }};
+const memberData = {{ per_member_category_data | tojson | safe }};
+
+// Global Functions
+function editProfile() {
+    window.location.href = "{{ url_for('main.profile') }}";
+}
+
+function showBudgetModal() {
+    document.getElementById('budgetModal').style.display = 'block';
+}
+
+function showAddExpenseModal() {
+    document.getElementById('addExpenseModal').style.display = 'block';
+}
+
+// Chart Functions
+let categoryChartInstance = null;
+
+function createChart(canvasId, data, title) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    
+    if (categoryChartInstance) {
+        categoryChartInstance.destroy();
+    }
+    
+    const labels = data.map(item => item.category);
+    const amounts = data.map(item => item.amount);
+    const colors = generateColors(data.length);
+    
+    categoryChartInstance = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: amounts,
+                backgroundColor: colors,
+                borderColor: colors.map(color => color.replace('0.8', '1')),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
+                },
+                title: {
+                    display: true,
+                    text: title,
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return `${label}: £${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updatePieChart(data) {
+    if (categoryChartInstance) {
+        const labels = data.map(item => item.category);
+        const amounts = data.map(item => item.amount);
+        const colors = generateColors(data.length);
+        
+        categoryChartInstance.data.labels = labels;
+        categoryChartInstance.data.datasets[0].data = amounts;
+        categoryChartInstance.data.datasets[0].backgroundColor = colors;
+        categoryChartInstance.data.datasets[0].borderColor = colors.map(color => color.replace('0.8', '1'));
+        
+        categoryChartInstance.update();
+    }
+}
+
+function generateColors(count) {
+    const baseColors = [
+        'rgba(255, 99, 132, 0.8)',
+        'rgba(54, 162, 235, 0.8)',
+        'rgba(255, 206, 86, 0.8)',
+        'rgba(75, 192, 192, 0.8)',
+        'rgba(153, 102, 255, 0.8)',
+        'rgba(255, 159, 64, 0.8)',
+        'rgba(199, 199, 199, 0.8)',
+        'rgba(83, 102, 255, 0.8)',
+        'rgba(40, 159, 64, 0.8)',
+        'rgba(210, 99, 132, 0.8)'
+    ];
+    
+    if (count <= baseColors.length) {
+        return baseColors.slice(0, count);
+    }
+    
+    const colors = [...baseColors];
+    for (let i = baseColors.length; i < count; i++) {
+        const r = Math.floor(Math.random() * 255);
+        const g = Math.floor(Math.random() * 255);
+        const b = Math.floor(Math.random() * 255);
+        colors.push(`rgba(${r}, ${g}, ${b}, 0.8)`);
+    }
+    
+    return colors;
+}
+
+// Chart view management
+let currentMemberView = 'family';
+
+function updateChartView(view, memberName = null) {
+    currentMemberView = view;
+    
+    const wholeFamilyBtn = document.getElementById('wholeFamilyBtn');
+    const perMemberBtn = document.getElementById('perMemberSelect');
+    const memberDropdownMenu = document.getElementById('memberDropdownMenu');
+    
+    if (view === 'family') {
+        // Whole Family view
+        wholeFamilyBtn.classList.add('active');
+        perMemberBtn.classList.remove('active');
+        perMemberBtn.textContent = 'Per Member ▼';
+        memberDropdownMenu.style.display = 'none';
+        
+        // Update charts with family data
+        if (familyData && familyData.length > 0) {
+            createChart('categoryChart', familyData, 'Family - Expense Categories');
+            updatePieChart(familyData);
+        } else {
+            createEmptyChart('No family expense data available');
+            createEmptyPieChart('No family expense data available');
+        }
+    } else {
+        // Per Member view
+        wholeFamilyBtn.classList.remove('active');
+        perMemberBtn.classList.add('active');
+        
+        if (memberName) {
+            perMemberBtn.textContent = memberName + ' ▼';
+            memberDropdownMenu.style.display = 'none';
+            
+            // Update charts with member data
+            const memberChartData = memberData && memberData[memberName];
+            if (memberChartData && memberChartData.length > 0) {
+                createChart('categoryChart', memberChartData, memberName + ' - Expense Categories');
+                updatePieChart(memberChartData);
+            } else {
+                createEmptyChart(`No expense data for ${memberName}`);
+                createEmptyPieChart(`No expense data for ${memberName}`);
+            }
+        }
+    }
+}
+
+// Empty pie chart
+function createEmptyPieChart(message) {
+    const canvas = document.getElementById('familyMonthlyComparisonChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    if (window.pieChartInstance) {
+        window.pieChartInstance.destroy();
+        window.pieChartInstance = null;
+    }
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+}
+
+function setupModalHandlers() {
+    // Add Expense butonu
+    const addExpenseBtn = document.querySelector('.add-expense-btn');
+    if (addExpenseBtn) {
+        addExpenseBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('addExpenseModal').style.display = 'block';
+        });
+    }
+
+    // Add Member card
+    const addMemberCard = document.querySelector('.add-member');
+    if (addMemberCard) {
+        addMemberCard.addEventListener('click', function() {
+            document.getElementById('addMemberModal').style.display = 'block';
+        });
+    }
+
+    // Edit member buttons
+    document.querySelectorAll('.edit-member').forEach(button => {
+        button.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            const memberName = this.getAttribute('data-member-name');
+            const memberRelationship = this.getAttribute('data-member-relationship');
+            
+            document.getElementById('editMemberId').value = memberId;
+            document.getElementById('editMemberName').value = memberName;
+            document.getElementById('editMemberRelationship').value = memberRelationship;
+            document.getElementById('editMemberModal').style.display = 'block';
+        });
+    });
+
+    // Delete member buttons
+    document.querySelectorAll('.delete-member').forEach(button => {
+        button.addEventListener('click', function() {
+            const memberId = this.getAttribute('data-member-id');
+            const memberName = this.getAttribute('data-member-name');
+            
+            if (confirm(`Are you sure you want to delete ${memberName}?`)) {
+                fetch(`/delete_member/${memberId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert('Error deleting member');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting member');
+                });
+            }
+        });
+    });
+
+    // Edit expense buttons
+    document.querySelectorAll('.edit-expense').forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            openEditExpenseModal(expenseId);
+        });
+    });
+
+    // Delete expense buttons
+    document.querySelectorAll('.delete-expense').forEach(button => {
+        button.addEventListener('click', function() {
+            const expenseId = this.getAttribute('data-expense-id');
+            
+            if (confirm('Are you sure you want to delete this expense?')) {
+                fetch(`/delete_expense/${expenseId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        location.reload();
+                    } else {
+                        alert('Error deleting expense');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error deleting expense');
+                });
+            }
+        });
+    });
+
+    // Close modals
+    document.querySelectorAll('.modal-close, .btn.secondary[data-modal-id]').forEach(button => {
+        button.addEventListener('click', function() {
+            const modalId = this.getAttribute('data-modal-id');
+            document.getElementById(modalId).style.display = 'none';
+        });
+    });
+
+    // Member dropdown
+    const perMemberBtn = document.getElementById('perMemberSelect');
+    const memberDropdownMenu = document.getElementById('memberDropdownMenu');
+    
+    if (perMemberBtn) {
+        perMemberBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            memberDropdownMenu.style.display = memberDropdownMenu.style.display === 'block' ? 'none' : 'block';
+        });
+    }
+
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const memberName = this.getAttribute('data-member');
+            if (memberName === 'all') {
+                updateChartView('family');
+            } else {
+                updateChartView('member', memberName);
+            }
+        });
+    });
+}
+
+// Expense Editing
+function openEditExpenseModal(expenseId) {
+    const apiUrl = `/api/family_expense/${expenseId}`;
+    const modal = document.getElementById('editExpenseModal');
+    const form = document.getElementById('editExpenseForm');
+    
+    form.action = `/edit_family_expense/${expenseId}`;
+    document.getElementById('editExpenseId').value = expenseId;
+    
+    fetch(apiUrl)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(error => { 
+                    throw new Error(error.message || `HTTP Error: ${response.status}`); 
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const expense = data.expense;
+                
+                document.getElementById('editExpenseAmount').value = expense.amount;
+                document.getElementById('editExpenseCategory').value = expense.category_id;
+                document.getElementById('editExpenseDate').value = expense.transaction_date;
+                document.getElementById('editUserParticipates').checked = expense.user_participates;
+
+                // Reset all checkboxes
+                document.querySelectorAll('.member-checkbox').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+
+                // Check associated members
+                expense.member_ids.forEach(memberId => {
+                    const checkbox = document.querySelector(`.member-checkbox[value="${memberId}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+
+                modal.style.display = 'block';
+            } else {
+                throw new Error(data.message || 'Server reported an error.');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading expense:', error);
+            alert('Error loading expense data: ' + error.message);
+        });
+}
+
+// Form submission handlers
+function setupFormHandlers() {
+    // Add Expense Form
+    document.getElementById('addExpenseForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error adding expense');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding expense');
+        });
+    });
+
+    // Edit Expense Form
+    document.getElementById('editExpenseForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error updating expense');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating expense');
+        });
+    });
+
+    // Add Member Form
+    document.getElementById('addMemberForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error adding member');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding member');
+        });
+    });
+
+    // Edit Member Form
+    document.getElementById('editMemberForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error updating member');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error updating member');
+        });
+    });
+
+    // Add Budget Form
+    document.getElementById('addCategoryBudgetForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error adding budget');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error adding budget');
+        });
+    });
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setupModalHandlers();
+    setupFormHandlers();
+    updateChartView('family');
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
+
+    // Close with ESC 
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+    });
+});
+</script>
+
+<!-- Load members.js -->
+<script src="{{ url_for('static', filename='js/members.js') }}"></script>
+
+<style>
+/* Family Management Specific Styles */
+.members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.member-card {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid var(--primary);
+    position: relative;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.member-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.member-card.add-member {
+    border: 2px dashed var(--border);
+    background: var(--bg-light);
+    cursor: pointer;
+}
+
+.member-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.btn-icon:hover {
+    background: var(--bg-light);
+}
+
+.delete-member {
+    color: var(--danger);
+}
+
+.avatar-placeholder {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2em;
+    font-weight: bold;
+    margin: 0 auto 12px auto;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.avatar-placeholder.small {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+    margin-bottom: 8px;
+}
+
+.avatar-placeholder.member-avatar {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+}
+
+.avatar-placeholder.add-avatar {
+    background: transparent;
+    border: 2px dashed var(--muted);
+    color: var(--muted);
+}
+
+.member-info h3 {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.member-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin: 0.5rem 0;
+    color: var(--text);
+}
+
+.member-info small {
+    color: var(--muted);
+    font-size: 0.85rem;
+}
+
+/* Expenses Table */
+.expenses-table {
+    padding: 0;
+    overflow: hidden;
+}
+
+.expenses-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.expenses-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-size: 0.875rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+}
+
+.expenses-table td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.expense-category {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+.expense-amount {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.shared-with {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.participants {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.participant-tag {
+    background: var(--primary);
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: white;
+}
+
+.cost-per-person {
+    font-size: 0.75rem;
+    color: var(--muted);
+}
+
+.not-shared {
+    font-size: 0.875rem;
+    color: var(--muted);
+}
+
+.expense-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    margin: 0;
+    flex: 1;
+}
+
+.modal-close {
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6b7280;
+    background: none;
+    border: none;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.input-group {
+    margin-bottom: 1rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-input, .form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.checkbox-group, .members-checkbox-group {
+    margin-top: 0.5rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+/* View Toggle */
+.view-toggle-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.view-toggle-buttons .btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.member-dropdown {
+    position: relative;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    min-width: 200px;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-light);
+}
+
+.dropdown-item:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+</style>
 {% endblock %}
