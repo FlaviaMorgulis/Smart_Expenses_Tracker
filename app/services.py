@@ -51,6 +51,13 @@ class CategoryService:
                     print(f"Error creating {category_name}: {e}")
                     
         return created_count
+    
+    @staticmethod
+    def get_user_categories(user_id):
+        """Get categories for a specific user (both system and user-specific)"""
+        return Category.query.filter(
+            (Category.user_id == user_id) | (Category.user_id.is_(None))
+        ).all()
 
 
 class UserService:
@@ -294,10 +301,14 @@ class SimpleAnalyticsService:
         
         return category_totals
 
+    @staticmethod
+    def get_balance(user_id):
+        """Get total balance (income - expenses) for user"""
+        income = SimpleAnalyticsService.get_total_income(user_id)
+        expenses = SimpleAnalyticsService.get_total_expenses(user_id)
+        return income - expenses
 
-class BudgetService:
-    """Budget management service"""
-    
+class BudgetService:     
     @staticmethod
     def create_simple_budget(user_id, category_id, amount):
         budget = Budget(
@@ -458,6 +469,27 @@ class BudgetService:
     
     @staticmethod
     def get_total_budget_status(user_id):
+        total_budget = BudgetService.get_user_total_budget(user_id)
+        if total_budget == 0:
+            return None
+            
+        now = datetime.now()
+        monthly_data = SimpleAnalyticsService.get_monthly_totals(user_id, now.year, now.month)
+        
+        spent = monthly_data['expenses']
+        remaining = total_budget - spent
+        
+        return {
+            'budget_amount': total_budget,
+            'spent': spent,
+            'remaining': remaining,
+            'is_over_budget': spent > total_budget,
+            'percentage_used': (spent / total_budget * 100) if total_budget > 0 else 0
+        }
+
+    @staticmethod
+    def get_total_budget_status(user_id):
+        """Get total budget status for user (for dashboard)"""
         total_budget = BudgetService.get_user_total_budget(user_id)
         if total_budget == 0:
             return None
