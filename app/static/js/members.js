@@ -359,51 +359,61 @@ function showBudgetModal() {
 
 // Expense Management Functions
 function editExpense(expenseId) {
-  // Fetch expense data and populate the edit modal
-  fetch(`/get_expense/${expenseId}`)
-    .then((response) => response.json())
-    .then((expense) => {
-      if (expense) {
-        document.getElementById("editExpenseId").value = expense.id;
-        document.getElementById("editExpenseDate").value = expense.date;
-        document.getElementById("editExpenseDescription").value =
-          expense.description;
-        document.getElementById("editExpenseAmount").value = expense.amount;
-        document.getElementById("editExpenseCategory").value =
-          expense.category_id;
-
-        // Clear all checkboxes first
-        const checkboxes = document.querySelectorAll(
-          '#editMemberCheckboxes input[type="checkbox"]'
-        );
-        checkboxes.forEach((cb) => (cb.checked = false));
-
-        // Check the user checkbox if they participate
-        if (expense.user_participates) {
-          document.querySelector(
-            '#editMemberCheckboxes input[name="include_user"]'
-          ).checked = true;
-        }
-
-        // Check member checkboxes
-        if (expense.member_ids) {
-          expense.member_ids.forEach((memberId) => {
-            const memberCheckbox = document.querySelector(
-              `#editMemberCheckboxes input[value="${memberId}"]`
-            );
-            if (memberCheckbox) {
-              memberCheckbox.checked = true;
+    // Fetch expense data and populate the edit modal
+    fetch(`/api/family_expense/${expenseId}`)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
             }
-          });
-        }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.success && data.expense) {
+                const expense = data.expense;
+                
+                // Set form action with expense ID
+                const form = document.getElementById("editExpenseForm");
+                form.action = `/edit_family_expense/${expense.transaction_id}`;
+                
+                // Populate form fields
+                document.getElementById("editExpenseId").value = expense.transaction_id;
+                document.getElementById("editExpenseAmount").value = expense.amount;
+                document.getElementById("editExpenseCategory").value = expense.category_id;
+                document.getElementById("editExpenseDate").value = expense.transaction_date;
 
-        document.getElementById("editExpenseModal").style.display = "block";
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching expense data:", error);
-      alert("Error loading expense data");
-    });
+                // Clear all checkboxes first
+                const checkboxes = document.querySelectorAll(
+                    '#editMemberCheckboxes input[type="checkbox"]'
+                );
+                checkboxes.forEach((cb) => (cb.checked = false));
+
+                // Check the user checkbox if they participate
+                const userCheckbox = document.querySelector('#editMemberCheckboxes input[name="include_user"]');
+                if (userCheckbox) {
+                    userCheckbox.checked = expense.user_participates;
+                }
+
+                // Check member checkboxes
+                if (expense.member_ids) {
+                    expense.member_ids.forEach((memberId) => {
+                        const memberCheckbox = document.querySelector(
+                            `#editMemberCheckboxes input[value="${memberId}"]`
+                        );
+                        if (memberCheckbox) {
+                            memberCheckbox.checked = true;
+                        }
+                    });
+                }
+
+                document.getElementById("editExpenseModal").style.display = "block";
+            } else {
+                throw new Error(data.message || 'Failed to load expense data');
+            }
+        })
+        .catch((error) => {
+            console.error("Error fetching expense data:", error);
+            alert("Error loading expense data: " + error.message);
+        });
 }
 
 function deleteExpense(expenseId) {
