@@ -3,56 +3,81 @@
 {% block title %}FAQ - SmartExpensesTracker{% endblock %}
 
 {% block content %}
-<!-- Brand Section -->
-<section class="brand">
-    <div class="logo">❓</div>
-    <h1>Frequently Asked Questions</h1>
-</section>
-
-<!-- FAQ Content -->
-<section class="auth-card">
-    <div class="faq-content">
+<div class="dashboard-container">
+    <div class="dashboard-content">
+        <!-- Welcome Section -->
         <div class="welcome-section">
-            <h2>Hello, {{ user.user_name }}! 👋</h2>
-            <p>Find answers to common questions about SmartExpensesTracker</p>
+            <h1>Frequently Asked Questions ❓</h1>
+            <p class="lead">Hello, {{ user.user_name }}! Find answers to common questions</p>
         </div>
 
-        <div class="faq-list">
-            <div class="faq-item">
-                <h3>💳 How do I add a new transaction?</h3>
-                <p>Go to the Transactions page and click "Add Transaction". Fill in the amount, category, and date for your income or expense.</p>
-            </div>
+        <!-- FAQ Content -->
+        <div class="analytics-section">
+            <div class="analytics-card full-width">
+                <div class="faq-content">
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-header">
+                                <div class="faq-icon">💳</div>
+                                <h3>How do I add a new transaction?</h3>
+                            </div>
+                            <p>Go to the Transactions page and click "Add Transaction". Fill in the amount, category, and date for your income or expense.</p>
+                        </div>
 
-            <div class="faq-item">
-                <h3>👨‍👩‍👧‍👦 How can I add family members?</h3>
-                <p>Navigate to your Profile page and click "Add Family Member". You can track expenses for each family member individually.</p>
-            </div>
+                        <div class="faq-item">
+                            <div class="faq-header">
+                                <div class="faq-icon">👨‍👩‍👧‍👦</div>
+                                <h3>How can I add family members?</h3>
+                            </div>
+                            <p>Navigate to your Profile page and click "Add Family Member". You can track expenses for each family member individually.</p>
+                        </div>
 
-            <div class="faq-item">
-                <h3>📊 How do I view my spending reports?</h3>
-                <p>Visit the Dashboard to see your financial overview. You can view monthly summaries, category breakdowns, and savings progress.</p>
-            </div>
+                        <div class="faq-item">
+                            <div class="faq-header">
+                                <div class="faq-icon">📊</div>
+                                <h3>How do I view my spending reports?</h3>
+                            </div>
+                            <p>Visit the Dashboard to see your financial overview. You can view monthly summaries, category breakdowns, and savings progress.</p>
+                        </div>
 
-            <div class="faq-item">
-                <h3>🔒 Is my financial data secure?</h3>
-                <p>Yes! All your data is encrypted and stored securely. We never share your financial information with third parties.</p>
-            </div>
+                        <div class="faq-item">
+                            <div class="faq-header">
+                                <div class="faq-icon">🔒</div>
+                                <h3>Is my financial data secure?</h3>
+                            </div>
+                            <p>Yes! All your data is encrypted and stored securely. We never share your financial information with third parties.</p>
+                        </div>
 
-            <div class="faq-item">
-                <h3>📱 Can I use the app on multiple devices?</h3>
-                <p>Absolutely! Your account syncs across all your devices. Just log in with your email and password.</p>
-            </div>
+                        <div class="faq-item">
+                            <div class="faq-header">
+                                <div class="faq-icon">📱</div>
+                                <h3>Can I use the app on multiple devices?</h3>
+                            </div>
+                            <p>Absolutely! Your account syncs across all your devices. Just log in with your email and password.</p>
+                        </div>
 
-            <div class="faq-item">
-                <h3>💾 How do I export my data?</h3>
-                <p>Go to your Profile page and click "Export Data". You can download your transactions as CSV or generate PDF reports.</p>
+                        <div class="faq-item">
+                            <div class="faq-header">
+                                <div class="faq-icon">💾</div>
+                                <h3>How do I export my data?</h3>
+                            </div>
+                            <p>Go to your Profile page and click "Export Data". You can download your transactions as CSV or generate PDF reports.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="support-section">
-            <h3>Still need help?</h3>
-            <p>Contact our support team at <strong>support@smartexpensestracker.com</strong> or visit our <a href="{{ url_for('main.about') }}">About page</a> for more information.</p>
+        <!-- Support Section -->
+        <div class="analytics-section">
+            <div class="analytics-card full-width">
+                <div class="support-section">
+                    <h3>Still need help?</h3>
+                    <p>Contact our support team at <strong>support@smartexpensestracker.com</strong> or visit our 
+                       <a href="{{ url_for('main.about') }}" style="color: var(--accent); text-decoration: none; font-weight: 600;">About page</a> for more information.</p>
+                </div>
+            </div>
         </div>
     </div>
-</section>
+</div>
 {% endblock %}
