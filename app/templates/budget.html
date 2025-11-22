@@ -6,7 +6,8 @@ endblock %} {% block head %}
 />
 {% endblock %} {% block content %}
 <div class="dashboard-container">
-  <!-- Welcome Section -->
+  <div class="dashboard-content">
+    <!-- Welcome Section -->
     <div class="welcome-section">
       <h1>Budget Management 💰</h1>
       <p class="lead">Take control of your spending with smart budgeting</p>
@@ -80,11 +81,12 @@ endblock %} {% block head %}
         </div>
       </div>
     </div>
+
     <!-- Category Budgets Section -->
     <div class="analytics-section">
       <div class="analytics-card full-width">
-        <div class="analytics-header">
-          <h4>Category Budgets</h4>
+        <div class="section-header">
+          <h3>Category Budgets</h3>
           <button
             class="btn secondary"
             data-action="add-budget"
@@ -95,67 +97,64 @@ endblock %} {% block head %}
           </button>
         </div>
 
-        <div class="budget-cards-grid">
-          {% if category_spending %} {# Create a list of tuples with category
-          data and sort by percentage (highest first) #} {% set budget_list = []
-          %} {% for category_name, data in category_spending.items() %} {% if
-          data.budget > 0 %} {% set _ = budget_list.append((category_name,
-          data.budget, data.spent, data.percentage)) %} {% endif %} {% endfor %}
-          {# Sort by percentage descending (red to green) #} {% set
-          sorted_budgets = budget_list|sort(attribute='3', reverse=True) %} {%
-          for category_name, budget_amount, spent, percentage in sorted_budgets
-          %} {% set progress_class = 'critical-level' if percentage >= 90 else
-          ('warning-level' if percentage >= 75 else 'good-level') %} {% set
-          alert_class = 'critical' if percentage >= 90 else ('warning' if
-          percentage >= 75 else 'good') %}
-
-          <div class="category-card">
-            <div class="category-header">
-              <h3>{{ category_name }}</h3>
-              <div class="category-actions">
-                <button
-                  class="btn-icon"
-                  onclick="openEditModal({{ loop.index }}, '{{ category_name }}', {{ budget_amount }})"
-                  title="Edit"
-                >
-                  ✏️
-                </button>
-                <button
-                  class="btn-icon delete"
-                  onclick="deleteBudget({{ loop.index }}, '{{ category_name }}')"
-                  title="Delete"
-                >
-                  🗑️
-                </button>
+        <div class="budget-alerts-container">
+          {% if category_spending %}
+            {% set budget_list = [] %}
+            {% for category_name, data in category_spending.items() %}
+              {% if data.budget > 0 %}
+                {% set spent = data.spent %}
+                {% set budget_amount = data.budget %}
+                {% set percentage = data.percentage %}
+                {% set alert_level = 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget') %}
+                {% set _ = budget_list.append((category_name, budget_amount, spent, percentage, alert_level)) %}
+              {% endif %}
+            {% endfor %}
+            
+            {% set sorted_budgets = budget_list|sort(attribute='3', reverse=True) %}
+            
+            {% for category_name, budget_amount, spent, percentage, alert_level in sorted_budgets %}
+            <div class="budget-alert {{ alert_level }}">
+              <div class="alert-header">
+                <div class="alert-category">{{ category_name }}</div>
+                <div class="category-actions">
+                  <button
+                    class="btn-icon"
+                    onclick="openEditModal({{ loop.index }}, '{{ category_name }}', {{ budget_amount }})"
+                    title="Edit"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    class="btn-icon delete"
+                    onclick="deleteBudget({{ loop.index }}, '{{ category_name }}')"
+                    title="Delete"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              <div class="alert-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: {{ percentage }}%"></div>
+                </div>
+                <span class="progress-text">{{ "%.1f"|format(percentage) }}%</span>
+              </div>
+              <div class="alert-amount">£{{ "%.2f"|format(spent) }} / £{{ "%.2f"|format(budget_amount) }}</div>
+              <div class="alert-status">
+                {% if alert_level == 'over-budget' %}
+                  Over Budget
+                {% elif alert_level == 'near-limit' %}
+                  Near Limit
+                {% else %}
+                  Within Budget
+                {% endif %}
               </div>
             </div>
-            <div class="category-amount">
-              £{{ "%.0f"|format(budget_amount) }}
+            {% endfor %}
+          {% else %}
+            <div class="no-alerts">
+              <p>No budgets configured yet. Click "Add Budget" to create your first budget.</p>
             </div>
-            <div class="category-progress">
-              <div class="progress-bar small">
-                <div
-                  class="progress-fill {{ progress_class }}"
-                  style="width: {{ percentage|round(0) }}%"
-                ></div>
-              </div>
-              <div class="progress-text">
-                <span>£{{ "%.0f"|format(spent) }} spent</span>
-                <span>{{ "%.0f"|format(percentage) }}%</span>
-              </div>
-            </div>
-            <div class="category-alert {{ alert_class }}">
-              {% if percentage >= 90 %} 🚨 {{ "%.0f"|format(percentage) }}% -
-              Critical! Near limit! {% elif percentage >= 75 %} ⚠️ {{
-              "%.0f"|format(percentage) }}% - Monitor spending {% else %} ✅ {{
-              "%.0f"|format(percentage) }}% - Well managed! {% endif %}
-            </div>
-          </div>
-          {% endfor %} {% else %}
-          <p style="color: #6c757d; padding: 20px; text-align: center">
-            No budgets configured yet. Click "Add Budget" to create your first
-            budget.
-          </p>
           {% endif %}
         </div>
       </div>
@@ -181,13 +180,9 @@ endblock %} {% block head %}
             required
           >
             <option value="">Select Category</option>
-            <option value="1">Transport</option>
-            <option value="2">Utilities</option>
-            <option value="3">Entertainment</option>
-            <option value="4">Food</option>
-            <option value="5">Healthcare</option>
-            <option value="6">Shopping</option>
-            <option value="7">Other</option>
+            {% for category in available_categories %}
+            <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="input-group">
@@ -256,24 +251,24 @@ endblock %} {% block head %}
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Sort category cards by alert level (critical first, then warning, then good)
-    const categoryGrid = document.querySelector(".category-grid");
-    if (categoryGrid) {
-      const cards = Array.from(categoryGrid.querySelectorAll(".category-card"));
-
-      // Sort cards by priority: critical (3), warning (2), good/no-alert (1)
-      cards.sort((a, b) => {
-        const getPriority = (card) => {
-          if (card.querySelector(".category-alert.critical")) return 3;
-          if (card.querySelector(".category-alert.warning")) return 2;
+    // Sort budget alerts by percentage (highest first)
+    const budgetAlertsContainer = document.querySelector(".budget-alerts-container");
+    if (budgetAlertsContainer) {
+      const alerts = Array.from(budgetAlertsContainer.querySelectorAll(".budget-alert"));
+      
+      // Sort alerts by priority: over-budget (3), near-limit (2), within-budget (1)
+      alerts.sort((a, b) => {
+        const getPriority = (alert) => {
+          if (alert.classList.contains('over-budget')) return 3;
+          if (alert.classList.contains('near-limit')) return 2;
           return 1;
         };
 
         return getPriority(b) - getPriority(a); // Descending order
       });
 
-      // Reappend cards in sorted order
-      cards.forEach((card) => categoryGrid.appendChild(card));
+      // Reappend alerts in sorted order
+      alerts.forEach((alert) => budgetAlertsContainer.appendChild(alert));
     }
 
     const statCards = document.querySelectorAll(".stat-card");
@@ -287,19 +282,19 @@ endblock %} {% block head %}
       }, index * 100);
     });
 
-    const categoryCards = document.querySelectorAll(".category-card");
-    categoryCards.forEach((card, index) => {
-      card.style.opacity = "0";
-      card.style.transform = "translateY(15px)";
+    const budgetAlerts = document.querySelectorAll(".budget-alert");
+    budgetAlerts.forEach((alert, index) => {
+      alert.style.opacity = "0";
+      alert.style.transform = "translateY(15px)";
       setTimeout(() => {
-        card.style.transition = "all 0.3s ease";
-        card.style.opacity = "1";
-        card.style.transform = "translateY(0)";
+        alert.style.transition = "all 0.3s ease";
+        alert.style.opacity = "1";
+        alert.style.transform = "translateY(0)";
       }, 300 + index * 50);
     });
   });
 
-  // Modal Functions
+  // Modal Functions (aynı kalacak)
   function openAddModal() {
     document.getElementById("addBudgetModal").style.display = "block";
   }
@@ -430,5 +425,4 @@ endblock %} {% block head %}
       });
   });
 </script>
-</div>
 {% endblock %}
