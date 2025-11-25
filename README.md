@@ -179,7 +179,7 @@ For implementation details and key relationship notes, see [Project Documentatio
 </td>
 <td width="50%" align="center">
 <a href="https://sleet-thread-13810139.figma.site/" target="_blank">
-<img src="docs/images/mockup-figma.png" alt="Figma Mockups - Click to view interactive prototype" width="100%" />
+<img src="docs/images/mockup-figma.png" alt="Figma Mockups - Click to view interactive prototype" style="width: 100%; height: auto; object-fit: cover;" />
 </a>
 <p><em>Click to view interactive Figma prototype</em></p>
 </td>
