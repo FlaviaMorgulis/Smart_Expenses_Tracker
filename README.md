@@ -299,11 +299,11 @@ Smart_Expenses_Tracker/
 ### Agile Phase (Development & Deployment)
 
 - **Methodology**: Iterative development with sprint cycles
-- **Task Management**: GitHub Projects with Kanban board
+- **Task Management**: [GitHub Projects](https://github.com/users/FlaviaMorgulis/projects/1) with Kanban board
 - **Version Control**: Git feature branches and pull requests
 - **Testing**: Continuous testing and integration
 
-**Tools**: GitHub Projects for task tracking, Git/GitHub for version control and collaboration
+**Tools**: [GitHub Projects](https://github.com/users/FlaviaMorgulis/projects/1) for task tracking, Git/GitHub for version control and collaboration
 
 ---
 

@@ -13,6 +13,7 @@
 9. [Testing](#testing)
 10. [Security & Authentication](#security--authentication)
 11. [Future Enhancements](#future-enhancements)
+12. [Developer Resources](#developer-resources)
 
 ---
 
@@ -361,6 +362,17 @@ Each Member Share: Cost per Person
 **For planned features and roadmap**, see [README.md](README.md#future-enhancements).
 
 Key priorities: Enhanced analytics, notifications system, receipt scanning, mobile app, banking integration, machine learning features.
+
+---
+
+## Developer Resources
+
+Additional documentation for developers and contributors:
+
+- **[Coding Guidelines](docs/coding_guidelines.md)** - Best practices, code standards, and conventions
+- **[User Stories](docs/user_stories.md)** - Detailed user requirements and acceptance criteria
+- **[Features Documentation](docs/features.md)** - Feature specifications and implementation details
+- **[Avatar System](docs/avatars.md)** - Profile avatar implementation and usage
 
 ---
 
