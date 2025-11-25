@@ -1,10 +1,8 @@
 # Smart Expenses Tracker
 
-![Smart Expenses Tracker Banner](docs/images/banner.png)
+<!-- Add video here -->
 
-<!-- Add banner image here -->
-
-A comprehensive family expense management web application that enables users to track personal and shared expenses, manage family member contributions, set intelligent budgets, and generate detailed financial reports.
+A comprehensive family expense management web application that enables users to track personal and shared expenses, manage family member contributions, set intelligent budgets, and generate detailed financial reports.The goal was to build something intuitive, simple, and scalable while applying Flask best practices and modern web development principles.
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.1.2-green.svg)](https://flask.palletsprojects.com/)
@@ -23,6 +21,7 @@ A comprehensive family expense management web application that enables users to 
 - [Database Design](#-database-design)
 - [User Interface](#-user-interface)
 - [Technology Stack](#-technology-stack)
+- [Project Management](#-project-management)
 - [Installation](#-installation)
 - [Testing](#-testing)
 - [Deployment](#-deployment)
@@ -41,8 +40,6 @@ A comprehensive family expense management web application that enables users to 
 - **Scalability** - Maintainable Flask Blueprint architecture for future expansion
 
 ---
-
-## User Stories
 
 ## User Stories
 
@@ -72,6 +69,8 @@ A comprehensive family expense management web application that enables users to 
 
 ### Main Application Features
 
+Core features for personal and family expense management with intelligent cost splitting.
+
 #### User Authentication
 
 Secure email-based registration and login with bcrypt password hashing, session management, and role-based admin access control.
@@ -100,11 +99,7 @@ Add, edit, and delete family members with automatic join date tracking. View com
 
 Flexible expense splitting with three modes: personal (100% user), shared (even split with members), and members-only (user pays, members owe). Real-time calculations with clear cost breakdowns.
 
-| Scenario          | Amount | Members        | User Participates | User Share | Each Member Share |
-| ----------------- | ------ | -------------- | ----------------- | ---------- | ----------------- |
-| Personal Coffee   | £5     | None           | N/A               | £5 (100%)  | £0                |
-| Shared Groceries  | £100   | Sarah (Spouse) | Yes               | £50        | £50               |
-| Kids' School Trip | £60    | Emma, Jack     | No                | £0         | £30 each          |
+See [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md#5-cost-splitting-system) for detailed calculations and examples.
 
 #### Budget Management
 
@@ -146,6 +141,8 @@ Flask-Admin dashboard for superusers with full database management: user/transac
 
 ![Database ERD](docs/images/database-erd.png)
 
+_Entity Relationship Diagram showing all 6 tables with fields, data types, nullable constraints, and relationship cardinalities_
+
 The application uses 6 core tables managed by SQLAlchemy ORM with Flask-Migrate for migrations:
 
 - **Users** - Account authentication and profiles
@@ -169,14 +166,34 @@ For complete table schemas and relationships, see [Project Documentation](PROJEC
 - **Responsive**: Mobile-first with breakpoints (Desktop: 1200px+, Tablet: 768-1199px, Mobile: <768px)
 - **Accessible**: Semantic HTML5, ARIA labels, keyboard navigation, WCAG AA compliant
 
+### Design Process
+
+**Wireframing**: Initial paper sketches to establish layout and user flow  
+**Prototyping**: High-fidelity mockups created in Figma for visual design
+
+<table>
+<tr>
+<td width="50%" align="center">
+<img src="docs/images/wireframes-paper.png" alt="Paper Wireframes" width="100%" />
+<p><em>Paper Wireframes</em></p>
+</td>
+<td width="50%" align="center">
+<a href="https://sleet-thread-13810139.figma.site/" target="_blank">
+<img src="https://img.shields.io/badge/🎨_View_Interactive-Figma_Prototype-F24E1E?style=for-the-badge&logo=figma&logoColor=white" alt="View Figma Prototype" />
+</a>
+<p><em>Click to view interactive Figma prototype</em></p>
+</td>
+</tr>
+</table>
+
 ### Color Palette
 
-- **Primary Blue**: #3498db - Main actions, links, primary buttons
-- **Success Green**: #27ae60 - Confirmations, positive feedback, income
-- **Warning Yellow**: #f39c12 - Alerts, budget warnings
-- **Danger Red**: #e74c3c - Errors, deletions, over-budget status
-- **Dark Gray**: #2c3e50 - Text, headers
-- **Light Gray**: #ecf0f1 - Backgrounds, borders
+- 🟦 **Primary Blue** `#3498db` - Main actions, links, primary buttons
+- 🟩 **Success Green** `#27ae60` - Confirmations, positive feedback, income
+- 🟨 **Warning Yellow** `#f39c12` - Alerts, budget warnings
+- 🟥 **Danger Red** `#e74c3c` - Errors, deletions, over-budget status
+- ⬛ **Dark Gray** `#2c3e50` - Text, headers
+- ⬜ **Light Gray** `#ecf0f1` - Backgrounds, borders
 
 ### Typography
 
@@ -184,14 +201,6 @@ For complete table schemas and relationships, see [Project Documentation](PROJEC
 - **Headings**: Bold weight for hierarchy
 - **Body Text**: Regular weight for readability
 - **Font Sizes**: Responsive scaling for accessibility
-
-### Design Process
-
-**Wireframing**: Initial paper sketches to establish layout and user flow  
-**Prototyping**: High-fidelity mockups created in Figma for visual design
-
-![Paper Wireframes](docs/images/wireframes-paper.png)
-![Figma Mockups](docs/images/mockup-figma.png)
 
 ### Pages
 
@@ -222,6 +231,79 @@ Full route details and access control logic available in [Project Documentation]
 **Tools**: Git/GitHub, VS Code, pip, venv
 
 See `requirements.txt` for complete dependency list.
+
+### Flask Application Structure
+
+```
+Smart_Expenses_Tracker/
+├── run.py                      # Application entry point
+├── requirements.txt            # Python dependencies
+├── app/
+│   ├── __init__.py            # App factory, extensions initialization
+│   ├── models.py              # SQLAlchemy models (User, Transaction, Member, Budget, Category)
+│   ├── services.py            # Business logic (cost splitting, budget calculations)
+│   ├── utils.py               # Helper functions
+│   ├── admin.py               # Admin user management
+│   ├── auth/                  # Authentication blueprint
+│   │   ├── __init__.py
+│   │   ├── routes.py          # Login, register, logout routes
+│   │   └── forms.py           # WTForms for authentication
+│   ├── main/                  # Main application blueprint
+│   │   ├── __init__.py
+│   │   └── routes.py          # Dashboard, profile routes
+│   ├── transactions/          # Transaction management blueprint
+│   │   ├── __init__.py
+│   │   ├── routes.py          # CRUD operations for transactions
+│   │   └── forms.py           # Transaction forms
+│   ├── static/
+│   │   ├── css/               # Stylesheets (style.css, budget.css, etc.)
+│   │   ├── js/                # JavaScript files (script.js, members.js)
+│   │   └── images/            # Static images
+│   ├── templates/             # Jinja2 templates
+│   │   ├── base.html          # Base template with navigation
+│   │   ├── index.html         # Landing page
+│   │   ├── dashboard.html     # Main dashboard
+│   │   ├── transactions.html  # Transaction list
+│   │   ├── edit_transaction.html # Edit transaction form
+│   │   ├── budget.html        # Budget management
+│   │   ├── family_management.html # Family members
+│   │   ├── cashflow.html      # Cash flow analysis
+│   │   ├── about.html         # About page
+│   │   └── faq.html           # FAQ page
+│   └── utilities/
+│       └── seed_categories.py # Database seeding script
+├── migrations/                 # Flask-Migrate database migrations
+├── instance/
+│   └── expenses.db            # SQLite database (dev)
+└── tests/                     # pytest test suite
+    ├── conftest.py            # Test fixtures
+    ├── test_auth.py           # Authentication tests
+    ├── test_family_management.py # Family management tests
+    ├── test_transactions.py   # Transaction tests
+    ├── test_budgets.py        # Budget tests
+    └── test_cost_splitting.py # Cost splitting logic tests
+```
+
+---
+
+## Project Management
+
+**Development Approach**: Hybrid methodology combining Waterfall and Agile practices
+
+### Waterfall Phase (Planning & Design)
+
+- **Ideation**: Requirements gathering and feature planning
+- **Design**: Wireframing (paper sketches) and prototyping (Figma)
+- **Database Design**: ERD modeling and schema planning
+
+### Agile Phase (Development & Deployment)
+
+- **Methodology**: Iterative development with sprint cycles
+- **Task Management**: GitHub Projects with Kanban board
+- **Version Control**: Git feature branches and pull requests
+- **Testing**: Continuous testing and integration
+
+**Tools**: GitHub Projects for task tracking, Git/GitHub for version control and collaboration
 
 ---
 
@@ -256,13 +338,15 @@ python run.py
 
 **Requirements**: Python 3.10+, pip, git (optional)
 
-For production deployment configuration, see [Project Documentation](PROJECT_DOCUMENTATION.md#deployment).
+For production deployment configuration, see [Project Documentation](PROJECT_DOCUMENTATION.md#deployment-checklist).
 
 ---
 
 ## Testing
 
 **Test Suite**: 49 tests (100% passing) - Authentication (15), Transactions (6), Family Management (8), Cost Splitting (10), Budget Management (10)
+
+**Test Strategy**: Test-Driven Development (TDD) approach with isolated unit and integration tests. Each test uses in-memory SQLite database to ensure no state pollution. Comprehensive coverage of authentication, CRUD operations, cost-splitting logic, and budget calculations.
 
 ```bash
 pytest                  # Run all tests
@@ -276,12 +360,9 @@ Full test documentation in [Project Documentation](PROJECT_DOCUMENTATION.md#test
 
 ## Deployment
 
-**Platform**: PythonAnywhere | **Live Demo**: [Smart Expenses Tracker](#)
+**For deployment configuration and setup**, see [Project Documentation](PROJECT_DOCUMENTATION.md#deployment).
 
-```bash
-flask db migrate -m "Description"  # Create migration
-flask db upgrade                    # Apply migration
-```
+**Live Demo**: [Smart Expenses Tracker](#)
 
 ---
 
@@ -310,7 +391,7 @@ flask db upgrade                    # Apply migration
 
 **Acknowledgments**:[Komal Karrir](https://github.com/Komals-Code4All) (Instructor), Flask documentation, SQLAlchemy ORM, pytest team, Stack Overflow community, [RealPython](https://realpython.com/)
 
-**Resources**: [Project Documentation](PROJECT_DOCUMENTATION.md) | [Flask Docs](https://flask.palletsprojects.com/) | [SQLAlchemy Docs](https://docs.sqlalchemy.org/) | [pytest Docs](https://docs.pytest.org/)
+**Resources**: [Project Documentation](PROJECT_DOCUMENTATION.md) | [Flask Docs](https://flask.palletsprojects.com/) | [SQLAlchemy Docs](https://docs.sqlalchemy.org/) | [pytest Docs](https://docs.pytest.org/) | [RealPython](https://realpython.com/) | [CS50](https://cs50.harvard.edu/) | [GitHub Docs](https://docs.github.com/) | [GitHub Projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects)
 
 **Support**: [Report Bug](https://github.com/FlaviaMorgulis/Smart_Expenses_Tracker/issues) | [Request Feature](https://github.com/FlaviaMorgulis/Smart_Expenses_Tracker/issues)
 
