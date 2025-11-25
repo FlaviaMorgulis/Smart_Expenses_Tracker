@@ -1,6 +1,6 @@
 # Smart Expenses Tracker
 
-<!-- Add video here -->
+<!-- Add video from the website here -->
 
 A comprehensive family expense management web application that enables users to track personal and shared expenses, manage family member contributions, set intelligent budgets, and generate detailed financial reports.The goal was to build something intuitive, simple, and scalable while applying Flask best practices and modern web development principles.
 
@@ -99,7 +99,7 @@ Add, edit, and delete family members with automatic join date tracking. View com
 
 Flexible expense splitting with three modes: personal (100% user), shared (even split with members), and members-only (user pays, members owe). Real-time calculations with clear cost breakdowns.
 
-See [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md#5-cost-splitting-system) for detailed calculations and examples.
+See [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md#cost-splitting-system) for detailed calculations and examples.
 
 #### Budget Management
 
@@ -154,7 +154,7 @@ The application uses 6 core tables managed by SQLAlchemy ORM with Flask-Migrate 
 
 **Database**: SQLite (development) / PostgreSQL (production-ready)
 
-For complete table schemas and relationships, see [Project Documentation](PROJECT_DOCUMENTATION.md#database-design).
+For implementation details and key relationship notes, see [Project Documentation](PROJECT_DOCUMENTATION.md#database-design).
 
 ---
 
@@ -208,7 +208,7 @@ For complete table schemas and relationships, see [Project Documentation](PROJEC
 **Protected Routes**: Dashboard, Transactions, Family Management, Budgets, Cash Flow, Profile  
 **Admin Only**: Admin Dashboard (`/admin`)
 
-Full route details and access control logic available in [Project Documentation](PROJECT_DOCUMENTATION.md).
+Full route details and access control logic available in [Project Documentation](PROJECT_DOCUMENTATION.md#api-endpoints).
 
 ### Navigation & Security
 
@@ -337,8 +337,6 @@ python run.py
 ```
 
 **Requirements**: Python 3.10+, pip, git (optional)
-
-For production deployment configuration, see [Project Documentation](PROJECT_DOCUMENTATION.md#deployment-checklist).
 
 ---
 

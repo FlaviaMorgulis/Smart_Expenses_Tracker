@@ -121,55 +121,6 @@ Smart_Expenses_Tracker/
 
 _Complete ERD showing all tables, fields (with data types and nullable indicators), primary/foreign keys, and relationship cardinalities (1:M, M:M)_
 
-**Text-based ERD (simplified overview):**
-
-```
-┌─────────────┐         ┌─────────────────┐         ┌──────────────┐
-│    User     │1       *│   Transaction   │*       1│   Category   │
-│─────────────│◄────────│─────────────────│────────►│──────────────│
-│ user_id PK  │         │ transaction_id PK│        │ category_id PK│
-│ user_name   │         │ user_id FK       │        │ category_name│
-│ email       │         │ category_id FK   │        │ user_id FK   │
-│ password    │         │ amount           │        └──────────────┘
-│ is_admin    │         │ transaction_type │
-└─────────────┘         │ transaction_date │
-      │1                │ user_participates│
-      │                 └─────────────────┘
-      │                          │*
-      │                          │
-      │                          │
-      │                 ┌────────▼────────┐
-      │                 │ MembersTransaction│
-      │                 │─────────────────│
-      │                 │ transaction_id PK,FK│
-      │                 │ member_id PK,FK │
-      │                 └─────────────────┘
-      │                          │*
-      │                          │
-      │1                ┌────────▼────────┐
-      └────────────────►│     Member      │
-                        │─────────────────│
-                        │ member_id PK    │
-                        │ user_id FK      │
-                        │ name            │
-                        │ relationship    │
-                        └─────────────────┘
-                                 │1
-                                 │
-                                 │*
-                        ┌────────▼────────┐
-                        │     Budget      │
-                        │─────────────────│
-                        │ budget_id PK    │
-                        │ user_id FK      │
-                        │ member_id FK    │
-                        │ category_id FK  │
-                        │ budget_amount   │
-                        │ is_active       │
-                        │ alert_threshold │
-                        └─────────────────┘
-```
-
 ### Key Database Notes
 
 **6 Core Tables:** User, Category, Member, Transaction, MembersTransaction (junction), Budget
