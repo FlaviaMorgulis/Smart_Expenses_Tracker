@@ -178,8 +178,8 @@ For implementation details and key relationship notes, see [Project Documentatio
 <p><em>Paper Wireframes</em></p>
 </td>
 <td width="50%" align="center">
-<a href="https://sleet-thread-13810139.figma.site/" target="_blank">
-<img src="docs/images/mockup-figma.png" alt="Figma Mockups - Click to view interactive prototype" width="100%" height="400" />
+<a href="https://sleet-thread-13810139.figma.site/" target="_blank" rel="noopener noreferrer">
+<img src="docs/images/mockup-figma.png" alt="Figma Mockups - Click to view interactive prototype" width="100%" />
 </a>
 <p><em>Click to view interactive Figma prototype</em></p>
 </td>
