@@ -179,7 +179,7 @@ For complete table schemas and relationships, see [Project Documentation](PROJEC
 </td>
 <td width="50%" align="center">
 <a href="https://sleet-thread-13810139.figma.site/" target="_blank">
-<img src="https://img.shields.io/badge/🎨_View_Interactive-Figma_Prototype-F24E1E?style=for-the-badge&logo=figma&logoColor=white" alt="View Figma Prototype" />
+<img src="docs/images/mockup-figma.png" alt="Figma Mockups - Click to view interactive prototype" width="100%" />
 </a>
 <p><em>Click to view interactive Figma prototype</em></p>
 </td>
