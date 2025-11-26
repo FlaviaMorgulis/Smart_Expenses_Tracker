@@ -82,91 +82,89 @@ endblock %} {% block head %}
       </div>
     </div>
 
-    <!-- Category Budgets Section -->
-    <div class="analytics-section">
-      <div class="analytics-card full-width">
+<!-- Category Budgets Section -->
+<div class="analytics-section">
+    <div class="analytics-card full-width">
         <div class="section-header">
-          <h3>Category Budgets</h3>
-          <button
-            class="btn secondary"
-            data-action="add-budget"
-            onclick="openAddModal()"
-            style="background: #6c757d; color: white; border: none"
-          >
-            <i class="icon"></i> Add Budget
-          </button>
+            <h3>Personal Category Budgets</h3>
+            <button
+                class="btn secondary"
+                data-action="add-budget"
+                onclick="openAddModal()"
+                style="background: #6c757d; color: white; border: none"
+            >
+                <i class="icon"></i> Add Personal Budget
+            </button>
         </div>
 
         <div class="budget-alerts-container">
-          {% if category_spending %}
-            {% set budget_list = [] %}
-            {% for category_name, data in category_spending.items() %}
-              {% if data.budget > 0 %}
-                {% set spent = data.spent %}
-                {% set budget_amount = data.budget %}
-                {% set percentage = data.percentage %}
-                {% set alert_level = 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget') %}
-                {% set _ = budget_list.append((category_name, budget_amount, spent, percentage, alert_level)) %}
-              {% endif %}
-            {% endfor %}
-            
-            {% set sorted_budgets = budget_list|sort(attribute='3', reverse=True) %}
-            
-            {% for category_name, budget_amount, spent, percentage, alert_level in sorted_budgets %}
-            <div class="budget-alert {{ alert_level }}">
-              <div class="alert-header">
-                <div class="alert-category">{{ category_name }}</div>
-                <div class="category-actions">
-                  <button
-                    class="btn-icon"
-                    onclick="openEditModal({{ loop.index }}, '{{ category_name }}', {{ budget_amount }})"
-                    title="Edit"
-                  >
-                    ✏️
-                  </button>
-                  <button
-                    class="btn-icon delete"
-                    onclick="deleteBudget({{ loop.index }}, '{{ category_name }}')"
-                    title="Delete"
-                  >
-                    🗑️
-                  </button>
+            {% if category_spending %}
+                {% for category_name, data in category_spending.items() %}
+                    {% if data.budget > 0 %}
+                        {% set spent = data.spent %}
+                        {% set budget_amount = data.budget %}
+                        {% set percentage = data.percentage %}
+                        {% set alert_level = 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget') %}
+                        {% set budget_id = data.budget_id %}
+                        
+                        {% if budget_id %}
+                        <div class="budget-alert {{ alert_level }}" data-budget-id="{{ budget_id }}">
+                            <div class="alert-header">
+                                <div class="alert-category">{{ category_name }}</div>
+                                <div class="category-actions">
+                                    <button
+                                        class="btn-icon edit-budget-btn"
+                                        data-budget-id="{{ budget_id }}"
+                                        data-category-name="{{ category_name }}"
+                                        data-budget-amount="{{ budget_amount }}"
+                                        title="Edit"
+                                    >
+                                        ✏️
+                                    </button>
+                                    <button
+                                        class="btn-icon delete-budget-btn"
+                                        data-budget-id="{{ budget_id }}"
+                                        data-category-name="{{ category_name }}"
+                                        title="Delete"
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="alert-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ percentage|round }}%"></div>
+                                </div>
+                                <span class="progress-text">{{ "%.1f"|format(percentage) }}%</span>
+                            </div>
+                            <div class="alert-amount">£{{ "%.2f"|format(spent) }} / £{{ "%.2f"|format(budget_amount) }}</div>
+                            <div class="alert-status">
+                                {% if alert_level == 'over-budget' %}
+                                    Over Budget
+                                {% elif alert_level == 'near-limit' %}
+                                    Near Limit
+                                {% else %}
+                                    Within Budget
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="no-alerts">
+                    <p>No personal budgets configured yet. Click "Add Personal Budget" to create your first personal budget.</p>
                 </div>
-              </div>
-              <div class="alert-progress">
-                <div class="progress-bar">
-                  <div class="progress-fill" style="width: {{ percentage }}%"></div>
-                </div>
-                <span class="progress-text">{{ "%.1f"|format(percentage) }}%</span>
-              </div>
-              <div class="alert-amount">£{{ "%.2f"|format(spent) }} / £{{ "%.2f"|format(budget_amount) }}</div>
-              <div class="alert-status">
-                {% if alert_level == 'over-budget' %}
-                  Over Budget
-                {% elif alert_level == 'near-limit' %}
-                  Near Limit
-                {% else %}
-                  Within Budget
-                {% endif %}
-              </div>
-            </div>
-            {% endfor %}
-          {% else %}
-            <div class="no-alerts">
-              <p>No budgets configured yet. Click "Add Budget" to create your first budget.</p>
-            </div>
-          {% endif %}
+            {% endif %}
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
 <!-- Add Budget Modal -->
 <div id="addBudgetModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>Add New Budget</h3>
+      <h3>Add New Personal Budget</h3>
       <span class="modal-close" onclick="closeAddModal()">&times;</span>
     </div>
     <div class="modal-body">
@@ -193,7 +191,7 @@ endblock %} {% block head %}
             name="amount"
             class="form-input"
             step="0.01"
-            min="0"
+            min="0.01"
             required
           />
         </div>
@@ -212,7 +210,7 @@ endblock %} {% block head %}
 <div id="editBudgetModal" class="modal">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>Edit Budget</h3>
+      <h3>Edit Personal Budget</h3>
       <span class="modal-close" onclick="closeEditModal()">&times;</span>
     </div>
     <div class="modal-body">
@@ -230,7 +228,7 @@ endblock %} {% block head %}
             name="amount"
             class="form-input"
             step="0.01"
-            min="0"
+            min="0.01"
             required
           />
         </div>
@@ -292,9 +290,35 @@ endblock %} {% block head %}
         alert.style.transform = "translateY(0)";
       }, 300 + index * 50);
     });
+
+    // Setup event listeners for edit and delete buttons
+    setupBudgetEventListeners();
   });
 
-  // Modal Functions (aynı kalacak)
+  function setupBudgetEventListeners() {
+    // Edit budget buttons
+    document.querySelectorAll('.edit-budget-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const budgetId = this.getAttribute('data-budget-id');
+        const categoryName = this.getAttribute('data-category-name');
+        const budgetAmount = this.getAttribute('data-budget-amount');
+        
+        openEditModal(budgetId, categoryName, budgetAmount);
+      });
+    });
+
+    // Delete budget buttons
+    document.querySelectorAll('.delete-budget-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        const budgetId = this.getAttribute('data-budget-id');
+        const categoryName = this.getAttribute('data-category-name');
+        
+        deleteBudget(budgetId, categoryName);
+      });
+    });
+  }
+
+  // Modal Functions
   function openAddModal() {
     document.getElementById("addBudgetModal").style.display = "block";
   }
@@ -304,11 +328,10 @@ endblock %} {% block head %}
     document.getElementById("addBudgetForm").reset();
   }
 
-  function openEditModal(budgetId, category, amount, period) {
+  function openEditModal(budgetId, category, amount) {
     document.getElementById("edit_budget_id").value = budgetId;
     document.getElementById("edit_category").value = category;
     document.getElementById("edit_amount").value = amount;
-    document.getElementById("edit_period").value = period;
     document.getElementById("editBudgetModal").style.display = "block";
   }
 
@@ -318,9 +341,7 @@ endblock %} {% block head %}
   }
 
   function deleteBudget(budgetId, category) {
-    if (
-      !confirm(`Are you sure you want to delete the budget for ${category}?`)
-    ) {
+    if (!confirm(`Are you sure you want to delete the budget for ${category}?`)) {
       return;
     }
 
@@ -330,17 +351,31 @@ endblock %} {% block head %}
         "Content-Type": "application/json",
       },
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
       .then((data) => {
         if (data.success) {
           alert(data.message);
-          location.reload();
+          // Remove the budget element from DOM
+          const budgetElement = document.querySelector(`[data-budget-id="${budgetId}"]`);
+          if (budgetElement) {
+            budgetElement.remove();
+          }
+          // Reload the page to update stats
+          setTimeout(() => {
+            location.reload();
+          }, 1000);
         } else {
           alert("Error: " + data.message);
         }
       })
       .catch((error) => {
-        alert("Error deleting budget: " + error);
+        console.error('Error:', error);
+        alert("Error deleting budget: " + error.message);
       });
   }
 
@@ -356,7 +391,7 @@ endblock %} {% block head %}
     }
   };
 
-  // Form submission handlers
+  // Form submission handlers - GÜNCELLENMİŞ KISIM
   document.addEventListener("DOMContentLoaded", function () {
     document
       .getElementById("addBudgetForm")
@@ -364,10 +399,25 @@ endblock %} {% block head %}
         e.preventDefault();
 
         const formData = new FormData(this);
+        const categoryId = document.getElementById('add_category').value;
+        const amount = document.getElementById('add_amount').value;
+
+        // Validation
+        if (!categoryId) {
+          alert('Please select a category');
+          return;
+        }
+        if (!amount || amount <= 0) {
+          alert('Please enter a valid budget amount');
+          return;
+        }
+
         const data = {
-          category_id: formData.get("category_id"),
-          amount: formData.get("amount"),
+          category_id: categoryId,
+          amount: parseFloat(amount)
         };
+
+        console.log('Sending budget data:', data);
 
         fetch("/budget/add", {
           method: "POST",
@@ -376,18 +426,24 @@ endblock %} {% block head %}
           },
           body: JSON.stringify(data),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
           .then((data) => {
             if (data.success) {
               alert(data.message);
               closeAddModal();
-              location.reload();
+              location.reload(); // Sayfayı yenile
             } else {
               alert("Error: " + data.message);
             }
           })
           .catch((error) => {
-            alert("Error adding budget: " + error);
+            console.error('Error:', error);
+            alert("Error adding budget: " + error.message);
           });
       });
 
@@ -397,9 +453,15 @@ endblock %} {% block head %}
         e.preventDefault();
 
         const budgetId = document.getElementById("edit_budget_id").value;
-        const formData = new FormData(this);
+        const amount = document.getElementById('edit_amount').value;
+
+        if (!amount || amount <= 0) {
+          alert('Please enter a valid budget amount');
+          return;
+        }
+
         const data = {
-          amount: formData.get("amount"),
+          amount: parseFloat(amount)
         };
 
         fetch(`/budget/${budgetId}/edit`, {
@@ -409,18 +471,24 @@ endblock %} {% block head %}
           },
           body: JSON.stringify(data),
         })
-          .then((response) => response.json())
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
           .then((data) => {
             if (data.success) {
               alert(data.message);
               closeEditModal();
-              location.reload();
+              location.reload(); // Sayfayı yenile
             } else {
               alert("Error: " + data.message);
             }
           })
           .catch((error) => {
-            alert("Error updating budget: " + error);
+            console.error('Error:', error);
+            alert("Error updating budget: " + error.message);
           });
       });
   });
