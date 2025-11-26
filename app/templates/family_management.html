@@ -163,40 +163,49 @@
         <!-- Budget Alerts Section -->
         <div class="budget-alerts-section">
             <div class="section-header">
-                <h3>Category Budgets</h3>
+                <h3>Family Category Budgets</h3>
                 <button class="btn secondary" onclick="showBudgetModal()">
-                    Add Category Budget
+                    Add Family Budget
                 </button>
             </div>
             
             <div class="budget-alerts-container">
-                {% if category_budgets %}
-                    {% set budget_list = [] %}
-                    {% for category_name, budget_amount in category_budgets.items() %}
-                        {% if budget_amount > 0 %}
-                            {% set spent = category_expenses.get(category_name, 0) %}
-                            {% set percentage = (spent / budget_amount * 100) if budget_amount > 0 else 0 %}
-                            {% set alert_level = 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget') %}
-                            {% set _ = budget_list.append((category_name, budget_amount, spent, percentage, alert_level)) %}
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% set sorted_budgets = budget_list|sort(attribute='3', reverse=True) %}
-                    
-                    {% for category_name, budget_amount, spent, percentage, alert_level in sorted_budgets %}
-                    <div class="budget-alert {{ alert_level }}">
-                        <div class="alert-category">{{ category_name }}</div>
+                {% if family_budgets_with_spent %}
+                    {% for budget in family_budgets_with_spent %}
+                    <div class="budget-alert {{ budget.alert_level }}" data-budget-id="{{ budget.budget_id }}">
+                        <div class="alert-header">
+                            <div class="alert-category">{{ budget.category_name }}</div>
+                            <div class="category-actions">
+                                <button
+                                    class="btn-icon edit-family-budget-btn"
+                                    data-budget-id="{{ budget.budget_id }}"
+                                    data-category-name="{{ budget.category_name }}"
+                                    data-budget-amount="{{ budget.budget_amount }}"
+                                    title="Edit"
+                                >
+                                    ✏️
+                                </button>
+                                <button
+                                    class="btn-icon delete-family-budget-btn"
+                                    data-budget-id="{{ budget.budget_id }}"
+                                    data-category-name="{{ budget.category_name }}"
+                                    title="Delete"
+                                >
+                                    🗑️
+                                </button>
+                            </div>
+                        </div>
                         <div class="alert-progress">
                             <div class="progress-bar">
-                                <div class="progress-fill" style="width: {{ percentage }}%"></div>
+                                <div class="progress-fill" style="width: {{ budget.percentage|round }}%"></div>
                             </div>
-                            <span class="progress-text">{{ "%.1f"|format(percentage) }}%</span>
+                            <span class="progress-text">{{ "%.1f"|format(budget.percentage) }}%</span>
                         </div>
-                        <div class="alert-amount">£{{ "%.2f"|format(spent) }} / £{{ "%.2f"|format(budget_amount) }}</div>
+                        <div class="alert-amount">£{{ "%.2f"|format(budget.spent) }} / £{{ "%.2f"|format(budget.budget_amount) }}</div>
                         <div class="alert-status">
-                            {% if alert_level == 'over-budget' %}
+                            {% if budget.alert_level == 'over-budget' %}
                                 Over Budget
-                            {% elif alert_level == 'near-limit' %}
+                            {% elif budget.alert_level == 'near-limit' %}
                                 Near Limit
                             {% else %}
                                 Within Budget
@@ -206,13 +215,13 @@
                     {% endfor %}
                 {% else %}
                     <div class="no-alerts">
-                        <p>No budgets configured yet. Click "Add Category Budget" to create your first budget.</p>
+                        <p>No family budgets configured yet. Click "Add Family Budget" to create your first family budget.</p>
                     </div>
                 {% endif %}
             </div>
         </div>
 
-        <!-- Recent Expenses Section -->
+       <!-- Recent Expenses Section -->
         <div class="analytics-section">
             <div class="section-header">
                 <h3>Recent Family Expenses</h3>
@@ -221,61 +230,105 @@
                 </button>
             </div>
             
-            <div class="analytics-card expenses-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>DATE</th>
-                            <th>CATEGORY</th>
-                            <th>AMOUNT</th>
-                            <th>SHARED WITH</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for expense in recent_shared_expenses %}
-                        <tr>
-                            <td>{{ expense.date }}</td>
-                            <td class="expense-category">{{ expense.category }}</td>
-                            <td class="expense-amount">£{{ "%.2f"|format(expense.amount) }}</td>
-                            <td>
-                                <div class="shared-with">
+            <div class="analytics-card">
+                <!-- Desktop Table -->
+                <div class="expenses-table-container desktop-only">
+                    <table class="expenses-table">
+                        <thead>
+                            <tr>
+                                <th>DATE</th>
+                                <th>CATEGORY</th>
+                                <th>AMOUNT</th>
+                                <th>SHARED WITH</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in recent_shared_expenses %}
+                            <tr>
+                                <td data-label="Date">{{ expense.date }}</td>
+                                <td data-label="Category" class="expense-category">{{ expense.category }}</td>
+                                <td data-label="Amount" class="expense-amount">£{{ "%.2f"|format(expense.amount) }}</td>
+                                <td data-label="Shared With">
+                                    <div class="shared-with">
+                                        {% if expense.shared_with and expense.shared_with|length > 0 %}
+                                            <div class="participants">
+                                                {% for participant in expense.shared_with %}
+                                                    <span class="participant-tag">{{ participant }}</span>
+                                                {% endfor %}
+                                            </div>
+                                            <span class="cost-per-person">
+                                                £{{ "%.2f"|format(expense.cost_per_person) }} per person
+                                            </span>
+                                        {% else %}
+                                            <span class="not-shared">Not shared</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td data-label="Actions">
+                                    <div class="expense-actions">
+                                        <button class="btn-icon edit-expense" 
+                                                data-expense-id="{{ expense.id }}"
+                                                title="Edit">
+                                            ✏️
+                                        </button>
+                                        <button class="btn-icon delete-expense" 
+                                                data-expense-id="{{ expense.id }}"
+                                                title="Delete">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Mobile Cards -->
+                <div class="expenses-table-mobile mobile-only">
+                    {% for expense in recent_shared_expenses %}
+                    <div class="expense-card">
+                        <div class="expense-header">
+                            <strong class="expense-category">{{ expense.category }}</strong>
+                            <span class="expense-amount">£{{ "%.2f"|format(expense.amount) }}</span>
+                        </div>
+                        <div class="expense-details">
+                            <div>
+                                <small>Date: {{ expense.date }}</small>
+                            </div>
+                            <div>
+                                <small>
                                     {% if expense.shared_with and expense.shared_with|length > 0 %}
-                                        <div class="participants">
-                                            {% for participant in expense.shared_with %}
-                                                <span class="participant-tag">{{ participant }}</span>
-                                            {% endfor %}
-                                        </div>
-                                        <span class="cost-per-person">
-                                            £{{ "%.2f"|format(expense.cost_per_person) }} per person
-                                        </span>
+                                        Shared with {{ expense.shared_with|length }} people
                                     {% else %}
-                                        <span class="not-shared">Not shared</span>
+                                        Not shared
                                     {% endif %}
-                                </div>
-                            </td>
-                            <td>
-                                <div class="expense-actions">
-                                    <button class="btn-icon edit-expense" 
-                                            data-expense-id="{{ expense.id }}"
-                                            title="Edit">
-                                        ✏️
-                                    </button>
-                                    <button class="btn-icon delete-expense" 
-                                            data-expense-id="{{ expense.id }}"
-                                            title="Delete">
-                                        🗑️
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </small>
+                            </div>
+                        </div>
+                        {% if expense.shared_with and expense.shared_with|length > 0 %}
+                        <div class="expense-sharing">
+                            <small>£{{ "%.2f"|format(expense.cost_per_person) }} per person</small>
+                        </div>
+                        {% endif %}
+                        <div class="expense-actions">
+                            <button class="btn-icon edit-expense" 
+                                    data-expense-id="{{ expense.id }}"
+                                    title="Edit">
+                                ✏️ Edit
+                            </button>
+                            <button class="btn-icon delete-expense" 
+                                    data-expense-id="{{ expense.id }}"
+                                    title="Delete">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
 <!-- Modals -->
 <!-- Add Family Member Modal -->
@@ -399,33 +452,33 @@
 
 <!-- Add Category Budget Modal -->
 <div id="budgetModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Add Category Budget</h3>
-            <span class="modal-close" data-modal-id="budgetModal">&times;</span>
-        </div>
-        <div class="modal-body">
-            <form id="addCategoryBudgetForm" method="POST" action="{{ url_for('main.update_family_budget') }}">
-                <div class="input-group">
-                    <label for="budget_category">Category</label>
-                    <select id="budget_category" name="category_id" class="form-select" required>
-                        <option value="">Select Category</option>
-                        {% for category in categories %}
-                        <option value="{{ category.category_id }}">{{ category.category_name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="input-group">
-                    <label for="budget_amount">Monthly Budget (£)</label>
-                    <input type="number" id="budget_amount" name="amount" class="form-input" step="0.01" min="0" required>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn secondary" data-modal-id="budgetModal">Cancel</button>
-                    <button type="submit" class="btn primary">Add Budget</button>
-                </div>
-            </form>
-        </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add Family Category Budget</h3>
+      <span class="modal-close" data-modal-id="budgetModal">&times;</span>
     </div>
+    <div class="modal-body">
+      <form id="addCategoryBudgetForm" method="POST" action="{{ url_for('main.add_family_budget') }}">
+        <div class="input-group">
+          <label for="budget_category">Category</label>
+          <select id="budget_category" name="category_id" class="form-select" required>
+            <option value="">Select Category</option>
+            {% for category in categories %}
+            <option value="{{ category.category_id }}">{{ category.category_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="budget_amount">Monthly Budget (£)</label>
+          <input type="number" id="budget_amount" name="amount" class="form-input" step="0.01" min="0" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn secondary" data-modal-id="budgetModal">Cancel</button>
+          <button type="submit" class="btn primary">Add Family Budget</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
 
 <!-- Edit Family Expense Modal -->
@@ -475,6 +528,41 @@
                 <div class="modal-actions">
                     <button type="button" class="btn secondary" data-modal-id="editExpenseModal">Cancel</button>
                     <button type="submit" class="btn primary">Update Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Family Budget Modal -->
+<div id="editFamilyBudgetModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Edit Family Budget</h3>
+            <span class="modal-close" data-modal-id="editFamilyBudgetModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <form id="editFamilyBudgetForm">
+                <input type="hidden" id="edit_family_budget_id" name="budget_id" />
+                <div class="input-group">
+                    <label for="edit_family_category">Category</label>
+                    <input type="text" id="edit_family_category" class="form-input" readonly />
+                </div>
+                <div class="input-group">
+                    <label for="edit_family_amount">Budget Amount (£)</label>
+                    <input
+                        type="number"
+                        id="edit_family_amount"
+                        name="amount"
+                        class="form-input"
+                        step="0.01"
+                        min="0.01"
+                        required
+                    />
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn secondary" data-modal-id="editFamilyBudgetModal">Cancel</button>
+                    <button type="submit" class="btn primary">Update Family Budget</button>
                 </div>
             </form>
         </div>
@@ -683,6 +771,14 @@ function setupModalHandlers() {
         });
     }
 
+    // Edit Family Budget modal close
+    document.querySelectorAll('.modal-close[data-modal-id="editFamilyBudgetModal"]').forEach(button => {
+        button.addEventListener('click', function() {
+            closeEditFamilyBudgetModal();
+        });
+    });
+
+
     // Add Member card
     const addMemberCard = document.querySelector('.add-member');
     if (addMemberCard) {
@@ -852,6 +948,125 @@ function openEditExpenseModal(expenseId) {
         });
 }
 
+// Family Budget Functions
+function setupFamilyBudgetEventListeners() {
+    // Edit family budget buttons
+    document.querySelectorAll('.edit-family-budget-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const budgetId = this.getAttribute('data-budget-id');
+            const categoryName = this.getAttribute('data-category-name');
+            const budgetAmount = this.getAttribute('data-budget-amount');
+            
+            openEditFamilyBudgetModal(budgetId, categoryName, budgetAmount);
+        });
+    });
+
+    // Delete family budget buttons
+    document.querySelectorAll('.delete-family-budget-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const budgetId = this.getAttribute('data-budget-id');
+            const categoryName = this.getAttribute('data-category-name');
+            
+            deleteFamilyBudget(budgetId, categoryName);
+        });
+    });
+}
+
+function openEditFamilyBudgetModal(budgetId, category, amount) {
+    document.getElementById("edit_family_budget_id").value = budgetId;
+    document.getElementById("edit_family_category").value = category;
+    document.getElementById("edit_family_amount").value = amount;
+    document.getElementById("editFamilyBudgetModal").style.display = "block";
+}
+
+function closeEditFamilyBudgetModal() {
+    document.getElementById("editFamilyBudgetModal").style.display = "none";
+    document.getElementById("editFamilyBudgetForm").reset();
+}
+
+function deleteFamilyBudget(budgetId, category) {
+    if (!confirm(`Are you sure you want to delete the family budget for ${category}?`)) {
+        return;
+    }
+
+    fetch(`/budget/${budgetId}/delete`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then((data) => {
+        if (data.success) {
+            alert(data.message);
+            // Remove the budget element from DOM
+            const budgetElement = document.querySelector(`[data-budget-id="${budgetId}"]`);
+            if (budgetElement) {
+                budgetElement.remove();
+            }
+            // Reload the page to update stats
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert("Error deleting family budget: " + error.message);
+    });
+}
+
+// Edit Family Budget Form submission
+document.getElementById("editFamilyBudgetForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const budgetId = document.getElementById("edit_family_budget_id").value;
+    const amount = document.getElementById('edit_family_amount').value;
+
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid budget amount');
+        return;
+    }
+
+    const data = {
+        amount: parseFloat(amount)
+    };
+
+    fetch(`/budget/${budgetId}/edit`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+    })
+    .then((response) => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then((data) => {
+        if (data.success) {
+            alert(data.message);
+            closeEditFamilyBudgetModal();
+            location.reload();
+        } else {
+            alert("Error: " + data.message);
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert("Error updating family budget: " + error.message);
+    });
+});
+
 // Form submission handlers
 function setupFormHandlers() {
     // Add Expense Form
@@ -969,6 +1184,7 @@ function setupFormHandlers() {
 document.addEventListener('DOMContentLoaded', function() {
     setupModalHandlers();
     setupFormHandlers();
+    setupFamilyBudgetEventListeners();
     updateChartView('family');
     
     // Close modals when clicking outside
@@ -1301,6 +1517,136 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .dropdown-item:not(:last-child) {
     border-bottom: 1px solid var(--border);
+}
+
+.alert-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.category-actions {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* ================================
+   FAMILY MANAGEMENT RESPONSIVE
+   ================================ */
+
+@media (max-width: 1024px) {
+  .members-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .expenses-table-mobile.mobile-only {
+    display: none;
+  }
+  .members-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .member-card {
+    padding: 20px;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .expenses-table-container {
+    overflow-x: auto;
+  }
+  
+  .expenses-table {
+    min-width: 600px;
+  }
+  
+  .view-toggle-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .member-dropdown {
+    width: 100%;
+  }
+  
+  .toggle-btn,
+  .toggle-select {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .member-actions {
+    position: static;
+    justify-content: center;
+    margin-top: 15px;
+  }
+  
+  .member-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .member-stats {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 5% auto;
+  }
+  
+  .checkbox-group,
+  .members-checkbox-group {
+    font-size: 14px;
+  }
+}
+
+/* Mobile-first table approach */
+@media (max-width: 768px) {
+  .expenses-table-mobile.mobile-only {
+    display: none;
+  }
+  .expenses-table thead {
+    display: none;
+  }
+  
+  .expenses-table tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  
+  .expenses-table tbody td {
+    display: block;
+    text-align: right;
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .expenses-table tbody td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    color: var(--text);
+  }
 }
 </style>
 {% endblock %}
