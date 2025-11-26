@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - SmartExpensesTracker{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Profile Information Section -->
+    <div class="profile-section card">
+        <div class="section-header">
+            <h2>Profile Information</h2>
+        </div>
+        
+        <div class="profile-info">
+            <div class="profile-avatar">
+                <div class="avatar-placeholder">
+                    {{ current_user.user_name[0].upper() if current_user.user_name else 'U' }}
+                </div>
+                <p class="member-role">Account Owner</p>
+            </div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Full Name</label>
+                    <div class="info-value">{{ current_user.user_name or 'Not set' }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <label>Email Address</label>
+                    <div class="info-value">{{ current_user.email }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <label>Member Since</label>
+                    <div class="info-value">{{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else 'Unknown' }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <label>Account Status</label>
+                    <div class="info-value">
+                        <span class="badge active">ACTIVE</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <label>Last Login</label>
+                    <div class="info-value">{{ current_user.last_login.strftime('%B %d, %Y at %H:%M') if current_user.last_login else 'Never' }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <label>User ID</label>
+                    <div class="info-value code">{{ current_user.user_id }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Overview Section -->
+    <div class="profile-section card">
+        <div class="section-header">
+            <h2>Financial Overview</h2>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">{{ total_transactions }}</div>
+                <div class="stat-label">Total Transactions</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">£{{ "%.2f"|format(total_income) }}</div>
+                <div class="stat-label">Total Income</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">£{{ "%.2f"|format(total_expenses) }}</div>
+                <div class="stat-label">Total Expenses</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">{{ active_budgets }}</div>
+                <div class="stat-label">Active Budgets</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">{{ family_members }}</div>
+                <div class="stat-label">Family Members</div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-number">{{ "%.1f"|format(savings_rate) }}%</div>
+                <div class="stat-label">Savings Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Profile Section (Always Visible) -->
+    <div class="profile-section card">
+        <div class="section-header">
+            <h2>Edit Profile</h2>
+        </div>
+        
+        <div class="edit-profile-form">
+            <form id="editProfileForm" method="POST" action="{{ url_for('main.update_profile') }}">
+                <div class="form-section">
+                    <h3>Personal Information</h3>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="editUserName">Full Name</label>
+                            <input type="text" id="editUserName" name="user_name" class="form-input" value="{{ current_user.user_name or '' }}" required>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="editUserEmail">Email Address</label>
+                            <input type="email" id="editUserEmail" name="email" class="form-input" value="{{ current_user.email }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Change Password</h3>
+                    <p class="form-description">Leave password fields blank if you don't want to change your password.</p>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" name="current_password" class="form-input" placeholder="Enter current password">
+                            <small class="form-help">Required only when changing password</small>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" name="new_password" class="form-input" placeholder="Enter new password">
+                            <small class="form-help">Minimum 6 characters</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" name="confirm_password" class="form-input" placeholder="Confirm new password">
+                            <small class="form-help">Re-enter your new password</small>
+                        </div>
+                        <div class="input-group"></div> <!-- Empty spacer -->
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn primary">Save Changes</button>
+                    <button type="button" class="btn secondary" onclick="resetEditForm()">Reset Form</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Data Management Section -->
+    <div class="profile-section card">
+        <div class="section-header">
+            <h2>Data Management</h2>
+        </div>
+        
+        <div class="data-management-grid">
+            <div class="data-item">
+                <div class="data-info">
+                    <h3>Export Data</h3>
+                    <p>Download your financial data in CSV or PDF format</p>
+                </div>
+                <div class="data-actions">
+                    <button class="btn secondary" onclick="exportData('csv')">CSV</button>
+                    <button class="btn secondary" onclick="exportData('pdf')">PDF</button>
+                </div>
+            </div>
+            
+            <div class="data-item">
+                <div class="data-info">
+                    <h3>Clear Data</h3>
+                    <p>Remove all your transactions and start fresh</p>
+                </div>
+                <button class="btn warning" onclick="clearData()">Clear Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Section (Always Visible) -->
+    <div class="profile-section card danger-zone">
+        <div class="section-header">
+            <h2>Delete Account</h2>
+        </div>
+        
+        <div class="delete-account-section">
+            <div class="warning-message">
+                <h4>⚠️ Warning: This action cannot be undone</h4>
+                <p>You are about to permanently delete your account and all associated data including:</p>
+                <ul>
+                    <li>All transactions and financial records</li>
+                    <li>Budget configurations</li>
+                    <li>Family member information</li>
+                    <li>Account settings and preferences</li>
+                </ul>
+                <p>This action is irreversible. Please confirm your password to proceed.</p>
+            </div>
+            
+            <form id="deleteAccountForm" method="POST" action="{{ url_for('main.delete_account') }}">
+                <div class="input-group">
+                    <label for="deleteConfirmPassword">Confirm Password</label>
+                    <input type="password" id="deleteConfirmPassword" name="password" class="form-input" required placeholder="Enter your password to confirm">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn danger">Permanently Delete Account</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form reset function
+function resetEditForm() {
+    if (confirm('Are you sure you want to reset all changes?')) {
+        document.getElementById('editProfileForm').reset();
+        // Reset to original values
+        document.getElementById('editUserName').value = "{{ current_user.user_name or '' }}";
+        document.getElementById('editUserEmail').value = "{{ current_user.email }}";
+    }
+}
+
+// Password validation
+function validatePasswordChange() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // If any password field is filled, all must be filled
+    if (newPassword || confirmPassword || currentPassword) {
+        if (!currentPassword) {
+            alert('Please enter your current password to change your password.');
+            return false;
+        }
+        if (!newPassword) {
+            alert('Please enter a new password.');
+            return false;
+        }
+        if (!confirmPassword) {
+            alert('Please confirm your new password.');
+            return false;
+        }
+        if (newPassword.length < 6) {
+            alert('New password must be at least 6 characters long.');
+            return false;
+        }
+        if (newPassword !== confirmPassword) {
+            alert('New passwords do not match.');
+            return false;
+        }
+    }
+    return true;
+}
+
+// Form Submissions
+document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    if (!validatePasswordChange()) {
+        return;
+    }
+    
+    console.log('Profile form submitted');
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Profile updated successfully!');
+            // Clear password fields on success
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating profile');
+    });
+});
+
+document.getElementById('deleteAccountForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    console.log('Delete account form submitted');
+    
+    if (!confirm('Are you absolutely sure you want to delete your account? This action cannot be undone!')) {
+        return;
+    }
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Account deleted successfully!');
+            window.location.href = "{{ url_for('main.index') }}";
+        } else {
+            alert('Error: ' + data.message);
+            document.getElementById('deleteAccountForm').reset();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deleting account');
+        document.getElementById('deleteAccountForm').reset();
+    });
+});
+
+// Action Functions
+function exportData(format) {
+    if (format === 'csv') {
+        window.location.href = "{{ url_for('transactions.export_csv') }}";
+    } else if (format === 'pdf') {
+        window.location.href = "{{ url_for('transactions.export_pdf') }}";
+    }
+}
+
+function clearData() {
+    if (confirm('Are you sure you want to clear all your data? This will delete ALL transactions, budgets, and family members.')) {
+        if (confirm('This action cannot be undone. Are you absolutely sure?')) {
+            fetch("{{ url_for('main.clear_all_data') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('All data cleared successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error clearing data: ' + error);
+            });
+        }
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Profile page loaded');
+});
+</script>
+{% endblock %}
