@@ -53,11 +53,50 @@ def dashboard():
         # Get time range from request
         time_range = request.args.get('range', '6months')
         
+        # Define start_of_month for current month calculations
+        start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
         current_month_data = SimpleAnalyticsService.get_monthly_totals(current_user.user_id, now.year, now.month)
         
         monthly_income = current_month_data['income']
         monthly_expenses = current_month_data['expenses']
         monthly_balance = current_month_data['balance']
+        
+        # Get PERSONAL budget alerts only (member_id is NULL)
+        budget_alerts = []
+        personal_budgets = Budget.query.filter_by(
+            user_id=current_user.user_id,
+            member_id=None,  # Personal budgets only
+            is_active=True
+        ).all()
+        
+        for budget in personal_budgets:
+            if budget.category:
+                # Calculate spending for this category (personal expenses only)
+                category_spent_query = db.session.query(db.func.sum(Transaction.amount)).filter(
+                    Transaction.user_id == current_user.user_id,
+                    Transaction.transaction_type == 'expense',
+                    Transaction.category_id == budget.category_id,
+                    Transaction.transaction_date >= start_of_month,
+                    Transaction.user_participates == True,
+                    ~Transaction.members.any()  # No family members - personal expenses only
+                ).scalar()
+                
+                category_spent = float(category_spent_query) if category_spent_query else 0
+                budget_amount = float(budget.budget_amount)
+                
+                if budget_amount > 0:
+                    percentage = (category_spent / budget_amount * 100)
+                    # Show all personal budget alerts, not just over 75%
+                    budget_alerts.append({
+                        'category_name': budget.category.category_name,
+                        'budget_amount': budget_amount,
+                        'spent': category_spent,
+                        'percentage': percentage
+                    })
+        
+        # Sort budget alerts by percentage (highest first)
+        budget_alerts.sort(key=lambda x: x['percentage'], reverse=True)
         
         # Get monthly comparison data based on selected time range
         monthly_comparison = []
@@ -98,7 +137,7 @@ def dashboard():
                 'expenses': monthly_data['expenses']
             })
             
-            # Move to next month (approximately 30 days)
+            # Move to next month
             if current_date.month == 12:
                 current_date = current_date.replace(year=current_date.year + 1, month=1)
             else:
@@ -109,12 +148,6 @@ def dashboard():
         
         # Simplified category spending - use existing method
         category_spending = SimpleAnalyticsService.get_spending_by_category(current_user.user_id)
-        
-        # Simplified budget alerts for now
-        try:
-            budget_alerts = BudgetService.get_user_budget_alerts(current_user.user_id)
-        except:
-            budget_alerts = []
         
         # Simplified budget calculation for now
         try:
@@ -133,6 +166,7 @@ def dashboard():
         balance = SimpleAnalyticsService.get_balance(current_user.user_id)
         income = SimpleAnalyticsService.get_total_income(current_user.user_id)
         expenses = SimpleAnalyticsService.get_total_expenses(current_user.user_id)
+        
         return render_template('dashboard.html',
                              user=current_user,
                              balance=balance,
@@ -166,7 +200,7 @@ def dashboard():
                              category_spending={},
                              budget_alerts=[],
                              current_time_range='6months')
-
+    
 @main_bp.route('/faq')
 @login_required
 def faq():
@@ -500,7 +534,7 @@ def family_management():
     # Calculate basic stats
     member_count = len(family_members)
     
-    # Get total expenses
+    # Get total family expenses (all expenses including shared ones)
     total_expenses_query = db.session.query(db.func.sum(Transaction.amount)).filter(
         Transaction.user_id == current_user.user_id,
         Transaction.transaction_type == 'expense'
@@ -508,22 +542,15 @@ def family_management():
     
     total_family_expenses = float(total_expenses_query) if total_expenses_query else 0
     
-    # Family budget total
-    total_budget = Budget.query.filter(
+    # Get FAMILY category budgets (member_id is not null)
+    family_budget_records = Budget.query.filter(
         Budget.user_id == current_user.user_id,
         Budget.is_active == True,
-        Budget.category_id == None
-    ).first()
+        Budget.member_id != None  # This makes it a family budget
+    ).all()
     
-    if total_budget:
-        family_budget_total = float(total_budget.budget_amount)
-    else:
-        category_budgets_sum = db.session.query(db.func.sum(Budget.budget_amount)).filter(
-            Budget.user_id == current_user.user_id,
-            Budget.is_active == True,
-            Budget.category_id != None
-        ).scalar()
-        family_budget_total = float(category_budgets_sum) if category_budgets_sum else 0
+    # Calculate family budget total
+    family_budget_total = sum([float(b.budget_amount) for b in family_budget_records])
     
     budget_percentage = (total_family_expenses / family_budget_total * 100) if family_budget_total > 0 else 0
     
@@ -559,7 +586,7 @@ def family_management():
         
         member_contributions[member.member_id] = member_total
     
-    # Category data
+    # Category data for charts
     category_data = db.session.query(
         Category.category_name,
         db.func.sum(Transaction.amount).label('total_amount')
@@ -575,17 +602,26 @@ def family_management():
     for cat in category_data:
         category_expenses[cat[0]] = float(cat[1])
     
-    # Get category-specific budgets
-    category_budgets = {}
-    category_budget_records = Budget.query.filter(
-        Budget.user_id == current_user.user_id,
-        Budget.is_active == True,
-        Budget.category_id != None
-    ).all()
+    # Prepare family budget data with spent amounts
+    family_budgets_with_spent = []
+    for budget in family_budget_records:
+        if budget.category:
+            category_name = budget.category.category_name
+            budget_amount = float(budget.budget_amount)
+            spent = category_expenses.get(category_name, 0)
+            percentage = (spent / budget_amount * 100) if budget_amount > 0 else 0
+            
+            family_budgets_with_spent.append({
+                'budget_id': budget.budget_id,
+                'category_name': category_name,
+                'budget_amount': budget_amount,
+                'spent': spent,
+                'percentage': percentage,
+                'alert_level': 'over-budget' if percentage >= 100 else ('near-limit' if percentage >= 75 else 'within-budget')
+            })
     
-    for budget in category_budget_records:
-        if budget.category and budget.budget_amount > 0:
-            category_budgets[budget.category.category_name] = float(budget.budget_amount)
+    # Sort family budgets by percentage (highest first)
+    family_budgets_with_spent.sort(key=lambda x: x['percentage'], reverse=True)
     
     # Per-member category data
     per_member_category_data = {}
@@ -633,7 +669,7 @@ def family_management():
         if member_expenses_list:
             per_member_category_data[member.name] = member_expenses_list
     
-    # Recent expenses - DÜZELTİLMİŞ KISIM
+    # Recent expenses
     recent_shared_expenses = db.session.query(Transaction).filter(
         Transaction.user_id == current_user.user_id,
         Transaction.transaction_type == 'expense'
@@ -646,7 +682,7 @@ def family_management():
         if transaction.user_participates:
             shared_with.append(current_user.user_name or "You")
         
-        # Üyeleri ekle
+        # Add member
         for member_transaction in transaction.members:
             if member_transaction.member:
                 shared_with.append(member_transaction.member.name)
@@ -658,7 +694,7 @@ def family_management():
             'category': transaction.category.category_name if transaction.category else 'Other',
             'amount': float(transaction.amount),
             'cost_per_person': transaction.get_cost_per_person(),
-            'shared_with': shared_with  # Bu satır eklendi!
+            'shared_with': shared_with 
         })
     
     # Generate monthly comparison data for charts
@@ -701,13 +737,72 @@ def family_management():
                          budget_percentage=budget_percentage,
                          category_chart_data=category_chart_data,
                          per_member_category_data=per_member_category_data,
-                         category_expenses=category_expenses,
-                         category_budgets=category_budgets,
+                         family_budgets_with_spent=family_budgets_with_spent,  
                          recent_shared_expenses=recent_expenses_data,
                          family_monthly_comparison=family_monthly_comparison,
                          categories=all_categories,
                          member_contributions=member_contributions,
                          user_contribution=user_contribution)
+
+@main_bp.route('/add_family_budget', methods=['POST'])
+@login_required
+def add_family_budget():
+    """Add a new FAMILY category budget for shared expenses"""
+    from app.models import Member
+    
+    category_id = request.form.get('category_id')
+    amount = request.form.get('amount')
+    
+    if not category_id or not amount:
+        flash('Please select a category and enter an amount.', 'error')
+        return redirect(url_for('main.family_management'))
+    
+    try:
+        amount = float(amount)
+        category_id = int(category_id)
+        
+        # For family budgets, we need member_id to be not null
+        # Use the first family member or create a special approach
+        first_member = Member.query.filter_by(user_id=current_user.user_id).first()
+        
+        if not first_member:
+            flash('Please add a family member first to create family budgets.', 'error')
+            return redirect(url_for('main.family_management'))
+        
+        # Check if family budget already exists for this category
+        existing_budget = Budget.query.filter_by(
+            user_id=current_user.user_id,
+            category_id=category_id,
+            member_id=first_member.member_id  # This makes it a family budget
+        ).first()
+        
+        if existing_budget:
+            # Update existing family budget
+            existing_budget.budget_amount = amount
+            existing_budget.updated_at = datetime.now()
+            message = 'Family budget updated successfully'
+        else:
+            # Create new FAMILY budget
+            new_budget = Budget(
+                user_id=current_user.user_id,
+                category_id=category_id,
+                budget_amount=amount,
+                member_id=first_member.member_id,  # This makes it a family budget
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+            db.session.add(new_budget)
+            message = 'Family budget added successfully'
+        
+        db.session.commit()
+        flash(message, 'success')
+        
+    except ValueError as e:
+        flash(f'Invalid amount or category: {str(e)}', 'error')
+    except Exception as e:
+        flash(f'Error creating family budget: {str(e)}', 'error')
+    
+    return redirect(url_for('main.family_management'))
 
 # ----------------------------------------------------------------------------
 # Family Member Management Routes
@@ -975,45 +1070,55 @@ def delete_expense(expense_id):
 @main_bp.route('/budget')
 @login_required
 def budget():
-    """Budget management page with category budgets and alerts"""
+    """Budget management page with PERSONAL category budgets and alerts"""
     try:
-        # Get all user budgets
-        user_budgets = BudgetService.get_user_budgets(current_user.user_id)
+        # Get only PERSONAL budgets (user_id is current user, member_id is NULL)
+        user_budgets = Budget.query.filter_by(
+            user_id=current_user.user_id,
+            member_id=None,  # This makes it a personal budget
+            is_active=True
+        ).all()
         
         # Get all categories for budget creation
         categories = CategoryService.get_all_categories()
         
-        # Calculate total budget and spent amounts
+        # Calculate total budget and spent amounts for PERSONAL budgets only
         now = datetime.now()
         start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
-        # Get category spending data for current month
+        # Get category spending data for current month (personal expenses only)
         category_spending = {}
         total_budget_amount = 0
         total_spent = 0
         
         for category in categories:
-            # Get spending for this category this month
+            # Get PERSONAL spending for this category this month
+            # Personal expenses are those that are not shared with family members
             category_spent_query = db.session.query(db.func.sum(Transaction.amount)).filter(
                 Transaction.user_id == current_user.user_id,
                 Transaction.transaction_type == 'expense',
                 Transaction.category_id == category.category_id,
-                Transaction.transaction_date >= start_of_month
+                Transaction.transaction_date >= start_of_month,
+                # Personal expenses: user participates but no family members
+                Transaction.user_participates == True,
+                ~Transaction.members.any()  # No family members associated
             ).scalar()
             
             category_spent = float(category_spent_query) if category_spent_query else 0
             
-            # Find budget for this category
+            # Find PERSONAL budget for this category
             category_budget = next((b for b in user_budgets if b.category_id == category.category_id), None)
             budget_amount = float(category_budget.budget_amount) if category_budget else 0
+            budget_id = category_budget.budget_id if category_budget else None
             
-            if budget_amount > 0 or category_spent > 0:  # Only include categories with budget or spending
+            if budget_amount > 0:  # Only include categories with budget
                 category_spending[category.category_name] = {
                     'budget': budget_amount,
                     'spent': category_spent,
                     'remaining': budget_amount - category_spent,
                     'percentage': (category_spent / budget_amount * 100) if budget_amount > 0 else 0,
-                    'is_over_budget': category_spent > budget_amount and budget_amount > 0
+                    'is_over_budget': category_spent > budget_amount and budget_amount > 0,
+                    'budget_id': budget_id
                 }
                 
                 total_budget_amount += budget_amount
@@ -1022,45 +1127,13 @@ def budget():
         # Calculate overall budget status
         overall_percentage = (total_spent / total_budget_amount * 100) if total_budget_amount > 0 else 0
         
-        # Get budget alerts
-        budget_alerts = BudgetService.check_budget_alerts(current_user.user_id)
-        
-        # Generate monthly trend data for chart (last 6 months)
-        monthly_trends = []
-        for i in range(5, -1, -1):  # Last 6 months
-            month_date = (now - timedelta(days=i*30)).replace(day=1)
-            month_start = month_date.replace(hour=0, minute=0, second=0, microsecond=0)
-            month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-            
-            month_spent_query = db.session.query(db.func.sum(Transaction.amount)).filter(
-                Transaction.user_id == current_user.user_id,
-                Transaction.transaction_type == 'expense',
-                Transaction.transaction_date >= month_start,
-                Transaction.transaction_date <= month_end
-            ).scalar()
-            
-            month_spent = float(month_spent_query) if month_spent_query else 0
-            
-            monthly_trends.append({
-                'month': month_date.strftime('%b'),
-                'spent': month_spent,
-                'budget': total_budget_amount  # Using current total budget for all months
-            })
-        
-        from app.utilities.seed_categories import get_available_categories
-    
-        available_categories = get_available_categories()
-        
         return render_template('budget.html',
                              total_budget=total_budget_amount,
                              monthly_spent=total_spent,
                              remaining_budget=total_budget_amount - total_spent,
                              budget_percentage=overall_percentage,
-                             available_categories=available_categories,
+                             available_categories=categories,
                              category_spending=category_spending,
-                             budget_alerts=budget_alerts,
-                             monthly_trends=monthly_trends,
-                             categories=categories,
                              current_month=now.strftime('%B %Y'))
                              
     except Exception as e:
@@ -1072,33 +1145,60 @@ def budget():
                              remaining_budget=0,
                              budget_percentage=0,
                              category_spending={},
-                             budget_alerts=[],
-                             monthly_trends=[],
-                             categories=[],
                              current_month=now.strftime('%B %Y'))
 
 @main_bp.route('/budget/add', methods=['POST'])
 @login_required
 def add_budget():
-    """Add a new category budget"""
+    """Add a new PERSONAL category budget"""
     try:
         data = request.get_json()
+        print(f"DEBUG: Received data: {data}")
+        
         category_id = int(data.get('category_id')) if data.get('category_id') else None
         amount = float(data.get('amount', 0))
         
+        if not category_id:
+            return jsonify({'success': False, 'message': 'Please select a category'}), 400
+            
         if not amount or amount <= 0:
             return jsonify({'success': False, 'message': 'Invalid budget amount'}), 400
         
-        # Use existing service method
-        BudgetService.create_or_update_budget(
-            user_id=current_user.user_id,
-            budget_amount=amount,
-            category_id=category_id
-        )
+        print(f"DEBUG: Creating PERSONAL budget - user_id: {current_user.user_id}, category_id: {category_id}, amount: {amount}")
         
-        return jsonify({'success': True, 'message': 'Budget added successfully'})
+        # Check if PERSONAL budget already exists for this category
+        existing_budget = Budget.query.filter_by(
+            user_id=current_user.user_id,
+            category_id=category_id,
+            member_id=None  # This makes it a personal budget
+        ).first()
+        
+        if existing_budget:
+            # Update existing PERSONAL budget
+            existing_budget.budget_amount = amount
+            existing_budget.updated_at = datetime.now()
+            message = 'Personal budget updated successfully'
+        else:
+            # Create new PERSONAL budget
+            new_budget = Budget(
+                user_id=current_user.user_id,
+                category_id=category_id,
+                budget_amount=amount,
+                member_id=None,  # This makes it a personal budget
+                created_at=datetime.now(),
+                updated_at=datetime.now()
+            )
+            db.session.add(new_budget)
+            message = 'Personal budget added successfully'
+        
+        db.session.commit()
+        print(f"DEBUG: {message}")
+        
+        return jsonify({'success': True, 'message': message})
+        
     except Exception as e:
-        print(f"Error adding budget: {e}")
+        print(f"Error adding personal budget: {e}")
+        db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 500
 
 @main_bp.route('/budget/<int:budget_id>/edit', methods=['POST'])

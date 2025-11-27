@@ -82,7 +82,7 @@
                         </small>
                     </h4>
                     <div class="chart-container">
-                        <canvas id="categoryChart" width="400" height="300"></canvas>
+                        <canvas id="categoryChart"></canvas>
                     </div>
                 </div>
                 
@@ -92,7 +92,7 @@
                         <small>({{ monthly_comparison|length }} months)</small>
                     </h4>
                     <div class="chart-container">
-                        <canvas id="monthlyComparisonChart" width="400" height="300"></canvas>
+                        <canvas id="monthlyComparisonChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -101,8 +101,8 @@
         <!-- Budget Alerts Section -->
 <div class="budget-alerts-section">
     <div class="section-header">
-        <h3>Budget Alerts - {{ current_month }}</h3>
-        <a href="{{ url_for('main.budget') }}" class="view-all">Manage Budgets</a>
+        <h3>Personal Budget Alerts - {{ current_month }}</h3>
+        <a href="{{ url_for('main.budget') }}" class="view-all">Manage Personal Budgets</a>
     </div>
     
     <div class="budget-alerts-container" id="budgetAlertsSlider">
@@ -141,7 +141,7 @@
             {% endfor %}
         {% else %}
             <div class="no-alerts">
-                <p>No budget alerts. All good! ✅</p>
+                <p>No personal budget alerts. All good! ✅</p>
             </div>
         {% endif %}
     </div>
