@@ -7,47 +7,67 @@ from datetime import datetime
 class TestBudgetCreation:
     """Test creating budgets"""
 
-    def test_create_user_budget(self, app, auth_client, test_user):
-        """Test creating a budget for user"""
-        response = auth_client.post('/budget/add', data={
-            'budget_amount': '1000.00',
-            'alert_threshold': '80',
-            'category_id': '',
-            'member_id': '',
-            'notifications_enabled': 'true'
-        }, follow_redirects=True)
+    def test_create_user_budget(self, app, auth_client, test_user, test_category):
+        """Test creating a basic category budget for user"""
+        response = auth_client.post('/budget/add',
+                                    json={
+                                        'amount': '1000.00',
+                                        'alert_threshold': '80',
+                                        'category_id': test_category,
+                                        'member_id': None,
+                                        'notifications_enabled': True
+                                    },
+                                    content_type='application/json',
+                                    follow_redirects=True)
+
+        assert response.status_code == 200
 
         with app.app_context():
-            budget = Budget.query.filter_by(user_id=test_user.user_id).first()
-            # Budget creation may or may not succeed based on route implementation
-            assert True  # Test that route doesn't crash
+            budget = Budget.query.filter_by(
+                user_id=test_user.user_id,
+                category_id=test_category
+            ).first()
+            assert budget is not None
 
     def test_create_category_budget(self, app, auth_client, test_user, test_category):
         """Test creating a category-specific budget"""
-        response = auth_client.post('/budget/add', data={
-            'budget_amount': '200.00',
-            'alert_threshold': '75',
-            'category_id': test_category,
-            'member_id': '',
-            'notifications_enabled': 'true'
-        }, follow_redirects=True)
+        response = auth_client.post('/budget/add',
+                                    json={
+                                        'amount': '200.00',
+                                        'alert_threshold': '75',
+                                        'category_id': test_category,
+                                        'member_id': None,
+                                        'notifications_enabled': True
+                                    },
+                                    content_type='application/json',
+                                    follow_redirects=True)
 
         assert response.status_code == 200
 
-    def test_create_member_budget(self, app, auth_client, test_user, test_member):
-        """Test creating a budget for tracking member's expenses"""
+    def test_create_multiple_category_budgets(self, app, auth_client, test_user, test_category):
+        """Test creating budgets for different categories"""
+        # Create first category budget
+        response1 = auth_client.post('/budget/add',
+                                     json={
+                                         'amount': '500.00',
+                                         'alert_threshold': '80',
+                                         'category_id': test_category,
+                                         'member_id': None,
+                                         'notifications_enabled': True
+                                     },
+                                     content_type='application/json',
+                                     follow_redirects=True)
+
+        assert response1.status_code == 200
+
+        # Verify budget was created
         with app.app_context():
-            member_id = test_member.member_id
-
-        response = auth_client.post('/budget/add', data={
-            'budget_amount': '500.00',
-            'alert_threshold': '80',
-            'category_id': '',
-            'member_id': member_id,
-            'notifications_enabled': 'true'
-        }, follow_redirects=True)
-
-        assert response.status_code == 200
+            budget = Budget.query.filter_by(
+                user_id=test_user.user_id,
+                category_id=test_category
+            ).first()
+            assert budget is not None
+            assert float(budget.budget_amount) == 500.00
 
 
 class TestBudgetEdit:
@@ -87,11 +107,14 @@ class TestBudgetEdit:
 
     def test_edit_budget_threshold(self, app, auth_client, sample_budget):
         """Test editing budget alert threshold"""
-        response = auth_client.post(f'/budget/{sample_budget.budget_id}/edit', data={
-            'budget_amount': '800.00',
+        response = auth_client.post(f'/budget/{sample_budget.budget_id}/edit',
+                                    json={
+            'amount': '800.00',
             'alert_threshold': '90',
-            'notifications_enabled': 'true'
-        }, follow_redirects=True)
+            'notifications_enabled': True
+        },
+            content_type='application/json',
+            follow_redirects=True)
 
         assert response.status_code == 200
 

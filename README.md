@@ -75,25 +75,25 @@ Core features for personal and family expense management with intelligent cost s
 
 Secure email-based registration and login with bcrypt password hashing, session management, and role-based admin access control.
 
-![Authentication Screenshot](docs/images/auth.png)
+<img src="docs/images/auth.png" alt="Authentication Screenshot" width="800">
 
 #### Interactive Dashboard
 
 Real-time financial overview with monthly summaries, category pie charts, budget progress bars with color-coded alerts, spending trends, and recent transaction activity.
 
-![Dashboard Screenshot](docs/images/dashboard.png)
+<img src="docs/images/dashboard.png" alt="Dashboard Screenshot" width="800">
 
 #### Transaction Management
 
 Complete CRUD operations for income/expenses with category assignment, date selection, member cost-splitting, and user participation toggle. Advanced filtering by type, category, and date range with sorting and pagination.
 
-![Transactions Screenshot](docs/images/transactions.png)
+<img src="docs/images/transactions.png" alt="Transactions Screenshot" width="800">
 
 #### Family Member Management
 
 Add, edit, and delete family members with automatic join date tracking. View comprehensive member statistics including total contributions, transaction count, and spending averages.
 
-![Family Management Screenshot](docs/images/family.png)
+<img src="docs/images/family-management.png" alt="Family Management Screenshot" width="800">
 
 #### Intelligent Cost Splitting
 
@@ -105,7 +105,7 @@ See [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md#cost-splitting-system) f
 
 Create budgets for users or members by category or total spending. Real-time monitoring with color-coded alerts (🟢 green, 🟡 yellow, 🟠 orange, 🔴 red) based on customizable thresholds (default 80%). Pause/unpause budgets as needed.
 
-![Budget Screenshot](docs/images/budget.png)
+<img src="docs/images/budget.png" alt="Budget Screenshot" width="800">
 
 #### Data Export
 
@@ -115,19 +115,19 @@ Export transactions to CSV (Excel/Google Sheets compatible) or PDF (professional
 
 View and edit account details (username, email). Clear all transaction data or permanently delete account with double confirmation for data safety.
 
-![Profile Screenshot](docs/images/profile.png)
+<img src="docs/images/profile.png" alt="Profile Screenshot" width="800">
 
 #### Cash Flow Analysis
 
 Visualize income vs expenses with line charts, category breakdowns, net balance tracking, and spending trend predictions.
 
-![Cash Flow Screenshot](docs/images/cashflow.png)
+<img src="docs/images/cashflow.png" alt="Cash Flow Screenshot" width="800">
 
 #### Admin Interface
 
 Flask-Admin dashboard for superusers with full database management: user/transaction/category/budget oversight, bulk operations, and advanced search/filtering.
 
-![Admin Screenshot](docs/images/admin.png)
+<img src="docs/images/admin.png" alt="Admin Screenshot" width="800">
 
 ### Additional Features
 
@@ -189,11 +189,11 @@ For implementation details and key relationship notes, see [Project Documentatio
 ### Color Palette
 
 - 🟦 **Primary Blue** `#3498db` - Main actions, links, primary buttons
-- 🟩 **Success Green** `#27ae60` - Confirmations, positive feedback, income
-- 🟨 **Warning Yellow** `#f39c12` - Alerts, budget warnings
-- 🟥 **Danger Red** `#e74c3c` - Errors, deletions, over-budget status
+- 🟩 **Success Green** `#28a745` - Confirmations, positive feedback, income
+- 🟨 **Warning Yellow** `#ffc107` - Alerts, budget warnings
+- 🟥 **Danger Red** `#dc3545` - Errors, deletions, over-budget status
 - ⬛ **Dark Gray** `#2c3e50` - Text, headers
-- ⬜ **Light Gray** `#ecf0f1` - Backgrounds, borders
+- ⬜ **Light Gray** `#f8f9fa` - Backgrounds, borders
 
 ### Typography
 
@@ -358,9 +358,9 @@ Full test documentation in [Project Documentation](PROJECT_DOCUMENTATION.md#test
 
 ## Deployment
 
-**For deployment configuration and setup**, see [Project Documentation](PROJECT_DOCUMENTATION.md#deployment).
+**Status:** Development Complete - Ready for Deployment
 
-**Live Demo**: [Smart Expenses Tracker](#)
+**Next Phase:** Production deployment and user testing planned for PythonAnywhere platform.
 
 ---
 
