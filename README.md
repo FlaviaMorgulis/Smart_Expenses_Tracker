@@ -2,9 +2,7 @@
 
 ## 🎥 Demo Video
 
-https://github.com/FlaviaMorgulis/Smart_Expenses_Tracker/assets/Recording%20live.mp4
-
-_Watch the full application walkthrough showing expense tracking, family management, budgets, and analytics features._
+📹 **[Download Demo Video (51 MB)](docs/images/Recording%20live.mp4)** - Full application walkthrough showing expense tracking, family management, budgets, and analytics features.
 
 ---
 
