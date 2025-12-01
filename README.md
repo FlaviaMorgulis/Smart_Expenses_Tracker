@@ -1,11 +1,5 @@
 # Smart Expenses Tracker
 
-## 🎥 Demo Video
-
-[![Watch Demo Video](https://img.youtube.com/vi/WgniY7e_eHk/maxresdefault.jpg)](https://www.youtube.com/watch?v=WgniY7e_eHk)
-
-_Click to watch the full application walkthrough showing expense tracking, family management, budgets, and analytics features._
-
 ---
 
 A comprehensive family expense management web application that enables users to track personal and shared expenses, manage family member contributions, set intelligent budgets, and generate detailed financial reports. The goal was to build something intuitive, simple, and scalable while applying Flask best practices and modern web development principles.
@@ -72,6 +66,11 @@ A comprehensive family expense management web application that enables users to 
 ---
 
 ## Features
+## 🎥 Demo Video
+
+[![Watch Demo Video](https://img.youtube.com/vi/WgniY7e_eHk/maxresdefault.jpg)](https://www.youtube.com/watch?v=WgniY7e_eHk)
+
+_Click to watch the full application walkthrough showing expense tracking, family management, budgets, and analytics features._
 
 ### Main Application Features
 
