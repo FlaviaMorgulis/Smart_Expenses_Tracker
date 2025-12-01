@@ -2,9 +2,7 @@
 
 ## 🎥 Demo Video
 
-<video src="docs/images/Recording live.mp4" controls width="800">
-  Your browser does not support the video tag.
-</video>
+https://github.com/FlaviaMorgulis/Smart_Expenses_Tracker/assets/Recording%20live.mp4
 
 _Watch the full application walkthrough showing expense tracking, family management, budgets, and analytics features._
 
