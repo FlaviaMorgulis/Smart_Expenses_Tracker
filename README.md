@@ -2,7 +2,9 @@
 
 ## 🎥 Demo Video
 
-📹 **[Download Demo Video (51 MB)](docs/images/Recording%20live.mp4)** - Full application walkthrough showing expense tracking, family management, budgets, and analytics features.
+[![Watch Demo Video](https://img.youtube.com/vi/WgniY7e_eHk/maxresdefault.jpg)](https://www.youtube.com/watch?v=WgniY7e_eHk)
+
+_Click to watch the full application walkthrough showing expense tracking, family management, budgets, and analytics features._
 
 ---
 
