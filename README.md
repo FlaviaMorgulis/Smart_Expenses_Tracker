@@ -1,8 +1,16 @@
 # Smart Expenses Tracker
 
-<!-- Add video from the website here -->
+## 🎥 Demo Video
 
-A comprehensive family expense management web application that enables users to track personal and shared expenses, manage family member contributions, set intelligent budgets, and generate detailed financial reports.The goal was to build something intuitive, simple, and scalable while applying Flask best practices and modern web development principles.
+<video src="docs/images/Recording live.mp4" controls width="800">
+  Your browser does not support the video tag.
+</video>
+
+_Watch the full application walkthrough showing expense tracking, family management, budgets, and analytics features._
+
+---
+
+A comprehensive family expense management web application that enables users to track personal and shared expenses, manage family member contributions, set intelligent budgets, and generate detailed financial reports. The goal was to build something intuitive, simple, and scalable while applying Flask best practices and modern web development principles.
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.1.2-green.svg)](https://flask.palletsprojects.com/)
@@ -75,25 +83,17 @@ Core features for personal and family expense management with intelligent cost s
 
 Secure email-based registration and login with bcrypt password hashing, session management, and role-based admin access control.
 
-<img src="docs/images/auth.png" alt="Authentication Screenshot" width="800">
-
 #### Interactive Dashboard
 
 Real-time financial overview with monthly summaries, category pie charts, budget progress bars with color-coded alerts, spending trends, and recent transaction activity.
-
-<img src="docs/images/dashboard.png" alt="Dashboard Screenshot" width="800">
 
 #### Transaction Management
 
 Complete CRUD operations for income/expenses with category assignment, date selection, member cost-splitting, and user participation toggle. Advanced filtering by type, category, and date range with sorting and pagination.
 
-<img src="docs/images/transactions.png" alt="Transactions Screenshot" width="800">
-
 #### Family Member Management
 
 Add, edit, and delete family members with automatic join date tracking. View comprehensive member statistics including total contributions, transaction count, and spending averages.
-
-<img src="docs/images/family-management.png" alt="Family Management Screenshot" width="800">
 
 #### Intelligent Cost Splitting
 
@@ -105,8 +105,6 @@ See [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md#cost-splitting-system) f
 
 Create budgets for users or members by category or total spending. Real-time monitoring with color-coded alerts (🟢 green, 🟡 yellow, 🟠 orange, 🔴 red) based on customizable thresholds (default 80%). Pause/unpause budgets as needed.
 
-<img src="docs/images/budget.png" alt="Budget Screenshot" width="800">
-
 #### Data Export
 
 Export transactions to CSV (Excel/Google Sheets compatible) or PDF (professional formatted reports) for tax preparation and record-keeping.
@@ -115,13 +113,9 @@ Export transactions to CSV (Excel/Google Sheets compatible) or PDF (professional
 
 View and edit account details (username, email). Clear all transaction data or permanently delete account with double confirmation for data safety.
 
-<img src="docs/images/profile.png" alt="Profile Screenshot" width="800">
-
 #### Cash Flow Analysis
 
 Visualize income vs expenses with line charts, category breakdowns, net balance tracking, and spending trend predictions.
-
-<img src="docs/images/cashflow.png" alt="Cash Flow Screenshot" width="800">
 
 #### Admin Interface
 
