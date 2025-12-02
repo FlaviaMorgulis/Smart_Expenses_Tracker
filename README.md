@@ -125,7 +125,9 @@ Visualize income vs expenses with line charts, category breakdowns, net balance 
 
 Flask-Admin dashboard for superusers with full database management: user/transaction/category/budget oversight, bulk operations, and advanced search/filtering.
 
-<img src="docs/images/admin.png" alt="Admin Screenshot" width="800">
+<p align="center">
+  <img src="docs/images/admin.png" alt="Admin Screenshot" width="800">
+</p>
 
 ### Additional Features
 
@@ -137,7 +139,9 @@ Flask-Admin dashboard for superusers with full database management: user/transac
 
 ## Database Design
 
-![Database ERD](docs/images/database-erd.png)
+<p align="center">
+  <img src="docs/images/database-erd.png" alt="Database ERD" width="800">
+</p>
 
 _Entity Relationship Diagram showing all 6 tables with fields, data types, nullable constraints, and relationship cardinalities_
 
