@@ -1,5 +1,6 @@
 # Smart Expenses Tracker
 
+<img src="docs/images/dashboard.png" alt="Dashboard Screenshot" width="800">
 ---
 
 A comprehensive family expense management web application that enables users to track personal and shared expenses, manage family member contributions, set intelligent budgets, and generate detailed financial reports. The goal was to build something intuitive, simple, and scalable while applying Flask best practices and modern web development principles.
