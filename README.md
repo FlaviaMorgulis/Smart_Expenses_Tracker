@@ -126,7 +126,7 @@ Visualize income vs expenses with line charts, category breakdowns, net balance 
 Flask-Admin dashboard for superusers with full database management: user/transaction/category/budget oversight, bulk operations, and advanced search/filtering.
 
 <p align="center">
-  <img src="docs/images/admin.png" alt="Admin Screenshot" width="800">
+  <img src="docs/images/admin.png" alt="Admin Screenshot" width="600">
 </p>
 
 ### Additional Features
@@ -140,7 +140,7 @@ Flask-Admin dashboard for superusers with full database management: user/transac
 ## Database Design
 
 <p align="center">
-  <img src="docs/images/database-erd.png" alt="Database ERD" width="800">
+  <img src="docs/images/database-erd.png" alt="Database ERD" width="600">
 </p>
 
 _Entity Relationship Diagram showing all 6 tables with fields, data types, nullable constraints, and relationship cardinalities_
@@ -176,12 +176,12 @@ For implementation details and key relationship notes, see [Project Documentatio
 <table>
 <tr>
 <td width="50%" align="center">
-<img src="docs/images/wireframes-paper.png" alt="Paper Wireframes" width="100%" />
+<img src="docs/images/wireframes-paper.png" alt="Paper Wireframes" width="80%" />
 <p><em>Paper Wireframes</em></p>
 </td>
 <td width="50%" align="center">
 <a href="https://sleet-thread-13810139.figma.site/" target="_blank" rel="noopener noreferrer">
-<img src="docs/images/mockup-figma.png" alt="Figma Mockups - Click to view interactive prototype" width="100%" />
+<img src="docs/images/mockup-figma.png" alt="Figma Mockups" width="100%" />
 </a>
 <p><em>Click to view interactive Figma prototype</em></p>
 </td>
