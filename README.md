@@ -71,7 +71,11 @@ A comprehensive family expense management web application that enables users to 
 ## Features
 ## 🎥 Demo Video
 
-[![Watch Demo Video](https://img.youtube.com/vi/WgniY7e_eHk/maxresdefault.jpg)](https://www.youtube.com/watch?v=WgniY7e_eHk)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=WgniY7e_eHk" target="_blank">
+    <img src="https://img.youtube.com/vi/WgniY7e_eHk/maxresdefault.jpg" alt="Watch Demo Video" width="600">
+  </a>
+</p>
 
 _Click to watch the full application walkthrough showing expense tracking, family management, budgets, and analytics features._
 
